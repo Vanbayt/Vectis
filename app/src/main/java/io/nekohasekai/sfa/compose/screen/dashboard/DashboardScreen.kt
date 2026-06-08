@@ -1,9 +1,9 @@
 package io.nekohasekai.sfa.compose.screen.dashboard
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,17 +13,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.compose.screen.login.WavyCookieShape
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,60 +36,11 @@ fun DashboardScreen(
     showStatusBar: Boolean = false,
     viewModel: DashboardViewModel? = null,
 ) {
-    val isRunning = serviceStatus == Status.Started || serviceStatus == Status.Starting
-    val isStarting = serviceStatus == Status.Starting
-    val isConnected = serviceStatus == Status.Started
-
-    // Pulse Animations (Radar Effect)
-    val infinitePulse = rememberInfiniteTransition(label = "pulse")
-    val pulseScale1 by infinitePulse.animateFloat(
-        initialValue = 1f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulseScale1"
-    )
-    val pulseAlpha1 by infinitePulse.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulseAlpha1"
-    )
-
-    val pulseScale2 by infinitePulse.animateFloat(
-        initialValue = 1f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearOutSlowInEasing, delayMillis = 1000),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulseScale2"
-    )
-    val pulseAlpha2 by infinitePulse.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearOutSlowInEasing, delayMillis = 1000),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulseAlpha2"
-    )
+    val isConnected = serviceStatus == Status.Started || serviceStatus == Status.Starting
 
     OverrideTopBar {
         TopAppBar(
-            title = {
-                Text(
-                    text = "Vectis",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
+            title = { },
             actions = {
                 IconButton(onClick = { /* TODO: Navigate to Profile */ }) {
                     Icon(Icons.Rounded.AccountCircle, contentDescription = "Profile", modifier = Modifier.size(28.dp))
@@ -104,62 +58,51 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 64.dp, top = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+            .padding(24.dp)
+            .padding(bottom = 64.dp)
     ) {
         
-        // Top Section: Info Cards (Time, Location, Protocol)
+        // Block 1: Header
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.weight(0.5f),
+            verticalArrangement = Arrangement.Center
         ) {
-            // Main Card: Subscription
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(
-                        elevation = 4.dp,
-                        shape = RoundedCornerShape(24.dp),
-                        ambientColor = MaterialTheme.colorScheme.primary,
-                        spotColor = MaterialTheme.colorScheme.primary
-                    ),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.outlinedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.DateRange,
-                        contentDescription = "Subscription",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = "Подписка",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "TODO: 14 дней",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+            Text(
+                text = "Vectis",
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = if (isConnected) "Secured" else "Ready",
+                style = MaterialTheme.typography.titleLarge,
+                color = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Block 2: Center Slider
+        Box(
+            contentAlignment = Alignment.Center, 
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            SwipeToConnectSlider(
+                isConnected = isConnected,
+                onConnect = {
+                    if (serviceStatus == Status.Stopped) viewModel?.toggleService()
+                },
+                onDisconnect = {
+                    if (serviceStatus == Status.Started || serviceStatus == Status.Starting) viewModel?.toggleService()
                 }
-            }
-            
-            // Grid: Location and Protocol
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Block 3: Bottom Cards Grid
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -167,118 +110,152 @@ fun DashboardScreen(
                 // Location Card
                 InfoTile(
                     modifier = Modifier.weight(1f),
-                    title = "Локация",
-                    value = "Frankfurt, DE", // TODO
+                    title = "Location",
+                    value = "Frankfurt", // TODO
                     icon = Icons.Rounded.Place
                 )
-
                 // Protocol Card
                 InfoTile(
                     modifier = Modifier.weight(1f),
-                    title = "Протокол",
-                    value = "VLESS Reality", // TODO
+                    title = "Protocol",
+                    value = "VLESS", // TODO
                     icon = Icons.Rounded.Lock
                 )
             }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Statistics Block
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Download Card
-            InfoTile(
-                modifier = Modifier.weight(1f),
-                title = "Download",
-                value = "0 KB/s", // TODO
-                icon = Icons.Rounded.ArrowDownward
-            )
-
-            // Upload Card
-            InfoTile(
-                modifier = Modifier.weight(1f),
-                title = "Upload",
-                value = "0 KB/s", // TODO
-                icon = Icons.Rounded.ArrowUpward
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Status Text & Indicator
-        val statusText = when {
-            serviceStatus == Status.Started -> "Подключено"
-            serviceStatus == Status.Starting -> "Подключение..."
-            serviceStatus == Status.Stopping -> "Отключение..."
-            else -> "Отключено"
-        }
-        
-        Text(
-            text = statusText,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Connection Button with Radar Effect
-        val interactionSource = remember { MutableInteractionSource() }
-        val buttonSize = 160.dp
-        
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            // Radar Effect (Only when connecting/connected)
-            if (isRunning) {
-                // Circle 1
-                Box(
-                    modifier = Modifier
-                        .size(buttonSize)
-                        .scale(pulseScale1)
-                        .graphicsLayer { alpha = pulseAlpha1 }
-                        .clip(WavyCookieShape(points = 12, waveDepth = 0.05f))
-                        .background(MaterialTheme.colorScheme.primary)
-                )
-                // Circle 2
-                Box(
-                    modifier = Modifier
-                        .size(buttonSize)
-                        .scale(pulseScale2)
-                        .graphicsLayer { alpha = pulseAlpha2 }
-                        .clip(WavyCookieShape(points = 12, waveDepth = 0.05f))
-                        .background(MaterialTheme.colorScheme.primary)
-                )
-            }
-
-            // Main Circular Button
-            Box(
+            
+            // Account/Subscription Card
+            OutlinedCard(
                 modifier = Modifier
-                    .size(buttonSize)
-                    .clip(WavyCookieShape(points = 12, waveDepth = 0.05f))
-                    .background(
-                        if (isConnected) MaterialTheme.colorScheme.primary 
-                        else MaterialTheme.colorScheme.surfaceVariant
-                    )
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null, // Disable default ripple to keep the shape clean
-                        onClick = { viewModel?.toggleService() }
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = 4.dp,
+                        shape = RoundedCornerShape(20.dp),
+                        ambientColor = MaterialTheme.colorScheme.primary,
+                        spotColor = MaterialTheme.colorScheme.primary
                     ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.PowerSettingsNew,
-                    contentDescription = "Start/Stop VPN",
-                    tint = if (isConnected) MaterialTheme.colorScheme.onPrimary 
-                           else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(64.dp)
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.outlinedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
                 )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.AccountCircle,
+                        contentDescription = "Subscription",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Premium Active",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "14 days left", // TODO
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+fun SwipeToConnectSlider(
+    isConnected: Boolean,
+    onConnect: () -> Unit,
+    onDisconnect: () -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val offsetX = remember { Animatable(0f) }
+    
+    val width = 280.dp
+    val height = 80.dp
+    val thumbSize = 64.dp
+    val padding = 8.dp
+    
+    val maxSwipePx = with(LocalDensity.current) { (width - thumbSize - (padding * 2)).toPx() }
+
+    // Sync external state changes with the slider thumb
+    LaunchedEffect(isConnected) {
+        val target = if (isConnected) maxSwipePx else 0f
+        if (offsetX.targetValue != target) {
+            offsetX.animateTo(target, spring())
+        }
+    }
+
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+        label = "sliderBackground"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(width = width, height = height)
+            .clip(CircleShape)
+            .background(backgroundColor),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        // Centered Text
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                text = if (isConnected) "Swipe to disconnect" else "Swipe to connect",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.alpha(0.5f)
+            )
+        }
+
+        // Thumb
+        Box(
+            modifier = Modifier
+                .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                .padding(start = padding)
+                .size(thumbSize)
+                .clip(CircleShape)
+                .background(if (isConnected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surface)
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            coroutineScope.launch {
+                                if (offsetX.value > maxSwipePx * 0.7f) {
+                                    offsetX.animateTo(maxSwipePx, spring())
+                                    onConnect()
+                                } else {
+                                    offsetX.animateTo(0f, spring())
+                                    onDisconnect()
+                                }
+                            }
+                        },
+                        onDragCancel = {
+                            coroutineScope.launch {
+                                offsetX.animateTo(if (isConnected) maxSwipePx else 0f, spring())
+                            }
+                        },
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            coroutineScope.launch {
+                                offsetX.snapTo((offsetX.value + dragAmount).coerceIn(0f, maxSwipePx))
+                            }
+                        }
+                    )
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isConnected) Icons.Rounded.PowerSettingsNew else Icons.Rounded.Lock,
+                contentDescription = "Swipe thumb",
+                tint = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }
@@ -294,19 +271,19 @@ fun InfoTile(
         modifier = modifier
             .shadow(
                 elevation = 4.dp,
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(20.dp),
                 ambientColor = MaterialTheme.colorScheme.primary,
                 spotColor = MaterialTheme.colorScheme.primary
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(
@@ -318,12 +295,12 @@ fun InfoTile(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
