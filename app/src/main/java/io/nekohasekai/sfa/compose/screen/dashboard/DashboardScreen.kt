@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -20,7 +21,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.compose.screen.login.WavyCookieShape
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 
@@ -36,46 +36,44 @@ fun DashboardScreen(
     val isStarting = serviceStatus == Status.Starting
     val isConnected = serviceStatus == Status.Started
 
-    // Animation states for the button
-    val infiniteTransition = rememberInfiniteTransition(label = "buttonRotation")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = if (isStarting) 2000 else 8000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
-
-    val scale by animateFloatAsState(
-        targetValue = if (isRunning) 1.15f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "scale"
-    )
-
-    // Breathing Halo Animation
-    val breathingTransition = rememberInfiniteTransition(label = "breathingHalo")
-    val haloScale by breathingTransition.animateFloat(
+    // Pulse Animations (Radar Effect)
+    val infinitePulse = rememberInfiniteTransition(label = "pulse")
+    val pulseScale1 by infinitePulse.animateFloat(
         initialValue = 1f,
-        targetValue = 1.2f,
+        targetValue = 2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            animation = tween(2000, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "haloScale"
+        label = "pulseScale1"
     )
-    val haloAlpha by breathingTransition.animateFloat(
-        initialValue = 0.3f,
+    val pulseAlpha1 by infinitePulse.animateFloat(
+        initialValue = 0.4f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            animation = tween(2000, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "haloAlpha"
+        label = "pulseAlpha1"
+    )
+
+    val pulseScale2 by infinitePulse.animateFloat(
+        initialValue = 1f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearOutSlowInEasing, delayMillis = 1000),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulseScale2"
+    )
+    val pulseAlpha2 by infinitePulse.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearOutSlowInEasing, delayMillis = 1000),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulseAlpha2"
     )
 
     OverrideTopBar {
@@ -185,43 +183,114 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Status Text is removed entirely to make room for a massive button.
+        // Statistics Block
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // Download
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowDownward,
+                    contentDescription = "Download",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "0 KB/s", // TODO
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            // Upload
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.ArrowUpward,
+                    contentDescription = "Upload",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "0 KB/s", // TODO
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Connection Button with Breathing Halo
+        // Status Text & Indicator
+        val statusText = when {
+            serviceStatus == Status.Started -> "Подключено"
+            serviceStatus == Status.Starting -> "Подключение..."
+            serviceStatus == Status.Stopping -> "Отключение..."
+            else -> "Отключено"
+        }
+        
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(if (isConnected) MaterialTheme.colorScheme.primary else Color.Gray)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = statusText,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Connection Button with Radar Effect
         val interactionSource = remember { MutableInteractionSource() }
-        val buttonSize = 240.dp
+        val buttonSize = 160.dp
         
         Box(
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            // Breathing Halo
-            Box(
-                modifier = Modifier
-                    .size(buttonSize)
-                    .scale(scale * haloScale) // Base scale + breathing expansion
-                    .graphicsLayer {
-                        rotationZ = if (isRunning) rotation else 0f
-                        alpha = haloAlpha
-                    }
-                    .clip(WavyCookieShape(points = 12, waveDepth = 0.15f))
-                    .background(MaterialTheme.colorScheme.primary)
-            )
+            // Radar Effect (Only when connecting/connected)
+            if (isRunning) {
+                // Circle 1
+                Box(
+                    modifier = Modifier
+                        .size(buttonSize)
+                        .scale(pulseScale1)
+                        .graphicsLayer { alpha = pulseAlpha1 }
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+                // Circle 2
+                Box(
+                    modifier = Modifier
+                        .size(buttonSize)
+                        .scale(pulseScale2)
+                        .graphicsLayer { alpha = pulseAlpha2 }
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+            }
 
-            // Main Button
+            // Main Circular Button
             Box(
                 modifier = Modifier
                     .size(buttonSize)
-                    .scale(scale)
-                    .graphicsLayer {
-                        // Apply rotation only if it's running or starting, else animate to 0 or stay static
-                        rotationZ = if (isRunning) rotation else 0f
-                    }
-                    .clip(WavyCookieShape(points = 12, waveDepth = 0.15f))
+                    .clip(CircleShape)
                     .background(
                         if (isConnected) MaterialTheme.colorScheme.primary 
-                        else MaterialTheme.colorScheme.secondaryContainer
+                        else MaterialTheme.colorScheme.surfaceVariant
                     )
                     .clickable(
                         interactionSource = interactionSource,
@@ -230,16 +299,12 @@ fun DashboardScreen(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = if (isRunning) "Stop" else "Start",
-                    style = MaterialTheme.typography.displaySmall, // Increased text size
-                    fontWeight = FontWeight.Black,
-                    color = if (isConnected) MaterialTheme.colorScheme.onPrimary 
-                            else MaterialTheme.colorScheme.onSecondaryContainer,
-                    // Counter-rotate text so it stays upright
-                    modifier = Modifier.graphicsLayer {
-                        rotationZ = if (isRunning) -rotation else 0f
-                    }
+                Icon(
+                    imageVector = Icons.Rounded.PowerSettingsNew,
+                    contentDescription = "Start/Stop VPN",
+                    tint = if (isConnected) MaterialTheme.colorScheme.onPrimary 
+                           else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(64.dp)
                 )
             }
         }
