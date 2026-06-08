@@ -5,8 +5,10 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -60,21 +62,21 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
-            .padding(bottom = 64.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 24.dp)
     ) {
         
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Block 1: Header
         Column(
-            modifier = Modifier
-                .weight(0.5f)
-                .padding(top = 32.dp, bottom = 48.dp, start = 8.dp),
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier.padding(start = 8.dp)
         ) {
             Text(
                 text = "Vectis",
                 style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
@@ -84,6 +86,8 @@ fun DashboardScreen(
                 fontWeight = FontWeight.Bold
             )
         }
+
+        Spacer(modifier = Modifier.height(48.dp))
 
         // Block 2: Center Slider
         Box(
@@ -101,13 +105,35 @@ fun DashboardScreen(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(48.dp))
 
         // Block 3: Bottom Cards Grid
-        Column {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Row 1: Traffic Stats
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                InfoTile(
+                    modifier = Modifier.weight(1f),
+                    title = "Download",
+                    value = "0 B/s", // TODO
+                    icon = Icons.Rounded.ArrowDownward
+                )
+                InfoTile(
+                    modifier = Modifier.weight(1f),
+                    title = "Upload",
+                    value = "0 B/s", // TODO
+                    icon = Icons.Rounded.ArrowUpward
+                )
+            }
+
+            // Row 2: Location and Protocol
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Location Card
                 InfoTile(
@@ -125,9 +151,7 @@ fun DashboardScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Account/Subscription Card
+            // Row 3: Account/Subscription Card
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -145,7 +169,7 @@ fun DashboardScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(16.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.AccountCircle,
@@ -291,14 +315,14 @@ fun InfoTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(24.dp) // slightly smaller icon to save vertical space
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
