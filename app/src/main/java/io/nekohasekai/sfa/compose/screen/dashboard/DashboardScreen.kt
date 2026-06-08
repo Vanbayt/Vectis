@@ -184,7 +184,7 @@ fun DashboardScreen(
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 80.dp)
+                    .height(80.dp)
                     .shadow(
                         elevation = 4.dp,
                         shape = RoundedCornerShape(20.dp),
@@ -297,21 +297,19 @@ fun LiveTrafficWave(isConnected: Boolean) {
             path2.moveTo(0f, centerY)
 
             // Draw wave points
+            val amplitude = size.height / 3f
             for (x in 0..width.toInt() step 5) {
-                val xFloat = x.toFloat()
+                val scaledX = x * 0.02f
                 
                 // If not connected, amplitude is 0 (flat line)
-                val amplitude1 = if (isConnected) height * 0.3f else 0f
-                val amplitude2 = if (isConnected) height * 0.2f else 0f
+                val amplitude1 = if (isConnected) amplitude else 0f
+                val amplitude2 = if (isConnected) amplitude * 0.7f else 0f
 
-                val frequency1 = (2 * PI) / width
-                val frequency2 = (3 * PI) / width
+                val y1 = centerY + sin((scaledX + phase).toDouble()).toFloat() * amplitude1
+                val y2 = centerY + sin((scaledX * 1.5f + phase * 1.5f).toDouble()).toFloat() * amplitude2
 
-                val y1 = centerY + sin(xFloat * frequency1 + phase) * amplitude1
-                val y2 = centerY + sin(xFloat * frequency2 + phase * 1.5f) * amplitude2
-
-                path1.lineTo(xFloat, y1.toFloat())
-                path2.lineTo(xFloat, y2.toFloat())
+                path1.lineTo(x.toFloat(), y1)
+                path2.lineTo(x.toFloat(), y2)
             }
 
             drawPath(
@@ -455,7 +453,7 @@ fun InfoTile(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .heightIn(min = 100.dp) // Ensure cards are not too thin
+                .height(110.dp)
         ) {
             Icon(
                 imageVector = icon,
