@@ -725,7 +725,7 @@ class MainActivity :
                     .padding(paddingValues),
             ) {
                 // Service Status Bar (shown when service is running or stopping)
-                val isLoginScreen = currentRootRoute == "login"
+                val isLoginScreen = currentRootRoute == "login" || (currentRootRoute == null && Settings.token.isEmpty())
                 val serviceRunning =
                     currentServiceStatus == Status.Started || currentServiceStatus == Status.Starting
                 val showStatusBar = (serviceRunning || currentServiceStatus == Status.Stopping) && !isLoginScreen
@@ -849,7 +849,7 @@ class MainActivity :
                     // Start FAB (shown when service is stopped and a profile is selected)
                     androidx.compose.animation.AnimatedVisibility(
                         visible = currentServiceStatus == Status.Stopped &&
-                            !isSubScreen,
+                            !isSubScreen && currentRootRoute != "login",
                         enter = scaleIn(),
                         exit = scaleOut(),
                         modifier = Modifier
@@ -883,7 +883,7 @@ class MainActivity :
         }
 
         CompositionLocalProvider(LocalTopBarController provides topBarController) {
-            val isLoginScreen = currentRootRoute == "login"
+            val isLoginScreen = currentRootRoute == "login" || (currentRootRoute == null && Settings.token.isEmpty())
             if (useNavigationRail && !isLoginScreen) {
                 Row(modifier = Modifier.fillMaxSize()) {
                     Surface(tonalElevation = 1.dp) {

@@ -1,7 +1,6 @@
 package io.nekohasekai.sfa.compose.screen.login
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,17 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.database.Settings
-import kotlin.math.cos
-import kotlin.math.sin
 
 @Composable
 fun LoginScreen(
@@ -116,73 +111,93 @@ fun LoginScreen(
 @Composable
 fun AnimatedCookiesBackground() {
     val infiniteTransition = rememberInfiniteTransition()
-    
+
+    // Slower rotation for Blob 1
     val rotation1 by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(20000, easing = LinearEasing),
+            animation = tween(40000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         )
     )
 
+    // Breathing (scale) for Blob 1 to simulate varying speed/direction
+    val scale1 by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(12000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Slower rotation for Blob 2 in opposite direction
     val rotation2 by infiniteTransition.animateFloat(
         initialValue = 360f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(25000, easing = LinearEasing),
+            animation = tween(45000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         )
     )
 
-    val color1 = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-    val color2 = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+    // Breathing (scale) for Blob 2
+    val scale2 by infiniteTransition.animateFloat(
+        initialValue = 1.2f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(15000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
 
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val width = size.width
-        val height = size.height
+    // Less contrasting colors with one explicitly purple
+    val color1 = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    val color2 = Color(0xFF9C27B0).copy(alpha = 0.25f)
 
-        // Draw First Cookie Blob
-        rotate(degrees = rotation1, pivot = Offset(width * 0.2f, height * 0.2f)) {
-            val path = createBlobPath(width * 0.2f, height * 0.2f, width * 0.4f)
-            drawPath(path, color = color1)
-        }
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Blob 1 (Top Left)
+        Box(
+            modifier = Modifier
+                .offset(x = (-100).dp, y = (-150).dp)
+                .size(450.dp)
+                .graphicsLayer {
+                    rotationZ = rotation1
+                    scaleX = scale1
+                    scaleY = scale1
+                }
+                .background(
+                    color = color1,
+                    shape = RoundedCornerShape(
+                        topStartPercent = 45,
+                        topEndPercent = 35,
+                        bottomEndPercent = 40,
+                        bottomStartPercent = 30
+                    )
+                )
+        )
 
-        // Draw Second Cookie Blob
-        rotate(degrees = rotation2, pivot = Offset(width * 0.8f, height * 0.8f)) {
-            val path = createBlobPath(width * 0.8f, height * 0.8f, width * 0.5f)
-            drawPath(path, color = color2)
-        }
+        // Blob 2 (Bottom Right)
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 120.dp, y = 120.dp)
+                .size(500.dp)
+                .graphicsLayer {
+                    rotationZ = rotation2
+                    scaleX = scale2
+                    scaleY = scale2
+                }
+                .background(
+                    color = color2,
+                    shape = RoundedCornerShape(
+                        topStartPercent = 35,
+                        topEndPercent = 45,
+                        bottomEndPercent = 30,
+                        bottomStartPercent = 40
+                    )
+                )
+        )
     }
-}
-
-private fun createBlobPath(centerX: Float, centerY: Float, radius: Float): Path {
-    val path = Path()
-    val points = 8
-    val angleStep = (2 * Math.PI) / points
-
-    for (i in 0 until points) {
-        val angle = i * angleStep
-        // Randomize radius slightly for blob shape
-        val r = radius * (0.8f + 0.4f * (i % 2)) 
-        val x = centerX + r * cos(angle).toFloat()
-        val y = centerY + r * sin(angle).toFloat()
-        
-        if (i == 0) {
-            path.moveTo(x, y)
-        } else {
-            // Smooth curve to next point
-            val prevAngle = (i - 1) * angleStep
-            val prevR = radius * (0.8f + 0.4f * ((i - 1) % 2))
-            val prevX = centerX + prevR * cos(prevAngle).toFloat()
-            val prevY = centerY + prevR * sin(prevAngle).toFloat()
-            
-            val ctrlX = centerX + radius * cos(prevAngle + angleStep / 2).toFloat()
-            val ctrlY = centerY + radius * sin(prevAngle + angleStep / 2).toFloat()
-            
-            path.quadraticBezierTo(ctrlX, ctrlY, x, y)
-        }
-    }
-    path.close()
-    return path
 }
