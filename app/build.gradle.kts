@@ -54,7 +54,7 @@ fun getVersionProps(propName: String): String {
 }
 
 android {
-    namespace = "io.vectis.app"
+    namespace = "io.nekohasekai.sfa"
     compileSdk = 36
 
     ndkVersion = "28.0.13004108"
