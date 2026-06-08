@@ -18,8 +18,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -64,19 +66,21 @@ fun DashboardScreen(
         
         // Block 1: Header
         Column(
-            modifier = Modifier.weight(0.5f),
+            modifier = Modifier
+                .weight(0.5f)
+                .padding(top = 32.dp, bottom = 48.dp, start = 8.dp),
             verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = "Vectis",
                 style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Black,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = if (isConnected) "Secured" else "Ready",
                 style = MaterialTheme.typography.titleLarge,
-                color = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -100,9 +104,7 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         // Block 3: Bottom Cards Grid
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -123,6 +125,8 @@ fun DashboardScreen(
                 )
             }
             
+            Spacer(modifier = Modifier.height(16.dp))
+            
             // Account/Subscription Card
             OutlinedCard(
                 modifier = Modifier
@@ -141,7 +145,7 @@ fun DashboardScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(20.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.AccountCircle,
@@ -175,6 +179,7 @@ fun SwipeToConnectSlider(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val offsetX = remember { Animatable(0f) }
+    val haptic = LocalHapticFeedback.current
     
     val width = 280.dp
     val height = 80.dp
@@ -185,9 +190,10 @@ fun SwipeToConnectSlider(
 
     // Sync external state changes with the slider thumb
     LaunchedEffect(isConnected) {
-        val target = if (isConnected) maxSwipePx else 0f
-        if (offsetX.targetValue != target) {
-            offsetX.animateTo(target, spring())
+        if (isConnected) {
+            offsetX.animateTo(maxSwipePx)
+        } else {
+            offsetX.animateTo(0f)
         }
     }
 
@@ -204,13 +210,14 @@ fun SwipeToConnectSlider(
         contentAlignment = Alignment.CenterStart
     ) {
         // Centered Text
+        val textAlpha = 1f - (offsetX.value / maxSwipePx * 1.5f).coerceIn(0f, 1f)
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
                 text = if (isConnected) "Swipe to disconnect" else "Swipe to connect",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.alpha(0.5f)
+                modifier = Modifier.alpha(textAlpha * 0.5f)
             )
         }
 
@@ -228,16 +235,17 @@ fun SwipeToConnectSlider(
                             coroutineScope.launch {
                                 if (offsetX.value > maxSwipePx * 0.7f) {
                                     offsetX.animateTo(maxSwipePx, spring())
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     onConnect()
                                 } else {
-                                    offsetX.animateTo(0f, spring())
+                                    offsetX.animateTo(0f, spring(dampingRatio = 0.6f, stiffness = 400f))
                                     onDisconnect()
                                 }
                             }
                         },
                         onDragCancel = {
                             coroutineScope.launch {
-                                offsetX.animateTo(if (isConnected) maxSwipePx else 0f, spring())
+                                offsetX.animateTo(if (isConnected) maxSwipePx else 0f, spring(dampingRatio = 0.6f, stiffness = 400f))
                             }
                         },
                         onHorizontalDrag = { change, dragAmount ->
@@ -283,7 +291,7 @@ fun InfoTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(
