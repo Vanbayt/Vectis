@@ -2,14 +2,13 @@ package io.nekohasekai.sfa.compose.screen.dashboard
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -20,6 +19,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -31,8 +32,10 @@ import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import kotlinx.coroutines.launch
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,26 +49,7 @@ fun DashboardScreen(
 
     OverrideTopBar {
         TopAppBar(
-            title = {
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Vectis",
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = if (isConnected) "Secured" else "Ready",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                }
-            },
+            title = { },
             actions = {
                 IconButton(onClick = { /* TODO: Navigate to Profile */ }) {
                     Icon(Icons.Rounded.AccountCircle, contentDescription = "Profile", modifier = Modifier.size(28.dp))
@@ -86,55 +70,80 @@ fun DashboardScreen(
             .padding(bottom = 24.dp)
     ) {
         
-        // Cards Grid area (scrollable if needed, expands to push slider down)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Block 1: Header
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(horizontal = 24.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Vectis",
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = if (isConnected) "Secured" else "Ready",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
-            // Quick Toggles Row
-            val killSwitchEnabled = remember { mutableStateOf(false) }
-            val splitTunnelEnabled = remember { mutableStateOf(false) }
-            val autoConnectEnabled = remember { mutableStateOf(false) }
+        Spacer(modifier = Modifier.height(24.dp))
 
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 24.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                item {
-                    FilterChip(
-                        selected = killSwitchEnabled.value,
-                        onClick = { killSwitchEnabled.value = !killSwitchEnabled.value },
-                        label = { Text("Kill Switch") },
-                        leadingIcon = { Icon(Icons.Rounded.GppBad, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = splitTunnelEnabled.value,
-                        onClick = { splitTunnelEnabled.value = !splitTunnelEnabled.value },
-                        label = { Text("Split Tunnel") },
-                        leadingIcon = { Icon(Icons.Rounded.AltRoute, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = autoConnectEnabled.value,
-                        onClick = { autoConnectEnabled.value = !autoConnectEnabled.value },
-                        label = { Text("Auto-connect") },
-                        leadingIcon = { Icon(Icons.Rounded.Autorenew, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    )
-                }
+        // Quick Toggles Row
+        val killSwitchEnabled = remember { mutableStateOf(false) }
+        val splitTunnelEnabled = remember { mutableStateOf(false) }
+        val autoConnectEnabled = remember { mutableStateOf(false) }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            item {
+                FilterChip(
+                    selected = killSwitchEnabled.value,
+                    onClick = { killSwitchEnabled.value = !killSwitchEnabled.value },
+                    label = { Text("Kill Switch") },
+                    leadingIcon = { Icon(Icons.Rounded.GppBad, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                )
             }
+            item {
+                FilterChip(
+                    selected = splitTunnelEnabled.value,
+                    onClick = { splitTunnelEnabled.value = !splitTunnelEnabled.value },
+                    label = { Text("Split Tunnel") },
+                    leadingIcon = { Icon(Icons.Rounded.AltRoute, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                )
+            }
+            item {
+                FilterChip(
+                    selected = autoConnectEnabled.value,
+                    onClick = { autoConnectEnabled.value = !autoConnectEnabled.value },
+                    label = { Text("Auto-connect") },
+                    leadingIcon = { Icon(Icons.Rounded.Autorenew, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                )
+            }
+        }
 
+        Spacer(modifier = Modifier.weight(0.8f))
+
+        // Live Traffic Wave
+        LiveTrafficWave(isConnected = isConnected)
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Cards Grid
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             // Row 1: Traffic Stats
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 InfoTile(
                     modifier = Modifier.weight(1f),
@@ -152,8 +161,8 @@ fun DashboardScreen(
 
             // Row 2: Location and Protocol
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Location Card
                 InfoTile(
@@ -175,7 +184,7 @@ fun DashboardScreen(
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .heightIn(min = 80.dp)
                     .shadow(
                         elevation = 4.dp,
                         shape = RoundedCornerShape(20.dp),
@@ -212,11 +221,11 @@ fun DashboardScreen(
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Slider pinned at the bottom
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Slider
         Box(
             contentAlignment = Alignment.Center, 
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
@@ -236,7 +245,7 @@ fun DashboardScreen(
 
         // Session Stats
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -249,6 +258,72 @@ fun DashboardScreen(
             Icon(Icons.Rounded.SignalCellularAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.width(4.dp))
             Text("Ping: 45 ms", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun LiveTrafficWave(isConnected: Boolean) {
+    val infiniteTransition = rememberInfiniteTransition(label = "wave")
+    val phase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "phase"
+    )
+
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val waveColor1 = primaryColor.copy(alpha = 0.5f)
+    val waveColor2 = primaryColor
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
+            val centerY = height / 2
+
+            val path1 = Path()
+            val path2 = Path()
+
+            path1.moveTo(0f, centerY)
+            path2.moveTo(0f, centerY)
+
+            // Draw wave points
+            for (x in 0..width.toInt() step 5) {
+                val xFloat = x.toFloat()
+                
+                // If not connected, amplitude is 0 (flat line)
+                val amplitude1 = if (isConnected) height * 0.3f else 0f
+                val amplitude2 = if (isConnected) height * 0.2f else 0f
+
+                val frequency1 = (2 * PI) / width
+                val frequency2 = (3 * PI) / width
+
+                val y1 = centerY + sin(xFloat * frequency1 + phase) * amplitude1
+                val y2 = centerY + sin(xFloat * frequency2 + phase * 1.5f) * amplitude2
+
+                path1.lineTo(xFloat, y1.toFloat())
+                path2.lineTo(xFloat, y2.toFloat())
+            }
+
+            drawPath(
+                path = path1,
+                color = waveColor1,
+                style = Stroke(width = 4f)
+            )
+            drawPath(
+                path = path2,
+                color = waveColor2,
+                style = Stroke(width = 4f)
+            )
         }
     }
 }
@@ -271,7 +346,6 @@ fun SwipeToConnectSlider(
     
     val maxSwipePx = with(LocalDensity.current) { (width - thumbSize - (padding * 2)).toPx() }
 
-    // Sync external state changes with the slider thumb
     LaunchedEffect(isConnected) {
         if (isConnected) {
             offsetX.animateTo(maxSwipePx)
@@ -292,7 +366,6 @@ fun SwipeToConnectSlider(
             .background(backgroundColor),
         contentAlignment = Alignment.CenterStart
     ) {
-        // Centered Text
         val textAlpha = 1f - (offsetX.value / maxSwipePx * 1.5f).coerceIn(0f, 1f)
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
@@ -304,7 +377,6 @@ fun SwipeToConnectSlider(
             )
         }
 
-        // Thumb
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
@@ -382,8 +454,8 @@ fun InfoTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp)
+                .heightIn(min = 100.dp) // Ensure cards are not too thin
         ) {
             Icon(
                 imageVector = icon,
@@ -391,6 +463,7 @@ fun InfoTile(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
+            Spacer(modifier = Modifier.weight(1f)) // Pushes the text to the bottom
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = title,
