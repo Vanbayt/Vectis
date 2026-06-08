@@ -44,7 +44,26 @@ fun DashboardScreen(
 
     OverrideTopBar {
         TopAppBar(
-            title = { },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Vectis",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = if (isConnected) "Secured" else "Ready",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+            },
             actions = {
                 IconButton(onClick = { /* TODO: Navigate to Profile */ }) {
                     Icon(Icons.Rounded.AccountCircle, contentDescription = "Profile", modifier = Modifier.size(28.dp))
@@ -62,55 +81,19 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
             .padding(bottom = 24.dp)
     ) {
         
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Block 1: Header
+        // Cards Grid area (scrollable if needed, expands to push slider down)
         Column(
-            modifier = Modifier.padding(start = 8.dp)
-        ) {
-            Text(
-                text = "Vectis",
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = if (isConnected) "Secured" else "Ready",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Block 2: Center Slider
-        Box(
-            contentAlignment = Alignment.Center, 
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            SwipeToConnectSlider(
-                isConnected = isConnected,
-                onConnect = {
-                    if (serviceStatus == Status.Stopped) viewModel?.toggleService()
-                },
-                onDisconnect = {
-                    if (serviceStatus == Status.Started || serviceStatus == Status.Starting) viewModel?.toggleService()
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Block 3: Bottom Cards Grid
-        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Row 1: Traffic Stats
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -191,6 +174,24 @@ fun DashboardScreen(
                     )
                 }
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Slider pinned at the bottom
+        Box(
+            contentAlignment = Alignment.Center, 
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            SwipeToConnectSlider(
+                isConnected = isConnected,
+                onConnect = {
+                    if (serviceStatus == Status.Stopped) viewModel?.toggleService()
+                },
+                onDisconnect = {
+                    if (serviceStatus == Status.Started || serviceStatus == Status.Starting) viewModel?.toggleService()
+                }
+            )
         }
     }
 }
