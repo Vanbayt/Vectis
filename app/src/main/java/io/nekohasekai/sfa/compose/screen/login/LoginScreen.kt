@@ -3,6 +3,7 @@ package io.nekohasekai.sfa.compose.screen.login
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
@@ -11,13 +12,68 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.database.Settings
+
+val BlobShape1 = GenericShape { size, _ ->
+    val w = size.width
+    val h = size.height
+    moveTo(w * 0.5f, h * 0.05f)
+    cubicTo(w * 0.8f, h * 0.0f, w * 1.0f, h * 0.25f, w * 0.95f, h * 0.5f)
+    cubicTo(w * 0.9f, h * 0.8f, w * 0.7f, h * 0.95f, w * 0.5f, h * 0.95f)
+    cubicTo(w * 0.2f, h * 0.95f, w * 0.05f, h * 0.8f, w * 0.05f, h * 0.5f)
+    cubicTo(w * 0.05f, h * 0.2f, w * 0.2f, h * 0.1f, w * 0.5f, h * 0.05f)
+    close()
+}
+
+val BlobShape2 = GenericShape { size, _ ->
+    val w = size.width
+    val h = size.height
+    moveTo(w * 0.4f, h * 0.1f)
+    cubicTo(w * 0.9f, h * 0.05f, w * 0.95f, h * 0.4f, w * 0.9f, h * 0.6f)
+    cubicTo(w * 0.8f, h * 0.9f, w * 0.6f, h * 0.95f, w * 0.4f, h * 0.9f)
+    cubicTo(w * 0.1f, h * 0.8f, w * 0.0f, h * 0.6f, w * 0.1f, h * 0.4f)
+    cubicTo(w * 0.2f, h * 0.15f, w * 0.2f, h * 0.15f, w * 0.4f, h * 0.1f)
+    close()
+}
+
+@Composable
+fun AnimatedBlob(
+    shape: Shape,
+    color: Color,
+    size: Dp,
+    durationMillis: Int,
+    offset: DpOffset,
+    reverse: Boolean = false
+) {
+    val infiniteTransition = rememberInfiniteTransition()
+
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = if (reverse) 360f else 0f,
+        targetValue = if (reverse) 0f else 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = durationMillis, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .offset(x = offset.x, y = offset.y)
+            .size(size)
+            .rotate(rotation)
+            .clip(shape)
+            .background(color)
+    )
+}
 
 @Composable
 fun LoginScreen(
@@ -32,28 +88,27 @@ fun LoginScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             
-            // Organic Background Blobs
+            // Native Bezier Blobs
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 // Blob 1 (Large)
-                OrganicBlob(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                    size = 400,
-                    offsetX = 80,
-                    offsetY = 100,
-                    durationMillis = 20000,
-                    reverse = false
+                AnimatedBlob(
+                    shape = BlobShape1,
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                    size = 350.dp,
+                    offset = DpOffset(x = 60.dp, y = 50.dp),
+                    durationMillis = 24000
                 )
                 
                 // Blob 2 (Medium)
-                OrganicBlob(
-                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
-                    size = 300,
-                    offsetX = -100,
-                    offsetY = 80,
-                    durationMillis = 25000,
+                AnimatedBlob(
+                    shape = BlobShape2,
+                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                    size = 280.dp,
+                    offset = DpOffset(x = (-80).dp, y = 20.dp),
+                    durationMillis = 18000,
                     reverse = true
                 )
             }
@@ -153,44 +208,4 @@ fun LoginScreen(
             }
         }
     }
-}
-
-@Composable
-fun OrganicBlob(
-    color: Color,
-    size: Int,
-    offsetX: Int,
-    offsetY: Int,
-    durationMillis: Int,
-    reverse: Boolean
-) {
-    val infiniteTransition = rememberInfiniteTransition()
-
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = if (reverse) 360f else 0f,
-        targetValue = if (reverse) 0f else 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = durationMillis, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
-    )
-
-    Box(
-        modifier = Modifier
-            .offset(x = offsetX.dp, y = offsetY.dp)
-            .size(size.dp)
-            .blur(8.dp) // Смягчение краев
-            .graphicsLayer {
-                rotationZ = rotation
-            }
-            .background(
-                color = color,
-                shape = RoundedCornerShape(
-                    topStartPercent = 40,
-                    topEndPercent = 60,
-                    bottomEndPercent = 30,
-                    bottomStartPercent = 50
-                )
-            )
-    )
 }
