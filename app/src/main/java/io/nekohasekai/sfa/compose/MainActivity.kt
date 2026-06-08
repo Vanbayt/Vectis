@@ -277,6 +277,15 @@ class MainActivity :
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun SFAApp() {
+        var isAuthenticated by remember { mutableStateOf(Settings.token.isNotEmpty()) }
+
+        if (!isAuthenticated) {
+            io.nekohasekai.sfa.compose.screen.login.LoginScreen(
+                onLoginSuccess = { isAuthenticated = true }
+            )
+            return
+        }
+
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
@@ -725,11 +734,10 @@ class MainActivity :
                     .padding(paddingValues),
             ) {
                 // Service Status Bar (shown when service is running or stopping)
-                val isLoginScreen = currentRootRoute == "login" || (currentRootRoute == null && Settings.token.isEmpty())
                 val serviceRunning =
                     currentServiceStatus == Status.Started || currentServiceStatus == Status.Starting
-                val showStatusBar = (serviceRunning || currentServiceStatus == Status.Stopping) && !isLoginScreen
-                val showStartFab = !serviceRunning && !isLoginScreen
+                val showStatusBar = serviceRunning || currentServiceStatus == Status.Stopping
+                val showStartFab = !serviceRunning
 
                 SFANavHost(
                     navController = navController,
@@ -848,8 +856,7 @@ class MainActivity :
                 } else {
                     // Start FAB (shown when service is stopped and a profile is selected)
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = currentServiceStatus == Status.Stopped &&
-                            !isSubScreen && currentRootRoute != "login",
+                        visible = currentServiceStatus == Status.Stopped && !isSubScreen,
                         enter = scaleIn(),
                         exit = scaleOut(),
                         modifier = Modifier
@@ -883,8 +890,7 @@ class MainActivity :
         }
 
         CompositionLocalProvider(LocalTopBarController provides topBarController) {
-            val isLoginScreen = currentRootRoute == "login" || (currentRootRoute == null && Settings.token.isEmpty())
-            if (useNavigationRail && !isLoginScreen) {
+            if (useNavigationRail) {
                 Row(modifier = Modifier.fillMaxSize()) {
                     Surface(tonalElevation = 1.dp) {
                         NavigationRail(
@@ -932,7 +938,7 @@ class MainActivity :
                         scaffoldContent(paddingValues)
                     }
                 }
-            } else if (!isLoginScreen) {
+            } else {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -979,13 +985,6 @@ class MainActivity :
                             }
                         }
                     },
-                ) { paddingValues ->
-                    scaffoldContent(paddingValues)
-                }
-            } else {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 ) { paddingValues ->
                     scaffoldContent(paddingValues)
                 }

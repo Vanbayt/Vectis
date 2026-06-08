@@ -17,7 +17,6 @@ import androidx.navigation.navArgument
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionDetailsRoute
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionsPage
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionsViewModel
-import io.nekohasekai.sfa.compose.screen.login.LoginScreen
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.compose.screen.dashboard.DashboardScreen
 import io.nekohasekai.sfa.compose.screen.dashboard.DashboardViewModel
@@ -93,20 +92,9 @@ fun SFANavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = if (Settings.token.isNotEmpty()) Screen.Dashboard.route else "login",
+        startDestination = Screen.Dashboard.route,
         modifier = modifier,
-    ) {
-        composable("login") {
-            LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(Screen.Dashboard.route) {
-                        popUpTo("login") { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(Screen.Dashboard.route) {
+    ) {        composable(Screen.Dashboard.route) {
             if (dashboardViewModel != null) {
                 DashboardScreen(
                     serviceStatus = serviceStatus,
