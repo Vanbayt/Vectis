@@ -164,7 +164,7 @@ fun DashboardSettingsBottomSheet(
                                 CardGroup.Connections,
                                 CardGroup.SystemProxy,
                                 CardGroup.ClashMode,
-                                CardGroup.Profiles,
+
                             )
                         val allCardsEnabled =
                             setOfNotNull(
@@ -174,7 +174,7 @@ fun DashboardSettingsBottomSheet(
                                 CardGroup.Debug,
                                 CardGroup.Connections,
                                 CardGroup.SystemProxy,
-                                CardGroup.Profiles,
+
                             )
                         reorderedList = defaultOrder
                         currentVisibleCards = allCardsEnabled
@@ -387,7 +387,7 @@ fun DashboardItemCard(
                     CardGroup.DownloadTraffic -> Icons.Outlined.Download
                     CardGroup.ClashMode -> Icons.Outlined.Route
                     CardGroup.SystemProxy -> Icons.Outlined.SettingsEthernet
-                    CardGroup.Profiles -> Icons.Outlined.Person
+
                 },
                 contentDescription = null,
                 modifier =
@@ -418,7 +418,7 @@ fun DashboardItemCard(
                         CardGroup.DownloadTraffic -> stringResource(R.string.download)
                         CardGroup.ClashMode -> stringResource(R.string.clash_mode)
                         CardGroup.SystemProxy -> stringResource(R.string.system_proxy)
-                        CardGroup.Profiles -> stringResource(R.string.title_configuration)
+
                     },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
@@ -430,7 +430,7 @@ fun DashboardItemCard(
             Switch(
                 checked = isVisible,
                 onCheckedChange = { onToggleVisibility() },
-                enabled = cardGroup != CardGroup.Profiles, // Disable switch for Profiles card
+                enabled = true,
             )
         }
     }

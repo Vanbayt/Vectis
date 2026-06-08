@@ -13,7 +13,7 @@ sealed class UiEvent {
 
     data class OpenUrl(val url: String) : UiEvent()
 
-    data class EditProfile(val profileId: Long) : UiEvent()
+
 
     object RequestStartService : UiEvent()
 

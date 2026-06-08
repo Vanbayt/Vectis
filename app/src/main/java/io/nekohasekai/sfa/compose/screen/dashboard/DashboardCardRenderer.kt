@@ -2,9 +2,7 @@ package io.nekohasekai.sfa.compose.screen.dashboard
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.nekohasekai.sfa.compose.navigation.NewProfileArgs
 import io.nekohasekai.sfa.constant.Status
-import io.nekohasekai.sfa.database.Profile
 import io.nekohasekai.sfa.utils.CommandClient
 
 @Composable
@@ -15,26 +13,7 @@ fun DashboardCardRenderer(
     serviceStatus: Status = Status.Stopped,
     onClashModeSelected: (String) -> Unit,
     onSystemProxyToggle: (Boolean) -> Unit,
-    // Profile card specific props
-    profiles: List<Profile> = emptyList(),
-    selectedProfileId: Long = -1L,
-    isLoading: Boolean = false,
-    showAddProfileSheet: Boolean = false,
-    showProfilePickerSheet: Boolean = false,
-    updatingProfileId: Long? = null,
-    updatedProfileId: Long? = null,
-    onProfileSelected: (Long) -> Unit = {},
-    onProfileEdit: (Profile) -> Unit = {},
-    onProfileDelete: (Profile) -> Unit = {},
-    onProfileShare: (Profile) -> Unit = {},
-    onProfileShareURL: (Profile) -> Unit = {},
-    onProfileUpdate: (Profile) -> Unit = {},
-    onProfileMove: (Int, Int) -> Unit = { _, _ -> },
-    onShowAddProfileSheet: () -> Unit = {},
-    onHideAddProfileSheet: () -> Unit = {},
-    onShowProfilePickerSheet: () -> Unit = {},
-    onHideProfilePickerSheet: () -> Unit = {},
-    onOpenNewProfile: (NewProfileArgs) -> Unit = {},
+
     commandClient: CommandClient? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -103,28 +82,6 @@ fun DashboardCardRenderer(
             }
         }
 
-        CardGroup.Profiles -> {
-            ProfilesCard(
-                profiles = profiles,
-                selectedProfileId = selectedProfileId,
-                isLoading = isLoading,
-                showAddProfileSheet = showAddProfileSheet,
-                showProfilePickerSheet = showProfilePickerSheet,
-                updatingProfileId = updatingProfileId,
-                updatedProfileId = updatedProfileId,
-                onProfileSelected = onProfileSelected,
-                onProfileEdit = onProfileEdit,
-                onProfileDelete = onProfileDelete,
-                onProfileShare = onProfileShare,
-                onProfileShareURL = onProfileShareURL,
-                onProfileUpdate = onProfileUpdate,
-                onProfileMove = onProfileMove,
-                onShowAddProfileSheet = onShowAddProfileSheet,
-                onHideAddProfileSheet = onHideAddProfileSheet,
-                onShowProfilePickerSheet = onShowProfilePickerSheet,
-                onHideProfilePickerSheet = onHideProfilePickerSheet,
-                onOpenNewProfile = onOpenNewProfile,
-            )
-        }
+
     }
 }

@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.base.UiEvent
-import io.nekohasekai.sfa.compose.navigation.NewProfileArgs
+
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import kotlinx.coroutines.launch
@@ -44,7 +44,6 @@ fun DashboardScreen(
     serviceStatus: Status = Status.Stopped,
     showStartFab: Boolean = false,
     showStatusBar: Boolean = false,
-    onOpenNewProfile: (NewProfileArgs) -> Unit = {},
     viewModel: DashboardViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -144,7 +143,6 @@ fun DashboardScreen(
             val actuallyVisibleCards =
                 uiState.visibleCards.filter { cardGroup ->
                     when (cardGroup) {
-                        CardGroup.Profiles -> true // Profiles card is always available
                         else -> serviceRunning && isCardAvailableWhenServiceRunning(cardGroup, uiState)
                     }
                 }.toSet()
@@ -173,26 +171,6 @@ fun DashboardScreen(
                                 uiState = uiState,
                                 onClashModeSelected = viewModel::selectClashMode,
                                 onSystemProxyToggle = viewModel::toggleSystemProxy,
-                                // Profile card specific props
-                                profiles = uiState.profiles,
-                                selectedProfileId = uiState.selectedProfileId,
-                                isLoading = uiState.isLoading,
-                                showAddProfileSheet = uiState.showAddProfileSheet,
-                                showProfilePickerSheet = uiState.showProfilePickerSheet,
-                                updatingProfileId = uiState.updatingProfileId,
-                                updatedProfileId = uiState.updatedProfileId,
-                                onProfileSelected = viewModel::selectProfile,
-                                onProfileEdit = viewModel::editProfile,
-                                onProfileDelete = viewModel::deleteProfile,
-                                onProfileShare = viewModel::shareProfile,
-                                onProfileShareURL = viewModel::shareProfileURL,
-                                onProfileUpdate = viewModel::updateProfile,
-                                onProfileMove = viewModel::moveProfile,
-                                onShowAddProfileSheet = viewModel::showAddProfileSheet,
-                                onHideAddProfileSheet = viewModel::hideAddProfileSheet,
-                                onShowProfilePickerSheet = viewModel::showProfilePickerSheet,
-                                onHideProfilePickerSheet = viewModel::hideProfilePickerSheet,
-                                onOpenNewProfile = onOpenNewProfile,
                                 commandClient = viewModel.commandClient,
                                 modifier =
                                 Modifier
@@ -213,26 +191,6 @@ fun DashboardScreen(
                             serviceStatus = serviceStatus,
                             onClashModeSelected = viewModel::selectClashMode,
                             onSystemProxyToggle = viewModel::toggleSystemProxy,
-                            // Profile card specific props
-                            profiles = uiState.profiles,
-                            selectedProfileId = uiState.selectedProfileId,
-                            isLoading = uiState.isLoading,
-                            showAddProfileSheet = uiState.showAddProfileSheet,
-                            showProfilePickerSheet = uiState.showProfilePickerSheet,
-                            updatingProfileId = uiState.updatingProfileId,
-                            updatedProfileId = uiState.updatedProfileId,
-                            onProfileSelected = viewModel::selectProfile,
-                            onProfileEdit = viewModel::editProfile,
-                            onProfileDelete = viewModel::deleteProfile,
-                            onProfileShare = viewModel::shareProfile,
-                            onProfileShareURL = viewModel::shareProfileURL,
-                            onProfileUpdate = viewModel::updateProfile,
-                            onProfileMove = viewModel::moveProfile,
-                            onShowAddProfileSheet = viewModel::showAddProfileSheet,
-                            onHideAddProfileSheet = viewModel::hideAddProfileSheet,
-                            onShowProfilePickerSheet = viewModel::showProfilePickerSheet,
-                            onHideProfilePickerSheet = viewModel::hideProfilePickerSheet,
-                            onOpenNewProfile = onOpenNewProfile,
                             commandClient = viewModel.commandClient,
                         )
                     }
@@ -310,5 +268,4 @@ fun isCardAvailableWhenServiceRunning(cardGroup: CardGroup, uiState: DashboardUi
     CardGroup.Debug -> true // Debug info is always available when service is running
     CardGroup.Connections -> uiState.trafficVisible
     CardGroup.SystemProxy -> uiState.systemProxyVisible
-    CardGroup.Profiles -> true // This shouldn't be called for Profiles, but return true for safety
 }

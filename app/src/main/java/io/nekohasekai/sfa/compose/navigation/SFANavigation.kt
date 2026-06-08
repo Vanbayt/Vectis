@@ -13,7 +13,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import io.nekohasekai.sfa.compose.screen.configuration.NewProfileScreen
+
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionDetailsRoute
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionsPage
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionsViewModel
@@ -25,7 +25,7 @@ import io.nekohasekai.sfa.compose.screen.log.HookLogScreen
 import io.nekohasekai.sfa.compose.screen.log.LogScreen
 import io.nekohasekai.sfa.compose.screen.log.LogViewModel
 import io.nekohasekai.sfa.compose.screen.privilegesettings.PrivilegeSettingsManageScreen
-import io.nekohasekai.sfa.compose.screen.profile.EditProfileRoute
+
 import io.nekohasekai.sfa.compose.screen.profileoverride.PerAppProxyScreen
 import io.nekohasekai.sfa.compose.screen.settings.AppSettingsScreen
 import io.nekohasekai.sfa.compose.screen.settings.CoreSettingsScreen
@@ -80,9 +80,7 @@ fun SFANavHost(
     serviceStatus: Status = Status.Stopped,
     showStartFab: Boolean = false,
     showStatusBar: Boolean = false,
-    newProfileArgs: NewProfileArgs = NewProfileArgs(),
     onClearNewProfileArgs: () -> Unit = {},
-    onOpenNewProfile: (NewProfileArgs) -> Unit = {},
     dashboardViewModel: DashboardViewModel? = null,
     logViewModel: LogViewModel? = null,
     groupsViewModel: GroupsViewModel? = null,
@@ -102,7 +100,6 @@ fun SFANavHost(
                     serviceStatus = serviceStatus,
                     showStartFab = showStartFab,
                     showStatusBar = showStatusBar,
-                    onOpenNewProfile = onOpenNewProfile,
                     viewModel = dashboardViewModel,
                 )
             } else {
@@ -110,7 +107,6 @@ fun SFANavHost(
                     serviceStatus = serviceStatus,
                     showStartFab = showStartFab,
                     showStatusBar = showStatusBar,
-                    onOpenNewProfile = onOpenNewProfile,
                 )
             }
         }
@@ -174,44 +170,7 @@ fun SFANavHost(
             }
         }
 
-        composable(ProfileRoutes.NewProfile) {
-            DisposableEffect(Unit) {
-                onDispose { onClearNewProfileArgs() }
-            }
-            NewProfileScreen(
-                importName = newProfileArgs.importName,
-                importUrl = newProfileArgs.importUrl,
-                qrsData = newProfileArgs.qrsData,
-                onNavigateBack = {
-                    onClearNewProfileArgs()
-                    navController.navigateUp()
-                },
-                onProfileCreated = { profileId ->
-                    onClearNewProfileArgs()
-                    navController.navigate(ProfileRoutes.editProfile(profileId)) {
-                        popUpTo(ProfileRoutes.NewProfile) {
-                            inclusive = true
-                        }
-                    }
-                },
-            )
-        }
 
-        composable(
-            route = ProfileRoutes.EditProfile,
-            arguments = listOf(
-                navArgument("profileId") {
-                    type = NavType.LongType
-                },
-            ),
-        ) { backStackEntry ->
-            val profileId = backStackEntry.arguments?.getLong("profileId") ?: -1L
-            EditProfileRoute(
-                profileId = profileId,
-                onNavigateBack = { navController.navigateUp() },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
 
         composable("connections/detail/{connectionId}") { backStackEntry ->
             val connectionId = backStackEntry.arguments?.getString("connectionId")

@@ -101,12 +101,9 @@ import io.nekohasekai.sfa.compose.component.ServiceStatusBar
 import io.nekohasekai.sfa.compose.component.UpdateAvailableDialog
 import io.nekohasekai.sfa.compose.component.UptimeText
 import io.nekohasekai.sfa.compose.model.Connection
-import io.nekohasekai.sfa.compose.navigation.NewProfileArgs
-import io.nekohasekai.sfa.compose.navigation.ProfileRoutes
 import io.nekohasekai.sfa.compose.navigation.SFANavHost
 import io.nekohasekai.sfa.compose.navigation.Screen
 import io.nekohasekai.sfa.compose.navigation.bottomNavigationScreens
-import io.nekohasekai.sfa.compose.screen.configuration.ProfileImportHandler
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionDetailsScreen
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionsPage
 import io.nekohasekai.sfa.compose.screen.connections.ConnectionsViewModel
@@ -144,13 +141,7 @@ class MainActivity :
     private var currentAlert by mutableStateOf<Pair<Alert, String?>?>(null)
     private var showLocationPermissionDialog by mutableStateOf(false)
     private var showBackgroundLocationDialog by mutableStateOf(false)
-    private var showImportProfileDialog by mutableStateOf(false)
-    private var pendingImportProfile by mutableStateOf<Triple<String, String, String>?>(null)
-    private var showImportLocalProfileDialog by mutableStateOf(false)
-    private var pendingImportLocalProfileName by mutableStateOf<String?>(null)
-    private var pendingImportLocalProfileUri by mutableStateOf<Uri?>(null)
-    private var newProfileArgs by mutableStateOf(NewProfileArgs())
-    private var parseImportLocalProfileJob: Job? = null
+
     private var pendingIntentErrorMessage by mutableStateOf<String?>(null)
 
     private val notificationPermissionLauncher =
@@ -238,41 +229,7 @@ class MainActivity :
             launchCustomTab(uri.toString())
             return
         }
-        if (uri.scheme == "sing-box" && uri.host == "import-remote-profile") {
-            try {
-                val profile = Libbox.parseRemoteProfileImportLink(uri.toString())
-                pendingImportProfile = Triple(profile.name, profile.host, profile.url)
-                showImportProfileDialog = true
-            } catch (e: Exception) {
-                pendingIntentErrorMessage = e.message ?: "Failed to parse profile link"
-            }
-            return
-        }
 
-        if (intent.action == Intent.ACTION_VIEW &&
-            (uri.scheme == ContentResolver.SCHEME_CONTENT || uri.scheme == ContentResolver.SCHEME_FILE)
-        ) {
-            parseImportLocalProfileJob?.cancel()
-            parseImportLocalProfileJob =
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val importHandler = ProfileImportHandler(this@MainActivity)
-                    when (val result = importHandler.parseUri(uri)) {
-                        is ProfileImportHandler.UriParseResult.Success -> {
-                            withContext(Dispatchers.Main) {
-                                pendingImportLocalProfileName = result.name
-                                pendingImportLocalProfileUri = uri
-                                showImportLocalProfileDialog = true
-                            }
-                        }
-
-                        is ProfileImportHandler.UriParseResult.Error -> {
-                            withContext(Dispatchers.Main) {
-                                pendingIntentErrorMessage = result.message
-                            }
-                        }
-                    }
-                }
-        }
     }
 
     @SuppressLint("NewApi")
@@ -325,7 +282,6 @@ class MainActivity :
         val currentDestination = navBackStackEntry?.destination
         val currentRoute = currentDestination?.route
         val scope = rememberCoroutineScope()
-        val importHandler = remember { ProfileImportHandler(this@MainActivity) }
 
         val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
         val useNavigationRail =
@@ -435,12 +391,7 @@ class MainActivity :
         val topBarState = remember { mutableStateOf(emptyList<TopBarEntry>()) }
         val topBarController = remember { TopBarController(topBarState) }
         val topBarOverride = topBarState.value.lastOrNull()?.content
-        val openNewProfile: (NewProfileArgs) -> Unit = { args ->
-            newProfileArgs = args
-            navController.navigate(ProfileRoutes.NewProfile) {
-                launchSingleTop = true
-            }
-        }
+
 
         // Handle service alerts
         currentAlert?.let { (alertType, message) ->
@@ -479,85 +430,7 @@ class MainActivity :
             }, onDismiss = { showBackgroundLocationDialog = false })
         }
 
-        // Handle import remote profile dialog
-        if (showImportProfileDialog && pendingImportProfile != null) {
-            val (name, host, url) = pendingImportProfile!!
-            AlertDialog(
-                onDismissRequest = {
-                    showImportProfileDialog = false
-                    pendingImportProfile = null
-                },
-                title = { Text(stringResource(R.string.import_remote_profile)) },
-                text = { Text(stringResource(R.string.import_remote_profile_message, name, host)) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        openNewProfile(
-                            NewProfileArgs(
-                                importName = name,
-                                importUrl = url,
-                            ),
-                        )
-                        showImportProfileDialog = false
-                        pendingImportProfile = null
-                    }) {
-                        Text(stringResource(R.string.ok))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showImportProfileDialog = false
-                        pendingImportProfile = null
-                    }) {
-                        Text(stringResource(android.R.string.cancel))
-                    }
-                },
-            )
-        }
 
-        if (showImportLocalProfileDialog && pendingImportLocalProfileUri != null && pendingImportLocalProfileName != null) {
-            val importName = pendingImportLocalProfileName!!
-            val importUri = pendingImportLocalProfileUri!!
-            AlertDialog(
-                onDismissRequest = {
-                    showImportLocalProfileDialog = false
-                    pendingImportLocalProfileName = null
-                    pendingImportLocalProfileUri = null
-                },
-                title = { Text(stringResource(R.string.import_profile_confirm_title)) },
-                text = { Text(stringResource(R.string.import_profile_confirm_message, importName)) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showImportLocalProfileDialog = false
-                        pendingImportLocalProfileName = null
-                        pendingImportLocalProfileUri = null
-                        scope.launch {
-                            when (val result = importHandler.importFromUri(importUri)) {
-                                is ProfileImportHandler.ImportResult.Success -> {
-                                    navController.navigate(ProfileRoutes.editProfile(result.profile.id)) {
-                                        launchSingleTop = true
-                                    }
-                                }
-                                is ProfileImportHandler.ImportResult.Error -> {
-                                    errorMessage = result.message
-                                    showErrorDialog = true
-                                }
-                            }
-                        }
-                    }) {
-                        Text(stringResource(R.string.import_action))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showImportLocalProfileDialog = false
-                        pendingImportLocalProfileName = null
-                        pendingImportLocalProfileUri = null
-                    }) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                },
-            )
-        }
 
         // Handle update check prompt dialog (shown only once on first launch)
         var showUpdateCheckPrompt by remember { mutableStateOf(!Settings.updateCheckPrompted) }
@@ -834,11 +707,7 @@ class MainActivity :
                         connection.reconnect()
                     }
 
-                    is UiEvent.EditProfile -> {
-                        navController.navigate(ProfileRoutes.editProfile(event.profileId)) {
-                            launchSingleTop = true
-                        }
-                    }
+
 
                     is UiEvent.ApplyServiceChange -> enqueueApplyServiceChange(event.mode)
                 }
@@ -859,16 +728,13 @@ class MainActivity :
                 val serviceRunning =
                     currentServiceStatus == Status.Started || currentServiceStatus == Status.Starting
                 val showStatusBar = serviceRunning || currentServiceStatus == Status.Stopping
-                val showStartFab = !serviceRunning && dashboardUiState.selectedProfileId != -1L
+                val showStartFab = !serviceRunning
 
                 SFANavHost(
                     navController = navController,
                     serviceStatus = currentServiceStatus,
                     showStartFab = showStartFab,
                     showStatusBar = showStatusBar,
-                    newProfileArgs = newProfileArgs,
-                    onClearNewProfileArgs = { newProfileArgs = NewProfileArgs() },
-                    onOpenNewProfile = openNewProfile,
                     dashboardViewModel = dashboardViewModel,
                     logViewModel = logViewModel,
                     groupsViewModel = groupsViewModel,
@@ -982,7 +848,6 @@ class MainActivity :
                     // Start FAB (shown when service is stopped and a profile is selected)
                     androidx.compose.animation.AnimatedVisibility(
                         visible = currentServiceStatus == Status.Stopped &&
-                            dashboardUiState.selectedProfileId != -1L &&
                             !isSubScreen,
                         enter = scaleIn(),
                         exit = scaleOut(),
