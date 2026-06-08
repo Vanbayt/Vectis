@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.nekohasekai.sfa.compose.screen.login.WavyCookieShape
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 
@@ -186,40 +187,23 @@ fun DashboardScreen(
         // Statistics Block
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Download
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowDownward,
-                    contentDescription = "Download",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "0 KB/s", // TODO
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            // Upload
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowUpward,
-                    contentDescription = "Upload",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "0 KB/s", // TODO
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            // Download Card
+            InfoTile(
+                modifier = Modifier.weight(1f),
+                title = "Download",
+                value = "0 KB/s", // TODO
+                icon = Icons.Rounded.ArrowDownward
+            )
+
+            // Upload Card
+            InfoTile(
+                modifier = Modifier.weight(1f),
+                title = "Upload",
+                value = "0 KB/s", // TODO
+                icon = Icons.Rounded.ArrowUpward
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -232,24 +216,12 @@ fun DashboardScreen(
             else -> "Отключено"
         }
         
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(if (isConnected) MaterialTheme.colorScheme.primary else Color.Gray)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = statusText,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        Text(
+            text = statusText,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold
+        )
         
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -269,7 +241,7 @@ fun DashboardScreen(
                         .size(buttonSize)
                         .scale(pulseScale1)
                         .graphicsLayer { alpha = pulseAlpha1 }
-                        .clip(CircleShape)
+                        .clip(WavyCookieShape(points = 12, waveDepth = 0.05f))
                         .background(MaterialTheme.colorScheme.primary)
                 )
                 // Circle 2
@@ -278,7 +250,7 @@ fun DashboardScreen(
                         .size(buttonSize)
                         .scale(pulseScale2)
                         .graphicsLayer { alpha = pulseAlpha2 }
-                        .clip(CircleShape)
+                        .clip(WavyCookieShape(points = 12, waveDepth = 0.05f))
                         .background(MaterialTheme.colorScheme.primary)
                 )
             }
@@ -287,7 +259,7 @@ fun DashboardScreen(
             Box(
                 modifier = Modifier
                     .size(buttonSize)
-                    .clip(CircleShape)
+                    .clip(WavyCookieShape(points = 12, waveDepth = 0.05f))
                     .background(
                         if (isConnected) MaterialTheme.colorScheme.primary 
                         else MaterialTheme.colorScheme.surfaceVariant
