@@ -40,23 +40,23 @@ fun OnboardingScreen(
             // Dynamic Offsets for Blobs based on currentPage
             val blob1OffsetX by animateDpAsState(
                 targetValue = if (pagerState.currentPage == 2) (-100).dp else (-150).dp,
-                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 label = "blob1x"
             )
             val blob1OffsetY by animateDpAsState(
                 targetValue = if (pagerState.currentPage == 2) (-100).dp else 250.dp,
-                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 label = "blob1y"
             )
             
             val blob2OffsetX by animateDpAsState(
                 targetValue = if (pagerState.currentPage == 2) 100.dp else 180.dp,
-                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 label = "blob2x"
             )
             val blob2OffsetY by animateDpAsState(
                 targetValue = if (pagerState.currentPage == 2) 300.dp else 100.dp,
-                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 label = "blob2y"
             )
 
@@ -161,7 +161,7 @@ fun OnboardingScreen(
                             scope.launch {
                                 pagerState.animateScrollToPage(
                                     page = pagerState.currentPage - 1,
-                                    animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+                                    animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
                                 )
                             }
                         },
@@ -182,7 +182,7 @@ fun OnboardingScreen(
                             scope.launch {
                                 pagerState.animateScrollToPage(
                                     page = pagerState.currentPage + 1,
-                                    animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+                                    animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
                                 )
                             }
                         },
