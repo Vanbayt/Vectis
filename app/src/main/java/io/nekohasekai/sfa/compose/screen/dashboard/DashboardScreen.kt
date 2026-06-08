@@ -1,28 +1,28 @@
 package io.nekohasekai.sfa.compose.screen.dashboard
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.screen.login.WavyCookieShape
 import io.nekohasekai.sfa.constant.Status
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +57,27 @@ fun DashboardScreen(
         label = "scale"
     )
 
+    // Breathing Halo Animation
+    val breathingTransition = rememberInfiniteTransition(label = "breathingHalo")
+    val haloScale by breathingTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "haloScale"
+    )
+    val haloAlpha by breathingTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "haloAlpha"
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -87,7 +108,8 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(bottom = 64.dp, top = 32.dp),
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 64.dp, top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -95,26 +117,73 @@ fun DashboardScreen(
             // Top Section: Info Cards (Time, Location, Protocol)
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Mock Time Left
-                InfoCard(
-                    title = "Подписка",
-                    value = "TODO: 14 дней"
-                )
+                // Main Card: Subscription
+                OutlinedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(
+                            elevation = 4.dp,
+                            shape = RoundedCornerShape(24.dp),
+                            ambientColor = MaterialTheme.colorScheme.primary,
+                            spotColor = MaterialTheme.colorScheme.primary
+                        ),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.outlinedCardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.DateRange,
+                            contentDescription = "Subscription",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "Подписка",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                            Text(
+                                text = "TODO: 14 дней",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
                 
-                // Mock Location
-                InfoCard(
-                    title = "Локация",
-                    value = "TODO: Frankfurt, DE"
-                )
+                // Grid: Location and Protocol
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Location Card
+                    InfoTile(
+                        modifier = Modifier.weight(1f),
+                        title = "Локация",
+                        value = "Frankfurt, DE", // TODO
+                        icon = Icons.Rounded.Place
+                    )
 
-                // Mock Protocol
-                InfoCard(
-                    title = "Протокол",
-                    value = "TODO: VLESS Reality"
-                )
+                    // Protocol Card
+                    InfoTile(
+                        modifier = Modifier.weight(1f),
+                        title = "Протокол",
+                        value = "VLESS Reality", // TODO
+                        icon = Icons.Rounded.Lock
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -127,82 +196,125 @@ fun DashboardScreen(
                 else -> "Отключено"
             }
 
-            Text(
-                text = statusText,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold
-            )
+            AnimatedContent(
+                targetState = statusText,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                },
+                label = "StatusTextAnimation"
+            ) { text ->
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Connection Button
+            // Connection Button with Breathing Halo
             val interactionSource = remember { MutableInteractionSource() }
             
             Box(
-                modifier = Modifier
-                    .size(160.dp)
-                    .scale(scale)
-                    .graphicsLayer {
-                        // Apply rotation only if it's running or starting, else animate to 0 or stay static
-                        // For a smoother stop, we could animate rotation back to 0, but graphicsLayer rotation is fine
-                        rotationZ = if (isRunning) rotation else 0f
-                    }
-                    .clip(WavyCookieShape(points = 12, waveDepth = 0.15f))
-                    .background(
-                        if (isConnected) MaterialTheme.colorScheme.primary 
-                        else MaterialTheme.colorScheme.secondaryContainer
-                    )
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null, // Disable default ripple to keep the shape clean
-                        onClick = { viewModel?.toggleService() }
-                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = if (isRunning) "Stop" else "Start",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Black,
-                    color = if (isConnected) MaterialTheme.colorScheme.onPrimary 
-                            else MaterialTheme.colorScheme.onSecondaryContainer,
-                    // Counter-rotate text so it stays upright
-                    modifier = Modifier.graphicsLayer {
-                        rotationZ = if (isRunning) -rotation else 0f
-                    }
+                // Breathing Halo
+                Box(
+                    modifier = Modifier
+                        .size(160.dp)
+                        .scale(scale * haloScale) // Base scale + breathing expansion
+                        .graphicsLayer {
+                            rotationZ = if (isRunning) rotation else 0f
+                            alpha = haloAlpha
+                        }
+                        .clip(WavyCookieShape(points = 12, waveDepth = 0.15f))
+                        .background(MaterialTheme.colorScheme.primary)
                 )
+
+                // Main Button
+                Box(
+                    modifier = Modifier
+                        .size(160.dp)
+                        .scale(scale)
+                        .graphicsLayer {
+                            // Apply rotation only if it's running or starting, else animate to 0 or stay static
+                            rotationZ = if (isRunning) rotation else 0f
+                        }
+                        .clip(WavyCookieShape(points = 12, waveDepth = 0.15f))
+                        .background(
+                            if (isConnected) MaterialTheme.colorScheme.primary 
+                            else MaterialTheme.colorScheme.secondaryContainer
+                        )
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null, // Disable default ripple to keep the shape clean
+                            onClick = { viewModel?.toggleService() }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isRunning) "Stop" else "Start",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Black,
+                        color = if (isConnected) MaterialTheme.colorScheme.onPrimary 
+                                else MaterialTheme.colorScheme.onSecondaryContainer,
+                        // Counter-rotate text so it stays upright
+                        modifier = Modifier.graphicsLayer {
+                            rotationZ = if (isRunning) -rotation else 0f
+                        }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun InfoCard(title: String, value: String) {
-    Surface(
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .height(72.dp)
+fun InfoTile(
+    modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    icon: ImageVector
+) {
+    ElevatedCard(
+        modifier = modifier
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(24.dp),
+                ambientColor = MaterialTheme.colorScheme.primary,
+                spotColor = MaterialTheme.colorScheme.primary
+            ),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        )
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp)
             )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }
