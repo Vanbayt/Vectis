@@ -725,10 +725,11 @@ class MainActivity :
                     .padding(paddingValues),
             ) {
                 // Service Status Bar (shown when service is running or stopping)
+                val isLoginScreen = currentRootRoute == "login"
                 val serviceRunning =
                     currentServiceStatus == Status.Started || currentServiceStatus == Status.Starting
-                val showStatusBar = serviceRunning || currentServiceStatus == Status.Stopping
-                val showStartFab = !serviceRunning
+                val showStatusBar = (serviceRunning || currentServiceStatus == Status.Stopping) && !isLoginScreen
+                val showStartFab = !serviceRunning && !isLoginScreen
 
                 SFANavHost(
                     navController = navController,
@@ -882,7 +883,8 @@ class MainActivity :
         }
 
         CompositionLocalProvider(LocalTopBarController provides topBarController) {
-            if (useNavigationRail) {
+            val isLoginScreen = currentRootRoute == "login"
+            if (useNavigationRail && !isLoginScreen) {
                 Row(modifier = Modifier.fillMaxSize()) {
                     Surface(tonalElevation = 1.dp) {
                         NavigationRail(
@@ -930,7 +932,7 @@ class MainActivity :
                         scaffoldContent(paddingValues)
                     }
                 }
-            } else {
+            } else if (!isLoginScreen) {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -977,6 +979,13 @@ class MainActivity :
                             }
                         }
                     },
+                ) { paddingValues ->
+                    scaffoldContent(paddingValues)
+                }
+            } else {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 ) { paddingValues ->
                     scaffoldContent(paddingValues)
                 }
