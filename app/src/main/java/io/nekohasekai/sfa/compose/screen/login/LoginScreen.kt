@@ -3,7 +3,6 @@ package io.nekohasekai.sfa.compose.screen.login
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
@@ -14,35 +13,47 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.database.Settings
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
-val BlobShape1 = GenericShape { size, _ ->
-    val w = size.width
-    val h = size.height
-    moveTo(w * 0.5f, h * 0.05f)
-    cubicTo(w * 0.8f, h * 0.0f, w * 1.0f, h * 0.25f, w * 0.95f, h * 0.5f)
-    cubicTo(w * 0.9f, h * 0.8f, w * 0.7f, h * 0.95f, w * 0.5f, h * 0.95f)
-    cubicTo(w * 0.2f, h * 0.95f, w * 0.05f, h * 0.8f, w * 0.05f, h * 0.5f)
-    cubicTo(w * 0.05f, h * 0.2f, w * 0.2f, h * 0.1f, w * 0.5f, h * 0.05f)
-    close()
-}
+class WavyCookieShape(private val points: Int = 12, private val waveDepth: Float = 0.15f) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val path = Path()
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val outerRadius = size.width / 2f
+        val innerRadius = outerRadius * (1f - waveDepth)
 
-val BlobShape2 = GenericShape { size, _ ->
-    val w = size.width
-    val h = size.height
-    moveTo(w * 0.4f, h * 0.1f)
-    cubicTo(w * 0.9f, h * 0.05f, w * 0.95f, h * 0.4f, w * 0.9f, h * 0.6f)
-    cubicTo(w * 0.8f, h * 0.9f, w * 0.6f, h * 0.95f, w * 0.4f, h * 0.9f)
-    cubicTo(w * 0.1f, h * 0.8f, w * 0.0f, h * 0.6f, w * 0.1f, h * 0.4f)
-    cubicTo(w * 0.2f, h * 0.15f, w * 0.2f, h * 0.15f, w * 0.4f, h * 0.1f)
-    close()
+        for (i in 0..360) {
+            val angle = i * PI / 180f
+            // Математика волны
+            val radius = innerRadius + (outerRadius - innerRadius) * (0.5f + 0.5f * cos(points * angle).toFloat())
+            val x = center.x + radius * cos(angle).toFloat()
+            val y = center.y + radius * sin(angle).toFloat()
+            
+            if (i == 0) {
+                path.moveTo(x, y)
+            } else {
+                path.lineTo(x, y)
+            }
+        }
+        path.close()
+        return Outline.Generic(path)
+    }
 }
 
 @Composable
@@ -91,24 +102,24 @@ fun LoginScreen(
             // Native Bezier Blobs
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.BottomCenter
+                contentAlignment = Alignment.Center
             ) {
-                // Blob 1 (Large)
+                // Blob 1 (Bottom Left)
                 AnimatedBlob(
-                    shape = BlobShape1,
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                    size = 350.dp,
-                    offset = DpOffset(x = 60.dp, y = 50.dp),
-                    durationMillis = 24000
+                    shape = WavyCookieShape(points = 12, waveDepth = 0.12f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                    size = 500.dp,
+                    offset = DpOffset(x = (-150).dp, y = 250.dp),
+                    durationMillis = 30000
                 )
                 
-                // Blob 2 (Medium)
+                // Blob 2 (Right)
                 AnimatedBlob(
-                    shape = BlobShape2,
-                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
-                    size = 280.dp,
-                    offset = DpOffset(x = (-80).dp, y = 20.dp),
-                    durationMillis = 18000,
+                    shape = WavyCookieShape(points = 14, waveDepth = 0.1f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.04f),
+                    size = 400.dp,
+                    offset = DpOffset(x = 180.dp, y = 100.dp),
+                    durationMillis = 25000,
                     reverse = true
                 )
             }
