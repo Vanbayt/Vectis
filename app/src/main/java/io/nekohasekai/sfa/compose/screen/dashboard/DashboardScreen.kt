@@ -5,6 +5,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,7 +83,6 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
             .padding(bottom = 24.dp)
     ) {
         
@@ -94,9 +95,45 @@ fun DashboardScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Quick Toggles Row
+            val killSwitchEnabled = remember { mutableStateOf(false) }
+            val splitTunnelEnabled = remember { mutableStateOf(false) }
+            val autoConnectEnabled = remember { mutableStateOf(false) }
+
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                item {
+                    FilterChip(
+                        selected = killSwitchEnabled.value,
+                        onClick = { killSwitchEnabled.value = !killSwitchEnabled.value },
+                        label = { Text("Kill Switch") },
+                        leadingIcon = { Icon(Icons.Rounded.GppBad, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = splitTunnelEnabled.value,
+                        onClick = { splitTunnelEnabled.value = !splitTunnelEnabled.value },
+                        label = { Text("Split Tunnel") },
+                        leadingIcon = { Icon(Icons.Rounded.AltRoute, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = autoConnectEnabled.value,
+                        onClick = { autoConnectEnabled.value = !autoConnectEnabled.value },
+                        label = { Text("Auto-connect") },
+                        leadingIcon = { Icon(Icons.Rounded.Autorenew, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    )
+                }
+            }
+
             // Row 1: Traffic Stats
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 InfoTile(
@@ -115,7 +152,7 @@ fun DashboardScreen(
 
             // Row 2: Location and Protocol
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Location Card
@@ -138,6 +175,7 @@ fun DashboardScreen(
             OutlinedCard(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
                     .shadow(
                         elevation = 4.dp,
                         shape = RoundedCornerShape(20.dp),
@@ -181,7 +219,7 @@ fun DashboardScreen(
         // Slider pinned at the bottom
         Box(
             contentAlignment = Alignment.Center, 
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
         ) {
             SwipeToConnectSlider(
                 isConnected = isConnected,
@@ -192,6 +230,25 @@ fun DashboardScreen(
                     if (serviceStatus == Status.Started || serviceStatus == Status.Starting) viewModel?.toggleService()
                 }
             )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Session Stats
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Rounded.Timer, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Uptime: 00:00", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            
+            Text("  •  ", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            
+            Icon(Icons.Rounded.SignalCellularAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Ping: 45 ms", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -204,6 +261,7 @@ fun SwipeToConnectSlider(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val offsetX = remember { Animatable(0f) }
+    var lastHapticPosition by remember { mutableFloatStateOf(0f) }
     val haptic = LocalHapticFeedback.current
     
     val width = 280.dp
@@ -257,26 +315,34 @@ fun SwipeToConnectSlider(
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
                         onDragEnd = {
+                            lastHapticPosition = 0f
                             coroutineScope.launch {
                                 if (offsetX.value > maxSwipePx * 0.7f) {
                                     offsetX.animateTo(maxSwipePx, spring())
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     onConnect()
                                 } else {
-                                    offsetX.animateTo(0f, spring(dampingRatio = 0.6f, stiffness = 400f))
+                                    offsetX.animateTo(0f, spring(dampingRatio = 0.5f, stiffness = 200f))
                                     onDisconnect()
                                 }
                             }
                         },
                         onDragCancel = {
+                            lastHapticPosition = 0f
                             coroutineScope.launch {
-                                offsetX.animateTo(if (isConnected) maxSwipePx else 0f, spring(dampingRatio = 0.6f, stiffness = 400f))
+                                offsetX.animateTo(if (isConnected) maxSwipePx else 0f, spring(dampingRatio = 0.5f, stiffness = 200f))
                             }
                         },
                         onHorizontalDrag = { change, dragAmount ->
                             change.consume()
                             coroutineScope.launch {
-                                offsetX.snapTo((offsetX.value + dragAmount).coerceIn(0f, maxSwipePx))
+                                val resistance = 1f - (offsetX.value / maxSwipePx * 0.6f)
+                                offsetX.snapTo((offsetX.value + dragAmount * resistance).coerceIn(0f, maxSwipePx))
+                                
+                                if (abs(offsetX.value - lastHapticPosition) > 40f) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    lastHapticPosition = offsetX.value
+                                }
                             }
                         }
                     )
@@ -323,7 +389,7 @@ fun InfoTile(
                 imageVector = icon,
                 contentDescription = title,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp) // slightly smaller icon to save vertical space
+                modifier = Modifier.size(24.dp)
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
