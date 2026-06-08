@@ -235,9 +235,7 @@ class NewProfileViewModel(application: Application) : AndroidViewModel(applicati
             }
 
         val fileID = ProfileManager.nextFileID()
-        val configDirectory = File(context.filesDir, "configs").also { it.mkdirs() }
-        val configFile = File(configDirectory, "$fileID.json")
-        typedProfile.path = configFile.path
+        typedProfile.path = ""
 
         // Get config content
         val configContent =
@@ -270,7 +268,6 @@ class NewProfileViewModel(application: Application) : AndroidViewModel(applicati
 
         // Validate config
         Libbox.checkConfig(configContent)
-        configFile.writeText(configContent)
 
         // Create profile in database and select it
         ProfileManager.create(profile, andSelect = true)
@@ -295,16 +292,12 @@ class NewProfileViewModel(application: Application) : AndroidViewModel(applicati
             }
 
         val fileID = ProfileManager.nextFileID()
-        val configDirectory = File(context.filesDir, "configs").also { it.mkdirs() }
-        val configFile = File(configDirectory, "$fileID.json")
-        typedProfile.path = configFile.path
+        typedProfile.path = ""
 
         // Fetch initial config - this MUST succeed for remote profiles
         val content = HTTPClient().use { it.getString(state.remoteUrl) }
         Libbox.checkConfig(content)
         val configContent = content
-
-        configFile.writeText(configContent)
 
         // Create profile in database and select it
         ProfileManager.create(profile, andSelect = true)

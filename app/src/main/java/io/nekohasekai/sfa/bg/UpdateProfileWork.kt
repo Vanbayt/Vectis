@@ -77,12 +77,8 @@ class UpdateProfileWork {
                 try {
                     val content = HTTPClient().use { it.getString(profile.typed.remoteURL) }
                     Libbox.checkConfig(content)
-                    val file = File(profile.typed.path)
-                    if (file.readText() != content) {
-                        File(profile.typed.path).writeText(content)
-                        if (profile.id == selectedProfile) {
-                            selectedProfileUpdated = true
-                        }
+                    if (profile.id == selectedProfile) {
+                        selectedProfileUpdated = true
                     }
                     profile.typed.lastUpdated = Date()
                     ProfileManager.update(profile)

@@ -1,15 +1,9 @@
 package io.nekohasekai.sfa.database
 
-import androidx.room.Room
-import io.nekohasekai.sfa.Application
-import io.nekohasekai.sfa.constant.Path
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-
-@Suppress("RedundantSuspendModifier")
 object ProfileManager {
     private val callbacks = mutableListOf<() -> Unit>()
+    private val profiles = mutableListOf<Profile>()
+    private var idCounter = 1L
 
     fun registerCallback(callback: () -> Unit) {
         callbacks.add(callback)
@@ -19,30 +13,21 @@ object ProfileManager {
         callbacks.remove(callback)
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    private val instance by lazy {
-        Application.application.getDatabasePath(Path.PROFILES_DATABASE_PATH).parentFile?.mkdirs()
-        Room
-            .databaseBuilder(
-                Application.application,
-                ProfileDatabase::class.java,
-                Path.PROFILES_DATABASE_PATH,
-            )
-            .addMigrations(ProfileDatabase.MIGRATION_1_2)
-            .fallbackToDestructiveMigrationOnDowngrade()
-            .enableMultiInstanceInvalidation()
-            .setQueryExecutor { GlobalScope.launch { it.run() } }
-            .build()
+    suspend fun nextOrder(): Long {
+        return profiles.maxOfOrNull { it.userOrder }?.plus(1) ?: 0L
     }
 
-    suspend fun nextOrder(): Long = instance.profileDao().nextOrder() ?: 0
+    suspend fun nextFileID(): Long {
+        return idCounter++
+    }
 
-    suspend fun nextFileID(): Long = instance.profileDao().nextFileID() ?: 1
-
-    suspend fun get(id: Long): Profile? = instance.profileDao().get(id)
+    suspend fun get(id: Long): Profile? {
+        return profiles.find { it.id == id }
+    }
 
     suspend fun create(profile: Profile, andSelect: Boolean = false): Profile {
-        profile.id = instance.profileDao().insert(profile)
+        profile.id = nextFileID()
+        profiles.add(profile)
         if (andSelect) {
             Settings.selectedProfile = profile.id
         }
@@ -53,44 +38,57 @@ object ProfileManager {
     }
 
     suspend fun update(profile: Profile): Int {
-        try {
-            return instance.profileDao().update(profile)
-        } finally {
+        val index = profiles.indexOfFirst { it.id == profile.id }
+        if (index != -1) {
+            profiles[index] = profile
             for (callback in callbacks.toList()) {
                 callback()
             }
+            return 1
         }
+        return 0
     }
 
-    suspend fun update(profiles: List<Profile>): Int {
-        try {
-            return instance.profileDao().update(profiles)
-        } finally {
-            for (callback in callbacks.toList()) {
-                callback()
+    suspend fun update(updateProfiles: List<Profile>): Int {
+        var count = 0
+        for (profile in updateProfiles) {
+            val index = profiles.indexOfFirst { it.id == profile.id }
+            if (index != -1) {
+                profiles[index] = profile
+                count++
             }
         }
+        for (callback in callbacks.toList()) {
+            callback()
+        }
+        return count
     }
 
     suspend fun delete(profile: Profile): Int {
-        try {
-            return instance.profileDao().delete(profile)
-        } finally {
+        val removed = profiles.removeIf { it.id == profile.id }
+        if (removed) {
             for (callback in callbacks.toList()) {
                 callback()
             }
+            return 1
         }
+        return 0
     }
 
-    suspend fun delete(profiles: List<Profile>): Int {
-        try {
-            return instance.profileDao().delete(profiles)
-        } finally {
-            for (callback in callbacks.toList()) {
-                callback()
+    suspend fun delete(deleteProfiles: List<Profile>): Int {
+        var count = 0
+        for (profile in deleteProfiles) {
+            if (profiles.removeIf { it.id == profile.id }) {
+                count++
             }
         }
+        for (callback in callbacks.toList()) {
+            callback()
+        }
+        return count
     }
 
-    suspend fun list(): List<Profile> = instance.profileDao().list()
+    suspend fun list(): List<Profile> {
+        return profiles.sortedBy { it.userOrder }.toList()
+    }
 }

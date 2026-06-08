@@ -153,6 +153,8 @@
     <string name="profile_source_create_new">Create New</string>
     <string name="profile_source_import">Import</string>
     <string name="profile_add_import_file">Import from file</string>
+    <string name="profile_add_import_clipboard">Import from clipboard</string>
+    <string name="import_from_clipboard_description">Import configuration from clipboard text</string>
     <string name="profile_add_scan_qr_code">Scan QR code</string>
     <string name="profile_add_create_manually">Create Manually</string>
     <string name="profile_override">Profile Override</string>

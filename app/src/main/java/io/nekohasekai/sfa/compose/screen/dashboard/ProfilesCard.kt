@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.outlined.CreateNewFolder
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.FileUpload
+import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -408,6 +411,46 @@ fun ProfilesCard(
                     },
                     supportingContent = {
                         Text(stringResource(R.string.import_from_file_description))
+                    },
+                )
+
+                ListItem(
+                    modifier = Modifier.clickable {
+                        onHideAddProfileSheet()
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = clipboard.primaryClip
+                        val text = if (clip != null && clip.itemCount > 0) clip.getItemAt(0).text?.toString() else null
+                        if (!text.isNullOrBlank()) {
+                            coroutineScope.launch {
+                                when (val importResult = importHandler.importFromQRCode(text)) {
+                                    is ProfileImportHandler.ImportResult.Success -> {
+                                        withContext(Dispatchers.Main) {
+                                            onProfileEdit(importResult.profile)
+                                        }
+                                    }
+                                    is ProfileImportHandler.ImportResult.Error -> {
+                                        withContext(Dispatchers.Main) {
+                                            context.errorDialogBuilder(Exception(importResult.message)).show()
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, context.getString(R.string.error_empty_file), Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Outlined.ContentPaste,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    },
+                    headlineContent = {
+                        Text(stringResource(R.string.profile_add_import_clipboard))
+                    },
+                    supportingContent = {
+                        Text(stringResource(R.string.import_from_clipboard_description))
                     },
                 )
 

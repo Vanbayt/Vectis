@@ -350,13 +350,7 @@ class DashboardViewModel :
                 val content = HTTPClient().use { it.getString(profile.typed.remoteURL) }
                 Libbox.checkConfig(content)
 
-                // Check if content changed
-                val file = File(profile.typed.path)
-                var contentChanged = false
-                if (!file.exists() || file.readText() != content) {
-                    file.writeText(content)
-                    contentChanged = true
-                }
+                var contentChanged = true
 
                 // Update last updated time
                 profile.typed.lastUpdated = Date()

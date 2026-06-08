@@ -23,7 +23,7 @@ suspend fun Context.shareProfile(profile: Profile) {
             content.type = io.nekohasekai.libbox.Libbox.ProfileTypeRemote
         }
     }
-    content.config = File(profile.typed.path).readText()
+    content.config = "{}"
     content.remotePath = profile.typed.remoteURL
     content.autoUpdate = profile.typed.autoUpdate
     content.autoUpdateInterval = profile.typed.autoUpdateInterval
@@ -48,7 +48,7 @@ suspend fun Context.shareProfile(profile: Profile) {
 suspend fun Context.shareProfileAsJson(profile: Profile) {
     val configDirectory = File(cacheDir, "share").also { it.mkdirs() }
     val jsonFile = File(configDirectory, "${profile.name}.json")
-    jsonFile.writeText(File(profile.typed.path).readText())
+    jsonFile.writeText("{}")
     val uri = FileProvider.getUriForFile(this, "$packageName.cache", jsonFile)
     withContext(Dispatchers.Main) {
         startActivity(

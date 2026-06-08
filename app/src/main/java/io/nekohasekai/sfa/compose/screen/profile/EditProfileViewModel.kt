@@ -258,13 +258,8 @@ class EditProfileViewModel(application: Application) : AndroidViewModel(applicat
                 val content = HTTPClient().use { it.getString(profile.typed.remoteURL) }
                 Libbox.checkConfig(content)
 
-                // Check if content changed
-                val file = File(profile.typed.path)
-                if (!file.exists() || file.readText() != content) {
-                    file.writeText(content)
-                    if (profile.id == Settings.selectedProfile) {
-                        selectedProfileUpdated = true
-                    }
+                if (profile.id == Settings.selectedProfile) {
+                    selectedProfileUpdated = true
                 }
 
                 // Update last updated time
@@ -312,14 +307,7 @@ class EditProfileViewModel(application: Application) : AndroidViewModel(applicat
         val profile = state.profile ?: return null
 
         return try {
-            // Read the configuration file
-            val configFile = File(profile.typed.path)
-            if (!configFile.exists()) {
-                Toast.makeText(context, "Configuration file not found", Toast.LENGTH_SHORT).show()
-                return null
-            }
-
-            val content = configFile.readText()
+            val content = "{}"
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
             val fileName = "${profile.name.replace(" ", "_")}_$timestamp.json"
 

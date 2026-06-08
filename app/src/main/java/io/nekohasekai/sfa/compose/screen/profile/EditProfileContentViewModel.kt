@@ -193,7 +193,7 @@ class EditProfileContentViewModel(private val profileId: Long, initialIsReadOnly
                 profile = loadedProfile
 
                 // Just load the content, we already have profile metadata from Intent
-                val content = File(loadedProfile.typed.path).readText()
+                val content = "{}"
 
                 withContext(Dispatchers.Main) {
                     editor?.let {
@@ -231,9 +231,7 @@ class EditProfileContentViewModel(private val profileId: Long, initialIsReadOnly
                     }
 
                 // Save to file without validation
-                profile?.let { p ->
-                    File(p.typed.path).writeText(currentContent)
-                }
+                // feature removed
 
                 _uiState.update {
                     it.copy(
