@@ -58,6 +58,13 @@ class ProfileImportHandler(private val context: Context) {
                 return@withContext importJsonConfiguration(dataString, filename)
             }
 
+            val urlString = dataString.trim()
+            val generatedJson = io.nekohasekai.sfa.utils.LinkParser.parse(urlString)
+            if (generatedJson != null) {
+                val profileName = try { Uri.parse(urlString).fragment?.let { java.net.URLDecoder.decode(it, "UTF-8") } } catch(e: Exception) { null } ?: "Imported Profile"
+                return@withContext importJsonConfiguration(generatedJson, profileName)
+            }
+
             // Try to decode as ProfileContent (the old way)
             val content =
                 try {
@@ -91,6 +98,13 @@ class ProfileImportHandler(private val context: Context) {
                 return@withContext UriParseResult.Success(name = filename)
             }
 
+            val urlString = dataString.trim()
+            val generatedJson = io.nekohasekai.sfa.utils.LinkParser.parse(urlString)
+            if (generatedJson != null) {
+                val profileName = try { Uri.parse(urlString).fragment?.let { java.net.URLDecoder.decode(it, "UTF-8") } } catch(e: Exception) { null } ?: "Imported Profile"
+                return@withContext UriParseResult.Success(name = profileName)
+            }
+
             val content =
                 try {
                     Libbox.decodeProfileContent(data)
@@ -111,6 +125,12 @@ class ProfileImportHandler(private val context: Context) {
 
     suspend fun parseQRCode(data: String): QRCodeParseResult = withContext(Dispatchers.IO) {
         try {
+            val generatedJson = io.nekohasekai.sfa.utils.LinkParser.parse(data)
+            if (generatedJson != null) {
+                val profileName = try { Uri.parse(data).fragment?.let { java.net.URLDecoder.decode(it, "UTF-8") } } catch(e: Exception) { null } ?: "Imported Profile"
+                return@withContext QRCodeParseResult.LocalProfile(name = profileName)
+            }
+
             // Check if it's a sing-box remote profile import link
             if (data.startsWith("sing-box://import-remote-profile")) {
                 try {
@@ -155,6 +175,12 @@ class ProfileImportHandler(private val context: Context) {
 
     suspend fun importFromQRCode(data: String): ImportResult = withContext(Dispatchers.IO) {
         try {
+            val generatedJson = io.nekohasekai.sfa.utils.LinkParser.parse(data)
+            if (generatedJson != null) {
+                val profileName = try { Uri.parse(data).fragment?.let { java.net.URLDecoder.decode(it, "UTF-8") } } catch(e: Exception) { null } ?: "Imported Profile"
+                return@withContext importJsonConfiguration(generatedJson, profileName)
+            }
+
             // Check if it's a sing-box remote profile import link
             if (data.startsWith("sing-box://import-remote-profile")) {
                 try {
