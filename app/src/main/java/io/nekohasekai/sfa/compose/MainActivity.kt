@@ -278,8 +278,17 @@ class MainActivity :
     @Composable
     fun SFAApp() {
         var isAuthenticated by remember { mutableStateOf(Settings.token.isNotEmpty()) }
+        var showOnboarding by remember { mutableStateOf(!Settings.hasSeenOnboarding) }
 
-        if (!isAuthenticated) {
+        if (showOnboarding) {
+            io.nekohasekai.sfa.compose.screen.login.OnboardingScreen(
+                onNavigateToLogin = {
+                    Settings.hasSeenOnboarding = true
+                    showOnboarding = false
+                }
+            )
+            return
+        } else if (!isAuthenticated) {
             io.nekohasekai.sfa.compose.screen.login.LoginScreen(
                 onLoginSuccess = { isAuthenticated = true }
             )

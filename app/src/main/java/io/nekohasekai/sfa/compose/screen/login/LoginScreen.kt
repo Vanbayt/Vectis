@@ -31,60 +31,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-class WavyCookieShape(private val points: Int = 12, private val waveDepth: Float = 0.15f) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val path = Path()
-        val center = Offset(size.width / 2f, size.height / 2f)
-        val outerRadius = size.width / 2f
-        val innerRadius = outerRadius * (1f - waveDepth)
-
-        for (i in 0..360) {
-            val angle = i * PI / 180f
-            // Математика волны
-            val radius = innerRadius + (outerRadius - innerRadius) * (0.5f + 0.5f * cos(points * angle).toFloat())
-            val x = center.x + radius * cos(angle).toFloat()
-            val y = center.y + radius * sin(angle).toFloat()
-            
-            if (i == 0) {
-                path.moveTo(x, y)
-            } else {
-                path.lineTo(x, y)
-            }
-        }
-        path.close()
-        return Outline.Generic(path)
-    }
-}
-
-@Composable
-fun AnimatedBlob(
-    shape: Shape,
-    color: Color,
-    size: Dp,
-    durationMillis: Int,
-    offset: DpOffset,
-    reverse: Boolean = false
-) {
-    val infiniteTransition = rememberInfiniteTransition()
-
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = if (reverse) 360f else 0f,
-        targetValue = if (reverse) 0f else 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = durationMillis, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
-    )
-
-    Box(
-        modifier = Modifier
-            .offset(x = offset.x, y = offset.y)
-            .size(size)
-            .rotate(rotation)
-            .clip(shape)
-            .background(color)
-    )
-}
 
 @Composable
 fun LoginScreen(

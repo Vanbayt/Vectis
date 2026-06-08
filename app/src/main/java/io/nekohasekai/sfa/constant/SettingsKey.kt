@@ -1,6 +1,7 @@
 package io.nekohasekai.sfa.constant
 
 object SettingsKey {
+    const val HAS_SEEN_ONBOARDING = "has_seen_onboarding"
     const val SELECTED_PROFILE = "selected_profile"
     const val SERVICE_MODE = "service_mode"
     const val CHECK_UPDATE_ENABLED = "check_update_enabled"

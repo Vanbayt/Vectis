@@ -41,7 +41,7 @@ object Settings {
     var selectedProfile by dataStore.long(SettingsKey.SELECTED_PROFILE) { -1L }
     var serviceMode by dataStore.string(SettingsKey.SERVICE_MODE) { ServiceMode.NORMAL }
     var startedByUser by dataStore.boolean(SettingsKey.STARTED_BY_USER)
-
+    var hasSeenOnboarding by dataStore.boolean(SettingsKey.HAS_SEEN_ONBOARDING) { false }
     var updateSource by dataStore.string(SettingsKey.UPDATE_SOURCE) { "github" }
     var checkUpdateEnabled by dataStore.boolean(SettingsKey.CHECK_UPDATE_ENABLED) { false }
     var updateCheckPrompted by dataStore.boolean(SettingsKey.UPDATE_CHECK_PROMPTED) { false }
