@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -275,25 +276,55 @@ class MainActivity :
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
+    enum class AppRootState { Onboarding, Login, MainApp }
+
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun SFAApp() {
         var isAuthenticated by remember { mutableStateOf(Settings.token.isNotEmpty()) }
         var showOnboarding by remember { mutableStateOf(!Settings.hasSeenOnboarding) }
 
-        if (showOnboarding) {
-            io.nekohasekai.sfa.compose.screen.login.OnboardingScreen(
-                onNavigateToLogin = {
-                    Settings.hasSeenOnboarding = true
-                    showOnboarding = false
-                }
-            )
-            return
-        } else if (!isAuthenticated) {
-            io.nekohasekai.sfa.compose.screen.login.LoginScreen(
-                onLoginSuccess = { isAuthenticated = true }
-            )
-            return
+        val rootState = when {
+            showOnboarding -> AppRootState.Onboarding
+            !isAuthenticated -> AppRootState.Login
+            else -> AppRootState.MainApp
         }
+
+        androidx.compose.animation.AnimatedContent(
+            targetState = rootState,
+            transitionSpec = {
+                (androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(600)) + 
+                 androidx.compose.animation.slideInHorizontally(animationSpec = androidx.compose.animation.core.tween(600)) { it }).togetherWith(
+                    androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(600)) + 
+                    androidx.compose.animation.slideOutHorizontally(animationSpec = androidx.compose.animation.core.tween(600)) { -it }
+                )
+            },
+            label = "RootStateTransition"
+        ) { state ->
+            when (state) {
+                AppRootState.Onboarding -> {
+                    io.nekohasekai.sfa.compose.screen.login.OnboardingScreen(
+                        onNavigateToLogin = {
+                            Settings.hasSeenOnboarding = true
+                            showOnboarding = false
+                        }
+                    )
+                }
+                AppRootState.Login -> {
+                    io.nekohasekai.sfa.compose.screen.login.LoginScreen(
+                        onLoginSuccess = { isAuthenticated = true }
+                    )
+                }
+                AppRootState.MainApp -> {
+                    SFAMainAppContent()
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun SFAMainAppContent() {
 
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()

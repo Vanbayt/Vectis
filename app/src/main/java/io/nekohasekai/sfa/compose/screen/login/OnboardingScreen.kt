@@ -1,5 +1,8 @@
 package io.nekohasekai.sfa.compose.screen.login
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -9,6 +12,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -27,59 +31,58 @@ fun OnboardingScreen(
     val pagerState = rememberPagerState(pageCount = { 3 })
     val scope = rememberCoroutineScope()
 
-    // Derived scroll position from 0f to 2f
-    val scrollPosition = pagerState.currentPage + pagerState.currentPageOffsetFraction
-
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.surface
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             
-            // Dynamic Immersive Background
+            // Dynamic Offsets for Blobs based on currentPage
+            val blob1OffsetX by animateDpAsState(
+                targetValue = if (pagerState.currentPage == 2) (-100).dp else (-150).dp,
+                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                label = "blob1x"
+            )
+            val blob1OffsetY by animateDpAsState(
+                targetValue = if (pagerState.currentPage == 2) (-100).dp else 250.dp,
+                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                label = "blob1y"
+            )
+            
+            val blob2OffsetX by animateDpAsState(
+                targetValue = if (pagerState.currentPage == 2) 100.dp else 180.dp,
+                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                label = "blob2x"
+            )
+            val blob2OffsetY by animateDpAsState(
+                targetValue = if (pagerState.currentPage == 2) 300.dp else 100.dp,
+                animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+                label = "blob2y"
+            )
+
+            // Immersive Background
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                // Blob 1: Shifts downwards and changes color as we scroll
+                // Blob 1
                 AnimatedBlob(
                     shape = remember { WavyCookieShape(points = 12, waveDepth = 0.12f) },
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f - (scrollPosition * 0.02f)),
-                    size = 500.dp + (scrollPosition * 50).dp,
-                    offset = DpOffset(
-                        x = (-150).dp + (scrollPosition * 100).dp,
-                        y = 250.dp - (scrollPosition * 50).dp
-                    ),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                    size = 500.dp,
+                    offset = DpOffset(x = blob1OffsetX, y = blob1OffsetY),
                     durationMillis = 30000
                 )
                 
-                // Blob 2: Moves left as we scroll
+                // Blob 2
                 AnimatedBlob(
                     shape = remember { WavyCookieShape(points = 14, waveDepth = 0.1f) },
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.04f + (scrollPosition * 0.01f)),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.04f),
                     size = 400.dp,
-                    offset = DpOffset(
-                        x = 180.dp - (scrollPosition * 80).dp,
-                        y = 100.dp + (scrollPosition * 50).dp
-                    ),
+                    offset = DpOffset(x = blob2OffsetX, y = blob2OffsetY),
                     durationMillis = 25000,
                     reverse = true
                 )
-
-                // Blob 3: Appears dynamically on later pages
-                val blob3Alpha = (scrollPosition - 0.5f).coerceIn(0f, 1f) * 0.06f
-                if (blob3Alpha > 0f) {
-                    AnimatedBlob(
-                        shape = remember { WavyCookieShape(points = 10, waveDepth = 0.15f) },
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = blob3Alpha),
-                        size = 350.dp,
-                        offset = DpOffset(
-                            x = 0.dp,
-                            y = (-200).dp + (scrollPosition * 100).dp
-                        ),
-                        durationMillis = 20000
-                    )
-                }
             }
 
             // Pager Content
@@ -128,6 +131,20 @@ fun OnboardingScreen(
                 }
             }
 
+            // Skip Button
+            if (pagerState.currentPage < 2) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    TextButton(onClick = onNavigateToLogin) {
+                        Text("Skip", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+
             // Bottom Navigation Bar
             Row(
                 modifier = Modifier
@@ -142,7 +159,10 @@ fun OnboardingScreen(
                     WavyButton(
                         onClick = {
                             scope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                pagerState.animateScrollToPage(
+                                    page = pagerState.currentPage - 1,
+                                    animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+                                )
                             }
                         },
                         modifier = Modifier.size(56.dp),
@@ -160,7 +180,10 @@ fun OnboardingScreen(
                     WavyButton(
                         onClick = {
                             scope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                pagerState.animateScrollToPage(
+                                    page = pagerState.currentPage + 1,
+                                    animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+                                )
                             }
                         },
                         modifier = Modifier.size(56.dp),

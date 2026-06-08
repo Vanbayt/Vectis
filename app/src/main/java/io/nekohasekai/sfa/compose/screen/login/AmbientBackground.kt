@@ -102,8 +102,11 @@ fun WavyButton(
     
     val waveDepth by animateFloatAsState(
         targetValue = if (isPressed) 0.15f else 0f,
-        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-        label = "waveDepth"
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "morph"
     )
 
     Button(
