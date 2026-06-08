@@ -41,8 +41,7 @@ object LinkParser {
           "outbounds": [
             $outboundJson,
             { "type": "direct", "tag": "direct" },
-            { "type": "block", "tag": "block" },
-            { "type": "dns", "tag": "dns-out" }
+            { "type": "block", "tag": "block" }
           ],
           "route": {
             "rules": [
