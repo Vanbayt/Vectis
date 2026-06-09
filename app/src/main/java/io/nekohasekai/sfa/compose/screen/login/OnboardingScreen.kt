@@ -132,14 +132,24 @@ fun OnboardingScreen(
             }
 
             // Skip Button
-            if (pagerState.currentPage < 2) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    contentAlignment = Alignment.TopEnd
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = pagerState.currentPage < 2,
+                    enter = androidx.compose.animation.fadeIn(),
+                    exit = androidx.compose.animation.fadeOut()
                 ) {
-                    TextButton(onClick = onNavigateToLogin) {
+                    WavyButton(
+                        onClick = onNavigateToLogin,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
                         Text("Skip", style = MaterialTheme.typography.labelLarge)
                     }
                 }
@@ -155,49 +165,65 @@ fun OnboardingScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Left Arrow (Hidden on first page)
-                if (pagerState.currentPage > 0) {
-                    WavyButton(
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(
-                                    page = pagerState.currentPage - 1,
-                                    animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
-                                )
-                            }
-                        },
-                        modifier = Modifier.size(56.dp),
-                        contentPadding = PaddingValues(0.dp)
+                Box(modifier = Modifier.size(56.dp)) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = pagerState.currentPage > 0,
+                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInHorizontally(initialOffsetX = { -it / 2 }),
+                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -it / 2 })
                     ) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Previous")
+                        WavyButton(
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(
+                                        page = pagerState.currentPage - 1,
+                                        animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.size(56.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Previous")
+                        }
                     }
-                } else {
-                    Spacer(modifier = Modifier.size(56.dp))
                 }
 
                 // Right side controls
-                if (pagerState.currentPage < 2) {
-                    // Right Arrow
-                    WavyButton(
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(
-                                    page = pagerState.currentPage + 1,
-                                    animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
-                                )
-                            }
-                        },
-                        modifier = Modifier.size(56.dp),
-                        contentPadding = PaddingValues(0.dp)
+                Box(contentAlignment = Alignment.CenterEnd) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = pagerState.currentPage < 2,
+                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it / 2 }),
+                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it / 2 })
                     ) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "Next")
+                        // Right Arrow
+                        WavyButton(
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(
+                                        page = pagerState.currentPage + 1,
+                                        animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.size(56.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "Next")
+                        }
                     }
-                } else {
-                    // Login Button on the last page
-                    WavyButton(
-                        onClick = onNavigateToLogin,
-                        modifier = Modifier.height(56.dp)
+
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = pagerState.currentPage == 2,
+                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it / 2 }),
+                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it / 2 })
                     ) {
-                        Text("Login", style = MaterialTheme.typography.titleMedium)
+                        // Login Button on the last page
+                        WavyButton(
+                            onClick = onNavigateToLogin,
+                            modifier = Modifier.height(56.dp)
+                        ) {
+                            Text("Login", style = MaterialTheme.typography.titleMedium)
+                        }
                     }
                 }
             }

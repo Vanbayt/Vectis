@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -35,17 +36,55 @@ class WavyCookieShape(private val points: Int = 12, private val waveDepth: Float
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val path = Path()
         val center = Offset(size.width / 2f, size.height / 2f)
-        val outerRadiusX = size.width / 2f
-        val outerRadiusY = size.height / 2f
-
+        
+        val w = size.width
+        val h = size.height
+        val R = h / 2f
+        val cx = if (w > h) w / 2f - R else 0f // distance from center to circle centers
+        
         for (i in 0..360) {
             val angle = i * PI / 180f
-            // Use ellipse math to support rectangular bounds
+            val cosA = cos(angle).toFloat()
+            val sinA = sin(angle).toFloat()
+            
+            var t = 0f
+            
+            // Try top/bottom edges
+            if (sinA != 0f) {
+                val tEdge = kotlin.math.abs(R / sinA)
+                val xIntersect = tEdge * cosA
+                if (xIntersect >= -cx && xIntersect <= cx) {
+                    t = tEdge
+                }
+            }
+            
+            // Try right circle
+            if (t == 0f && cosA > 0) {
+                val b = -2f * cx * cosA
+                val c = cx * cx - R * R
+                val discriminant = b * b - 4 * c
+                if (discriminant >= 0) {
+                    t = (-b + kotlin.math.sqrt(discriminant)) / 2f
+                }
+            }
+            
+            // Try left circle
+            if (t == 0f && cosA < 0) {
+                val b = 2f * cx * cosA
+                val c = cx * cx - R * R
+                val discriminant = b * b - 4 * c
+                if (discriminant >= 0) {
+                    t = (-b + kotlin.math.sqrt(discriminant)) / 2f
+                }
+            }
+            
+            if (t == 0f) t = R // Fallback
+            
             val wave = (0.5f + 0.5f * cos(points * angle).toFloat())
-            val rx = outerRadiusX * (1f - waveDepth * wave)
-            val ry = outerRadiusY * (1f - waveDepth * wave)
-            val x = center.x + rx * cos(angle).toFloat()
-            val y = center.y + ry * sin(angle).toFloat()
+            val rWave = t * (1f - waveDepth * wave)
+            
+            val x = center.x + rWave * cosA
+            val y = center.y + rWave * sinA
             
             if (i == 0) {
                 path.moveTo(x, y)
@@ -101,17 +140,20 @@ fun WavyButton(
     val isPressed by interactionSource.collectIsPressedAsState()
     
     val waveDepth by animateFloatAsState(
-        targetValue = if (isPressed) 0.15f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
+        targetValue = if (isPressed) 0.30f else 0f,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
         label = "morph"
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.92f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        label = "scale"
     )
 
     Button(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.scale(scale),
         shape = WavyCookieShape(points = points, waveDepth = waveDepth),
         colors = colors,
         contentPadding = contentPadding,
