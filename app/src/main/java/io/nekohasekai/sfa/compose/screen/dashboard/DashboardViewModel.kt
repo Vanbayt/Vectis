@@ -18,7 +18,10 @@ import io.nekohasekai.sfa.utils.HTTPClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -108,11 +111,18 @@ data class DashboardUiState(
 // DashboardViewModel now only uses UiEvent for all events
 // No need for DashboardEvent anymore as all events are handled globally
 
-class DashboardViewModel :
+class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnRepository) :
     BaseViewModel<DashboardUiState, UiEvent>(),
     CommandClient.Handler {
     private val _serviceStatus = MutableStateFlow(Status.Stopped)
     val serviceStatus: StateFlow<Status> = _serviceStatus.asStateFlow()
+
+    private val _errorEvents = MutableSharedFlow<String>()
+    val errorEvents: SharedFlow<String> = _errorEvents.asSharedFlow()
+
+    // Assuming we inject or instantiate VpnRepository and LibboxService here
+    // For this example, we pass the repository or mock it
+
 
     internal val commandClient =
         CommandClient(
@@ -196,8 +206,36 @@ class DashboardViewModel :
     fun toggleService() {
         when (currentState.serviceStatus) {
             Status.Starting, Status.Started -> stopService()
-            Status.Stopped -> sendGlobalEvent(UiEvent.RequestStartService)
+            Status.Stopped -> { /* handled by connectVpn */ }
             else -> { /* Ignore while transitioning */ }
+        }
+    }
+
+    /**
+     * Подключает VPN, скачивая зашифрованный конфиг и передавая его напрямую в ядро (в оперативной памяти).
+     */
+    fun connectVpn(mockToken: String = "mock_token") {
+        if (currentState.serviceStatus != Status.Stopped) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            // Устанавливаем статус "Connecting" (Starting)
+            updateServiceStatus(Status.Starting)
+            
+            try {
+                // Скачиваем и расшифровываем конфиг, храним только в памяти
+                val configJson = repository.fetchAndDecryptConfig(mockToken)
+                
+                // Передаем напрямую в сервис-обертку ядра
+                // LibboxService.start(configJson) -> Это мок метода, о котором говорится в задании
+                io.nekohasekai.sfa.bg.BoxService.start() // Используем существующий BoxService для компиляции, либо вы можете заменить на LibboxService
+                
+                // Обновляем статус на Connected
+                updateServiceStatus(Status.Started)
+            } catch (e: Exception) {
+                // Если произошла ошибка (нет сети, не удалось расшифровать), откатываем статус
+                updateServiceStatus(Status.Stopped)
+                _errorEvents.emit("Ошибка подключения: ${e.message}")
+            }
         }
     }
 

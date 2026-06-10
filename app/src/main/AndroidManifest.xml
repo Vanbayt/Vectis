@@ -30,7 +30,7 @@
         tools:ignore="QueryAllPackagesPermission" />
 
     <application
-        android:name=".Application"
+        android:name=".VectisApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:description="@string/xposed_description"

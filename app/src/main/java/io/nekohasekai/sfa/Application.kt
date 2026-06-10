@@ -31,7 +31,7 @@ import java.io.File
 import java.util.Locale
 import io.nekohasekai.sfa.Application as BoxApplication
 
-class Application : Application() {
+open class Application : Application() {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         application = this

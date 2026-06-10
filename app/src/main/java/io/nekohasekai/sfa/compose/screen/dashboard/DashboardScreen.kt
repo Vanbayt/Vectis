@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -40,9 +41,18 @@ fun DashboardScreen(
     serviceStatus: Status = Status.Stopped,
     showStartFab: Boolean = false,
     showStatusBar: Boolean = false,
-    viewModel: DashboardViewModel? = null,
+    viewModel: DashboardViewModel = koinViewModel(),
 ) {
     val isConnected = serviceStatus == Status.Started || serviceStatus == Status.Starting
+    val isConnecting = serviceStatus == Status.Starting
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Подписываемся на ошибки из ViewModel
+    LaunchedEffect(viewModel) {
+        viewModel.errorEvents.collect { errorMsg ->
+            snackbarHostState.showSnackbar(errorMsg)
+        }
+    }
 
     OverrideTopBar {
         TopAppBar(
@@ -73,11 +83,16 @@ fun DashboardScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 24.dp)
-    ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = Color.Transparent
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(bottom = 24.dp)
+        ) {
         
         // Cards Grid area (scrollable if needed, expands to push slider down)
         Column(
@@ -216,11 +231,14 @@ fun DashboardScreen(
         ) {
             SwipeToConnectSlider(
                 isConnected = isConnected,
+                isConnecting = isConnecting,
                 onConnect = {
-                    if (serviceStatus == Status.Stopped) viewModel?.toggleService()
+                    if (serviceStatus == Status.Stopped) {
+                        viewModel.connectVpn()
+                    }
                 },
                 onDisconnect = {
-                    if (serviceStatus == Status.Started || serviceStatus == Status.Starting) viewModel?.toggleService()
+                    if (serviceStatus == Status.Started || serviceStatus == Status.Starting) viewModel.toggleService()
                 }
             )
         }
@@ -244,11 +262,13 @@ fun DashboardScreen(
             Text("Ping: 45 ms", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+    }
 }
 
 @Composable
 fun SwipeToConnectSlider(
     isConnected: Boolean,
+    isConnecting: Boolean,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit
 ) {
@@ -288,13 +308,21 @@ fun SwipeToConnectSlider(
         // Centered Text
         val textAlpha = 1f - (offsetX.value / maxSwipePx * 1.5f).coerceIn(0f, 1f)
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = if (isConnected) "Swipe to disconnect" else "Swipe to connect",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.alpha(textAlpha * 0.5f)
-            )
+            if (isConnecting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = if (isConnected) "Swipe to disconnect" else "Swipe to connect",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.alpha(textAlpha * 0.5f)
+                )
+            }
         }
 
         // Thumb
@@ -305,7 +333,8 @@ fun SwipeToConnectSlider(
                 .size(thumbSize)
                 .clip(CircleShape)
                 .background(if (isConnected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surface)
-                .pointerInput(Unit) {
+                .pointerInput(isConnecting) {
+                    if (isConnecting) return@pointerInput // Блокируем свайп во время загрузки
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             lastHapticPosition = 0f

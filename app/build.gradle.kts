@@ -73,6 +73,8 @@ android {
         versionCode = getVersionProps("VERSION_CODE").toInt()
         versionName = getVersionProps("VERSION_NAME")
         base.archivesName.set("SFA-${versionName}")
+
+        buildConfigField("String", "AES_SECRET_KEY", "\"DUMMY_SECRET_KEY_FOR_AES_GCM_32\"")
     }
 
     signingConfigs {
@@ -215,6 +217,14 @@ dependencies {
         exclude(group = "com.google.guava", module = "guava")
     }
     implementation("com.google.guava:guava:33.5.0-android")
+
+    // Koin DI
+    implementation("io.insert-koin:koin-androidx-compose:3.5.3")
+
+    // Networking
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // API 23+ dependencies (play/other)
     "playImplementation"("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion23")
