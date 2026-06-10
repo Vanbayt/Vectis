@@ -17,9 +17,9 @@ object CryptoUtils {
      * Расшифровывает зашифрованный конфиг.
      * @param cipherTextBase64 зашифрованные данные (Base64)
      * @param ivBase64 вектор инициализации (Base64)
-     * @return расшифрованная JSON-строка
+     * @return расшифрованный массив байт
      */
-    fun decryptConfig(cipherTextBase64: String, ivBase64: String): String {
+    fun decryptConfig(cipherTextBase64: String, ivBase64: String): ByteArray {
         try {
             val cipherText = Base64.decode(cipherTextBase64, Base64.DEFAULT)
             val iv = Base64.decode(ivBase64, Base64.DEFAULT)
@@ -33,8 +33,7 @@ object CryptoUtils {
 
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec)
 
-            val decryptedBytes = cipher.doFinal(cipherText)
-            return String(decryptedBytes, StandardCharsets.UTF_8)
+            return cipher.doFinal(cipherText)
 
         } catch (e: AEADBadTagException) {
             throw SecurityException("Failed to decrypt config: Invalid tag or key.", e)

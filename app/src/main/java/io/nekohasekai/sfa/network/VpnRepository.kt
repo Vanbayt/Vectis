@@ -9,9 +9,9 @@ class VpnRepository(private val vpnApi: VpnApi) {
     /**
      * Получает зашифрованный конфиг с сервера и возвращает его в расшифрованном виде.
      * @param token JWT токен
-     * @return расшифрованная JSON-строка конфигурации
+     * @return расшифрованный массив байт конфигурации
      */
-    suspend fun fetchAndDecryptConfig(token: String): String {
+    suspend fun fetchAndDecryptConfig(token: String): ByteArray {
         return withContext(Dispatchers.IO) {
             try {
                 // Выполняем GET-запрос к API

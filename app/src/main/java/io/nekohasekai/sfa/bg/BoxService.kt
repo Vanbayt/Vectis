@@ -44,7 +44,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class BoxService(private val service: Service, private val platformInterface: PlatformInterface) : CommandServerHandler {
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+
+class BoxService(private val service: Service, private val platformInterface: PlatformInterface) : CommandServerHandler, KoinComponent {
+    private val repository: io.nekohasekai.sfa.network.VpnRepository by inject()
     companion object {
         private const val PROFILE_UPDATE_INTERVAL = 15L * 60 * 1000 // 15 minutes in milliseconds
         private const val TAG = "BoxService"
@@ -107,25 +111,23 @@ class BoxService(private val service: Service, private val platformInterface: Pl
                 notification.show(lastProfileName, R.string.status_starting)
             }
 
-            val selectedProfileId = Settings.selectedProfile
-            if (selectedProfileId == -1L) {
-                stopAndAlert(Alert.EmptyConfiguration)
+            val token = Settings.token
+            if (token.isBlank()) {
+                stopAndAlert(Alert.EmptyConfiguration, "Auth token is missing")
                 return
             }
 
-            val profile = ProfileManager.get(selectedProfileId)
-            if (profile == null) {
-                stopAndAlert(Alert.EmptyConfiguration)
+            val configBytes = try {
+                repository.fetchAndDecryptConfig(token)
+            } catch (e: Exception) {
+                stopAndAlert(Alert.StartService, "Failed to fetch config: ${e.message}")
                 return
             }
+            
+            val content = String(configBytes, Charsets.UTF_8)
+            configBytes.fill(0) // Zero out the decrypted config in memory
 
-            val content = File(profile.typed.path).readText()
-            if (content.isBlank()) {
-                stopAndAlert(Alert.EmptyConfiguration)
-                return
-            }
-
-            lastProfileName = profile.name
+            lastProfileName = "Vectis API Config"
             withContext(Dispatchers.Main) {
                 notification.show(lastProfileName, R.string.status_starting)
             }
@@ -196,24 +198,22 @@ class BoxService(private val service: Service, private val platformInterface: Pl
     }
 
     suspend fun serviceReload0() {
-        val selectedProfileId = Settings.selectedProfile
-        if (selectedProfileId == -1L) {
-            stopAndAlert(Alert.EmptyConfiguration)
+        val token = Settings.token
+        if (token.isBlank()) {
+            stopAndAlert(Alert.EmptyConfiguration, "Auth token is missing")
             return
         }
 
-        val profile = ProfileManager.get(selectedProfileId)
-        if (profile == null) {
-            stopAndAlert(Alert.EmptyConfiguration)
+        val configBytes = try {
+            repository.fetchAndDecryptConfig(token)
+        } catch (e: Exception) {
+            stopAndAlert(Alert.StartService, "Failed to fetch config: ${e.message}")
             return
         }
 
-        val content = File(profile.typed.path).readText()
-        if (content.isBlank()) {
-            stopAndAlert(Alert.EmptyConfiguration)
-            return
-        }
-        lastProfileName = profile.name
+        val content = String(configBytes, Charsets.UTF_8)
+        configBytes.fill(0) // Zero out the decrypted config in memory
+        lastProfileName = "Vectis API Config"
         try {
             commandServer.startOrReloadService(
                 content,

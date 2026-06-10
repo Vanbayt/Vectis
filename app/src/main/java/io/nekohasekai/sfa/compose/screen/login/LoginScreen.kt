@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.database.Settings
+import io.nekohasekai.sfa.compose.screen.login.LoginViewModel
+import io.nekohasekai.sfa.compose.screen.login.LoginUiState
+import org.koin.androidx.compose.koinViewModel
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -34,16 +37,28 @@ import kotlin.math.sin
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    viewModel: LoginViewModel = koinViewModel()
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+    LaunchedEffect(uiState) {
+        if (uiState is LoginUiState.Success) {
+            onLoginSuccess()
+        } else if (uiState is LoginUiState.Error) {
+            snackbarHostState.showSnackbar((uiState as LoginUiState.Error).message)
+            viewModel.resetState()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.surface
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             
             // Native Bezier Blobs
             Box(
@@ -143,10 +158,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = {
-                        Settings.token = "dummy_token_${System.currentTimeMillis()}"
-                        onLoginSuccess()
-                    },
+                    onClick = { viewModel.login(username, password) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -155,12 +167,20 @@ fun LoginScreen(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
-                    enabled = username.isNotBlank() && password.isNotBlank()
+                    enabled = username.isNotBlank() && password.isNotBlank() && uiState !is LoginUiState.Loading
                 ) {
-                    Text(
-                        text = "Login",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    if (uiState is LoginUiState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Login",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
             }
         }

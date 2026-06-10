@@ -214,27 +214,16 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
     /**
      * Подключает VPN, скачивая зашифрованный конфиг и передавая его напрямую в ядро (в оперативной памяти).
      */
-    fun connectVpn(mockToken: String = "mock_token") {
+    fun connectVpn() {
         if (currentState.serviceStatus != Status.Stopped) return
 
         viewModelScope.launch(Dispatchers.IO) {
-            // Устанавливаем статус "Connecting" (Starting)
             updateServiceStatus(Status.Starting)
-            
             try {
-                // Скачиваем и расшифровываем конфиг, храним только в памяти
-                val configJson = repository.fetchAndDecryptConfig(mockToken)
-                
-                // Передаем напрямую в сервис-обертку ядра
-                // LibboxService.start(configJson) -> Это мок метода, о котором говорится в задании
-                io.nekohasekai.sfa.bg.BoxService.start() // Используем существующий BoxService для компиляции, либо вы можете заменить на LibboxService
-                
-                // Обновляем статус на Connected
-                updateServiceStatus(Status.Started)
+                io.nekohasekai.sfa.bg.BoxService.start()
             } catch (e: Exception) {
-                // Если произошла ошибка (нет сети, не удалось расшифровать), откатываем статус
                 updateServiceStatus(Status.Stopped)
-                _errorEvents.emit("Ошибка подключения: ${e.message}")
+                _errorEvents.emit("Ошибка запуска сервиса: ${e.message}")
             }
         }
     }
