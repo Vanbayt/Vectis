@@ -13,3 +13,9 @@ local.properties
 /service-account-credentials.json
 /CLAUDE.md
 /.claude/
+
+# Security and Keys
+*.jks
+*.keystore
+keys.properties
+google-services.json
