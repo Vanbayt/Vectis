@@ -20,12 +20,14 @@ object CryptoUtils {
      * @return расшифрованный массив байт
      */
     fun decryptConfig(cipherTextBase64: String, ivBase64: String): ByteArray {
+        var secretKeyBytes: ByteArray? = null
+        var cipherText: ByteArray? = null
+        var iv: ByteArray? = null
         try {
-            val cipherText = Base64.decode(cipherTextBase64, Base64.DEFAULT)
-            val iv = Base64.decode(ivBase64, Base64.DEFAULT)
+            cipherText = Base64.decode(cipherTextBase64, Base64.DEFAULT)
+            iv = Base64.decode(ivBase64, Base64.DEFAULT)
 
-            // Получаем ключ из BuildConfig (предполагается, что он 32 байта для AES-256)
-            val secretKeyBytes = BuildConfig.AES_SECRET_KEY.toByteArray(StandardCharsets.UTF_8)
+            secretKeyBytes = NativeLib.getAesKey()
             val secretKeySpec = SecretKeySpec(secretKeyBytes, "AES")
 
             val cipher = Cipher.getInstance(ALGORITHM)
@@ -34,11 +36,14 @@ object CryptoUtils {
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec)
 
             return cipher.doFinal(cipherText)
-
         } catch (e: AEADBadTagException) {
             throw SecurityException("Failed to decrypt config: Invalid tag or key.", e)
         } catch (e: Exception) {
             throw RuntimeException("Failed to decrypt config", e)
+        } finally {
+            secretKeyBytes?.fill(0)
+            cipherText?.fill(0)
+            iv?.fill(0)
         }
     }
 }

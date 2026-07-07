@@ -220,7 +220,9 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
         viewModelScope.launch(Dispatchers.IO) {
             updateServiceStatus(Status.Starting)
             try {
-                io.nekohasekai.sfa.bg.BoxService.start()
+                // Вместо прямого старта, который обходит системный запрос на VPN-разрешение,
+                // отправляем событие в MainActivity, где будет вызван VpnService.prepare()
+                sendGlobalEvent(UiEvent.RequestStartService)
             } catch (e: Exception) {
                 updateServiceStatus(Status.Stopped)
                 _errorEvents.emit("Ошибка запуска сервиса: ${e.message}")

@@ -79,6 +79,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.androidx.compose.koinViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -247,10 +248,9 @@ class MainActivity :
             if (Settings.rebuildServiceMode()) {
                 connection.reconnect()
             }
-            if (Settings.serviceMode == ServiceMode.VPN) {
-                if (prepare()) {
-                    return@launch
-                }
+            // Всегда вызываем prepare(), так как мы принудительно используем VPNService
+            if (prepare()) {
+                return@launch
             }
             val intent = Intent(Application.application, Settings.serviceClass())
             withContext(Dispatchers.Main) {
@@ -316,7 +316,7 @@ class MainActivity :
                     )
                 }
                 AppRootState.MainApp -> {
-                    SFAMainAppContent()
+                    SFAMainAppContent(onLogout = { isAuthenticated = false })
                 }
             }
         }
@@ -324,7 +324,7 @@ class MainActivity :
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun SFAMainAppContent() {
+    fun SFAMainAppContent(onLogout: () -> Unit = {}) {
 
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -618,7 +618,7 @@ class MainActivity :
         }
 
         // Initialize the dashboard view model and store reference
-        val dashboardViewModel: DashboardViewModel = viewModel()
+        val dashboardViewModel: DashboardViewModel = koinViewModel()
         if (!::dashboardViewModel.isInitialized) {
             this.dashboardViewModel = dashboardViewModel
         }
@@ -756,7 +756,9 @@ class MainActivity :
                         connection.reconnect()
                     }
 
-
+                    is UiEvent.Logout -> {
+                        onLogout()
+                    }
 
                     is UiEvent.ApplyServiceChange -> enqueueApplyServiceChange(event.mode)
                 }

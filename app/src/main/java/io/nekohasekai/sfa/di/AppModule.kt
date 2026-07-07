@@ -15,14 +15,36 @@ import io.nekohasekai.sfa.network.AuthApi
 import io.nekohasekai.sfa.network.AuthRepository
 import io.nekohasekai.sfa.compose.screen.login.LoginViewModel
 import io.nekohasekai.sfa.BuildConfig
+import kotlinx.coroutines.launch
 
 val appModule = module {
     single {
         val json = Json { ignoreUnknownKeys = true }
         val contentType = "application/json".toMediaType()
+        val loggingInterceptor = okhttp3.logging.HttpLoggingInterceptor().apply {
+            level = okhttp3.logging.HttpLoggingInterceptor.Level.BODY
+        }
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                val request = chain.request()
+                val response = chain.proceed(request)
+                if (response.code == 401) {
+                    io.nekohasekai.sfa.database.Settings.clearSession()
+                    kotlinx.coroutines.GlobalScope.launch {
+                        io.nekohasekai.sfa.compose.base.GlobalEventBus.emit(io.nekohasekai.sfa.compose.base.UiEvent.Logout)
+                    }
+                }
+                response
+            }
+            .build()
+            
         Retrofit.Builder()
             .baseUrl(BuildConfig.API_BASE_URL)
-            .client(OkHttpClient.Builder().build())
+            .client(client)
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
     }

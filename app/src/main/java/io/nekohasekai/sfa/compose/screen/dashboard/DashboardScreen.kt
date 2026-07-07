@@ -285,10 +285,10 @@ fun SwipeToConnectSlider(
     val maxSwipePx = with(LocalDensity.current) { (width - thumbSize - (padding * 2)).toPx() }
 
     // Sync external state changes with the slider thumb
-    LaunchedEffect(isConnected) {
+    LaunchedEffect(isConnected, isConnecting) {
         if (isConnected) {
             offsetX.animateTo(maxSwipePx)
-        } else {
+        } else if (!isConnecting) {
             offsetX.animateTo(0f)
         }
     }

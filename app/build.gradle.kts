@@ -57,7 +57,7 @@ android {
     namespace = "io.nekohasekai.sfa"
     compileSdk = 36
 
-    ndkVersion = "28.0.13004108"
+    ndkVersion = "30.0.14904198"
 
     System.getenv("ANDROID_NDK_HOME")?.let { ndkPath = it }
 
@@ -73,10 +73,14 @@ android {
         versionCode = getVersionProps("VERSION_CODE").toInt()
         versionName = getVersionProps("VERSION_NAME")
         base.archivesName.set("SFA-${versionName}")
-
-        buildConfigField("String", "AES_SECRET_KEY", "\"DUMMY_SECRET_KEY_FOR_AES_GCM_32\"")
         // TODO: Replace with the actual local IP address of your FastAPI backend (e.g., "http://192.168.1.100:8000")
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.100:8000\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://144.31.97.178:8000/\"")
+        
+        externalNativeBuild {
+            cmake {
+                cppFlags("")
+            }
+        }
     }
 
     signingConfigs {
@@ -165,6 +169,13 @@ android {
         }
     }
 
+    externalNativeBuild {
+        cmake {
+            path("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
     lint {
         fatal += "NewApi"
     }
@@ -227,6 +238,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // API 23+ dependencies (play/other)
     "playImplementation"("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion23")

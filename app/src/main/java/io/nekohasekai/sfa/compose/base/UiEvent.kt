@@ -13,11 +13,11 @@ sealed class UiEvent {
 
     data class OpenUrl(val url: String) : UiEvent()
 
-
-
     object RequestStartService : UiEvent()
 
     object RequestReconnectService : UiEvent()
+
+    object Logout : UiEvent()
 
     data class ApplyServiceChange(val mode: Mode) : UiEvent() {
         enum class Mode {

@@ -152,6 +152,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
                     },
                 )
             } catch (e: Exception) {
+                android.util.Log.e("VPN_ERROR", "startOrReloadService failed! Config content: $content", e)
                 stopAndAlert(Alert.CreateService, e.message)
                 return
             }

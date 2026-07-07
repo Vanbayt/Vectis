@@ -3,8 +3,10 @@ package io.nekohasekai.sfa.network
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
+import androidx.annotation.Keep
 import kotlinx.serialization.Serializable
 
+@Keep
 @Serializable
 data class TokenResponse(
     val access_token: String,
