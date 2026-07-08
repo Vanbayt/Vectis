@@ -100,6 +100,7 @@ fun SFANavHost(
                     serviceStatus = serviceStatus,
                     showStartFab = showStartFab,
                     showStatusBar = showStatusBar,
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     viewModel = dashboardViewModel,
                 )
             } else {
@@ -107,6 +108,7 @@ fun SFANavHost(
                     serviceStatus = serviceStatus,
                     showStartFab = showStartFab,
                     showStatusBar = showStatusBar,
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
                 )
             }
         }

@@ -30,42 +30,18 @@ class VpnRepository(private val vpnApi: VpnApi) {
                         val inbound = inbounds.optJSONObject(i)
                         if (inbound != null && inbound.optString("type") == "tun") {
                             
-                            val addressList = org.json.JSONArray()
-                            var modified = false
-                            
-                            // Проверяем inet4_address
                             if (inbound.has("inet4_address")) {
-                                val inet4 = inbound.get("inet4_address")
-                                if (inet4 is org.json.JSONArray) {
-                                    for (j in 0 until inet4.length()) addressList.put(inet4.getString(j))
-                                } else if (inet4 is String) {
-                                    addressList.put(inet4)
-                                }
+                                val addr = inbound.optString("inet4_address")
                                 inbound.remove("inet4_address")
-                                modified = true
-                            }
-                            
-                            // ПОЛНОСТЬЮ удаляем IPv6 (inet6_address), так как он может вызывать 
-                            // IllegalArgumentException (invalid argument) на некоторых Android устройствах
-                            if (inbound.has("inet6_address")) {
-                                inbound.remove("inet6_address")
-                                modified = true
+                                val addressArray = org.json.JSONArray()
+                                if (addr.isNotEmpty()) {
+                                    addressArray.put(addr)
+                                }
+                                inbound.put("address", addressArray)
                             }
 
-                            // Если address уже есть, оставляем только IPv4
-                            if (inbound.has("address")) {
-                                val existing = inbound.getJSONArray("address")
-                                for (j in 0 until existing.length()) {
-                                    val s = existing.getString(j)
-                                    if (!s.contains(":")) { // Пропускаем IPv6
-                                        addressList.put(s)
-                                    }
-                                }
-                                modified = true
-                            }
-                            
-                            if (modified && addressList.length() > 0) {
-                                inbound.put("address", addressList)
+                            if (inbound.has("inet6_address")) {
+                                inbound.remove("inet6_address")
                             }
 
                             // Удаляем interface_name так как он может вызывать invalid argument на Android
@@ -85,6 +61,33 @@ class VpnRepository(private val vpnApi: VpnApi) {
                         }
                     }
                 }
+                // Извлекаем Location и Protocol для отображения в Dashboard
+                val outbounds = json.optJSONArray("outbounds")
+                var parsedProtocol = "—"
+                var parsedLocation = "—"
+                if (outbounds != null) {
+                    for (i in 0 until outbounds.length()) {
+                        val outbound = outbounds.optJSONObject(i)
+                        if (outbound != null) {
+                            val type = outbound.optString("type")
+                            val tag = outbound.optString("tag")
+                            // Ищем первый реальный прокси (игнорируем служебные)
+                            if (type != "direct" && type != "block" && type != "dns" && type != "urltest" && type != "selector") {
+                                parsedProtocol = type.uppercase()
+                                // Извлекаем город из тега вида "proxy-frankfurt-0"
+                                if (tag.startsWith("proxy-")) {
+                                    val parts = tag.split("-")
+                                    if (parts.size >= 2) {
+                                        parsedLocation = parts[1].replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                    }
+                                }
+                                break
+                            }
+                        }
+                    }
+                }
+                io.nekohasekai.sfa.database.Settings.lastProtocol = parsedProtocol
+                io.nekohasekai.sfa.database.Settings.lastLocation = parsedLocation
                 
                 json.toString().toByteArray(Charsets.UTF_8)
             } catch (e: java.net.SocketTimeoutException) {

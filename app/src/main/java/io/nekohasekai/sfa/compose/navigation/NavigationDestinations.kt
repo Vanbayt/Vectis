@@ -54,5 +54,4 @@ val bottomNavigationScreens =
         Screen.Dashboard,
         Screen.Log,
         Screen.Tools,
-        Screen.Settings,
     )

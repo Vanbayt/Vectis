@@ -696,7 +696,6 @@ class MainActivity :
                 }
                 add(Screen.Log)
                 add(Screen.Tools)
-                add(Screen.Settings)
             }
 
         val allowedRoutes =
@@ -796,7 +795,7 @@ class MainActivity :
                 )
                 if (!useNavigationRail) {
                     ServiceStatusBar(
-                        visible = showStatusBar && !isSubScreen,
+                        visible = false, // TODO: Implement and re-enable connection status bar
                         serviceStatus = currentServiceStatus,
                         startTime = dashboardUiState.serviceStartTime,
                         groupsCount = dashboardUiState.groupsCount,

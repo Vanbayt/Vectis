@@ -74,7 +74,7 @@ android {
         versionName = getVersionProps("VERSION_NAME")
         base.archivesName.set("SFA-${versionName}")
         // TODO: Replace with the actual local IP address of your FastAPI backend (e.g., "http://192.168.1.100:8000")
-        buildConfigField("String", "API_BASE_URL", "\"http://144.31.97.178:8000/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://144.31.97.178:18000/\"")
         
         externalNativeBuild {
             cmake {

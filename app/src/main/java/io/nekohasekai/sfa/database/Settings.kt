@@ -127,6 +127,8 @@ object Settings {
     var cachedApkPath by dataStore.string(SettingsKey.CACHED_APK_PATH) { "" }
     var lastShownUpdateVersion by dataStore.int(SettingsKey.LAST_SHOWN_UPDATE_VERSION) { 0 }
     var token by dataStore.string(SettingsKey.TOKEN) { "" }
+    var lastProtocol by dataStore.string(SettingsKey.LAST_PROTOCOL) { "—" }
+    var lastLocation by dataStore.string(SettingsKey.LAST_LOCATION) { "—" }
 
     fun serviceClass(): Class<*> = VPNService::class.java
 

@@ -91,11 +91,18 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
                 ),
             )
         }
-        service.startForeground(
+        val type = if (Build.VERSION.SDK_INT >= 34) {
+            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+        } else {
+            0
+        }
+        ServiceCompat.startForeground(
+            service,
             notificationId,
             notificationBuilder
                 .setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "sing-box")
                 .setContentText(service.getString(contentTextId)).build(),
+            type
         )
     }
 

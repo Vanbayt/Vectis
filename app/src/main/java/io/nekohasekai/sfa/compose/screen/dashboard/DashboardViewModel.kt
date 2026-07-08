@@ -23,7 +23,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONException
@@ -54,8 +56,11 @@ data class DashboardUiState(
     val deprecatedNotes: List<DeprecatedNote> = emptyList(),
     val showDeprecatedDialog: Boolean = false,
     // Status
+    val location: String = "—",
+    val protocol: String = "—",
     val memory: String = "",
     val goroutines: String = "",
+    val ping: String = "—",
     val isStatusVisible: Boolean = false,
     // Traffic
     val trafficVisible: Boolean = false,
@@ -277,10 +282,18 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
                 }
                 reloadSystemProxyStatus()
                 reloadStartedAt()
+                startPingJob()
+                updateState {
+                    copy(
+                        location = Settings.lastLocation,
+                        protocol = Settings.lastProtocol
+                    )
+                }
             }
 
             Status.Stopped -> {
                 commandClient.disconnect()
+                stopPingJob()
                 updateState {
                     copy(
                         hasGroups = false,
@@ -290,6 +303,9 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
                         clashModeVisible = false,
                         systemProxyVisible = false,
                         trafficVisible = false,
+                        location = "—",
+                        protocol = "—",
+                        ping = "—",
                         memory = "",
                         goroutines = "",
                         connectionsIn = "0",
@@ -306,6 +322,41 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
 
             else -> {}
         }
+    }
+
+    private var pingJob: Job? = null
+
+    private fun startPingJob() {
+        pingJob?.cancel()
+        pingJob = viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                if (_serviceStatus.value == Status.Started) {
+                    try {
+                        val process = Runtime.getRuntime().exec("ping -c 1 -W 1 8.8.8.8")
+                        val start = System.currentTimeMillis()
+                        val exitVal = process.waitFor()
+                        val time = System.currentTimeMillis() - start
+                        withContext(Dispatchers.Main) {
+                            if (exitVal == 0) {
+                                updateState { copy(ping = "${time} ms") }
+                            } else {
+                                updateState { copy(ping = "Error") }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            updateState { copy(ping = "Error") }
+                        }
+                    }
+                }
+                delay(3000)
+            }
+        }
+    }
+
+    private fun stopPingJob() {
+        pingJob?.cancel()
+        pingJob = null
     }
 
     private fun reloadStartedAt() {

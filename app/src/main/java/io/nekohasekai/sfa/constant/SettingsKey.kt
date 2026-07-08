@@ -56,4 +56,6 @@ object SettingsKey {
     const val CACHED_APK_PATH = "cached_apk_path"
     const val LAST_SHOWN_UPDATE_VERSION = "last_shown_update_version"
     const val TOKEN = "token"
+    const val LAST_PROTOCOL = "last_protocol"
+    const val LAST_LOCATION = "last_location"
 }
