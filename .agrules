@@ -1,0 +1,1 @@
+Strictly use Jetpack Compose and Material Design 3. No XML layouts. Reference local .agents/skills for architecture decisions.

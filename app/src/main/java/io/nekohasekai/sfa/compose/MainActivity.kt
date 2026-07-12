@@ -30,14 +30,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -57,6 +62,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -71,6 +78,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -641,7 +651,7 @@ class MainActivity :
         val isGroupsRoute = currentRootRoute == Screen.Groups.route
         val isLogRoute = currentRootRoute == Screen.Log.route
 
-        val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute
+        val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute || currentRoute == Screen.Settings.route
         // Get LogViewModel instance if we're on the Log screen
         val logViewModel: LogViewModel? =
             if (isLogRoute) {
@@ -880,7 +890,13 @@ class MainActivity :
                     bottomBar = {
                         if (!isSubScreen) {
                             val hasUpdate by UpdateState.hasUpdate
-                            NavigationBar {
+                            NavigationBar(
+                                modifier = Modifier
+                                    .padding(start = 24.dp, end = 24.dp, bottom = 32.dp, top = 8.dp)
+                                    .clip(RoundedCornerShape(32.dp)),
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
+                            ) {
                                 bottomNavigationScreens.forEach { screen ->
                                     NavigationBarItem(
                                         icon = {
@@ -896,7 +912,8 @@ class MainActivity :
                                                 Icon(screen.icon, contentDescription = null)
                                             }
                                         },
-                                        label = { Text(stringResource(screen.titleRes)) },
+                                        label = null, // Floating nav bars look cleaner without labels, relying on M3 active pill indicator
+                                        alwaysShowLabel = false,
                                         selected =
                                         currentDestination?.hierarchy?.any {
                                             it.route == screen.route

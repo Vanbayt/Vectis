@@ -155,6 +155,16 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
     }
 
     init {
+        // Validate token on start to trigger 401 logout if expired
+        if (Settings.token.isNotEmpty()) {
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    repository.fetchAndDecryptConfig(Settings.token)
+                } catch (e: Exception) {
+                    // Ignore, 401 will be caught by AppModule interceptor
+                }
+            }
+        }
 
         viewModelScope.launch {
             AppLifecycleObserver.isForeground.collect { foreground ->

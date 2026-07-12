@@ -3,6 +3,7 @@ package io.nekohasekai.sfa.compose.screen.dashboard
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -21,8 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -41,6 +45,51 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.clickable
+
+@Composable
+fun Modifier.bounceClick(
+    onClick: () -> Unit
+): Modifier {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val haptic = LocalHapticFeedback.current
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "bounce"
+    )
+
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
+    }
+
+    return this
+        .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+        .clickable(
+            interactionSource = interactionSource,
+            indication = LocalIndication.current,
+            onClick = onClick
+        )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +105,7 @@ fun DashboardScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.uiState.collectAsState()
 
+    // Подписываемся на ошибки из ViewModel
     // Подписываемся на ошибки из ViewModel
     LaunchedEffect(viewModel) {
         viewModel.errorEvents.collect { errorMsg ->
@@ -87,7 +137,12 @@ fun DashboardScreen(
         }
     }
 
-
+    // Staggered Entrance Animation State
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(100)
+        visible = true
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -119,7 +174,7 @@ fun DashboardScreen(
                 }
             }
             
-            // Cards Grid area
+                // Cards Grid area
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -127,120 +182,122 @@ fun DashboardScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-                // Quick Toggles Row
-                val killSwitchEnabled = remember { mutableStateOf(false) }
-                val splitTunnelEnabled = remember { mutableStateOf(false) }
-                val autoConnectEnabled = remember { mutableStateOf(false) }
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 24.dp),
-                    modifier = Modifier.fillMaxWidth()
+                // Hero Element: Data Usage
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = slideInVertically(
+                        initialOffsetY = { 50 },
+                        animationSpec = tween(durationMillis = 400, delayMillis = 0, easing = LinearOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(400, delayMillis = 0))
                 ) {
-                    item {
-                        FilterChip(
-                            selected = killSwitchEnabled.value,
-                            onClick = { killSwitchEnabled.value = !killSwitchEnabled.value },
-                            label = { Text("Kill Switch") },
-                            leadingIcon = { Icon(Icons.Rounded.GppBad, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                        )
-                    }
-                    item {
-                        FilterChip(
-                            selected = splitTunnelEnabled.value,
-                            onClick = { splitTunnelEnabled.value = !splitTunnelEnabled.value },
-                            label = { Text("Split Tunnel") },
-                            leadingIcon = { Icon(Icons.Rounded.AltRoute, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                        )
-                    }
-                    item {
-                        FilterChip(
-                            selected = autoConnectEnabled.value,
-                            onClick = { autoConnectEnabled.value = !autoConnectEnabled.value },
-                            label = { Text("Auto-connect") },
-                            leadingIcon = { Icon(Icons.Rounded.Autorenew, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                        )
+                    Box(modifier = Modifier.padding(horizontal = 8.dp).bounceClick { }) {
+                        DataUsageCard()
                     }
                 }
 
-                // Traffic Stats
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    InfoTile(
-                        modifier = Modifier.weight(1f),
-                        title = "Download",
-                        value = state.downlink,
-                        icon = Icons.Rounded.ArrowDownward
-                    )
-                    InfoTile(
-                        modifier = Modifier.weight(1f),
-                        title = "Upload",
-                        value = state.uplink,
-                        icon = Icons.Rounded.ArrowUpward
-                    )
-                }
-
-                // Location and Protocol
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    InfoTile(
-                        modifier = Modifier.weight(1f),
-                        title = "Location",
-                        value = state.location,
-                        icon = Icons.Rounded.Place
-                    )
-                    InfoTile(
-                        modifier = Modifier.weight(1f),
-                        title = "Protocol",
-                        value = state.protocol,
-                        icon = Icons.Rounded.Lock
-                    )
-                }
-                
-                // Account/Subscription Card
-                OutlinedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    )
+                // 2x2 Grid for Stats & Info
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = slideInVertically(
+                        initialOffsetY = { 50 },
+                        animationSpec = tween(durationMillis = 400, delayMillis = 100, easing = LinearOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(400, delayMillis = 100))
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.AccountCircle,
-                            contentDescription = "Subscription",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Premium Active",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "14 days left",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            InfoTile(
+                                modifier = Modifier.weight(1f).bounceClick { },
+                                title = "Download",
+                                value = state.downlink,
+                                icon = Icons.Rounded.ArrowDownward,
+                                shape = RoundedCornerShape(topStart = 32.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 4.dp)
+                            )
+                            InfoTile(
+                                modifier = Modifier.weight(1f).bounceClick { },
+                                title = "Upload",
+                                value = state.uplink,
+                                icon = Icons.Rounded.ArrowUpward,
+                                shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 32.dp, bottomStart = 4.dp)
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            InfoTile(
+                                modifier = Modifier.weight(1f).bounceClick { },
+                                title = "Location",
+                                value = state.location,
+                                icon = Icons.Rounded.Place,
+                                shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 32.dp)
+                            )
+                            InfoTile(
+                                modifier = Modifier.weight(1f).bounceClick { },
+                                title = "Protocol",
+                                value = state.protocol,
+                                icon = Icons.Rounded.Lock,
+                                shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 32.dp, topEnd = 4.dp, bottomStart = 4.dp)
+                            )
+                        }
                     }
                 }
-                
-                Box(modifier = Modifier.padding(horizontal = 24.dp)) {
-                    DataUsageCard()
+
+                // Account/Subscription Card
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = slideInVertically(
+                        initialOffsetY = { 50 },
+                        animationSpec = tween(durationMillis = 400, delayMillis = 200, easing = LinearOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(400, delayMillis = 200))
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                            .bounceClick { },
+                        shape = RoundedCornerShape(topStart = 32.dp, bottomEnd = 32.dp, topEnd = 8.dp, bottomStart = 8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateContentSize()
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Premium Active",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                )
+                                Text(
+                                    text = "14 days left",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.Rounded.AccountCircle,
+                                contentDescription = "Subscription",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -281,7 +338,16 @@ fun DashboardScreen(
                 
                 Icon(Icons.Rounded.SignalCellularAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Ping: ${state.ping}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                AnimatedContent(
+                    targetState = state.ping,
+                    transitionSpec = {
+                        slideInVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)) { height -> height } + fadeIn() togetherWith
+                                slideOutVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)) { height -> -height } + fadeOut()
+                    },
+                    label = "ping"
+                ) { targetPing ->
+                    Text("Ping: $targetPing", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
         
@@ -321,15 +387,33 @@ fun SwipeToConnectSlider(
 
     val backgroundColor by animateColorAsState(
         targetValue = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
         label = "sliderBackground"
+    )
+
+    // M3 Expressive Shape Morphing
+    val containerShapePercent by animateIntAsState(
+        targetValue = if (isConnected) 50 else 25,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "containerShape"
+    )
+    val thumbShapePercent by animateIntAsState(
+        targetValue = if (offsetX.value > 5f && offsetX.value < maxSwipePx - 5f) 25 else 50,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "thumbShape"
     )
 
     Box(
         modifier = Modifier
             .size(width = width, height = height)
-            .clip(CircleShape)
+            .bounceClick { if (isConnected && !isConnecting) onDisconnect() }
+            .clip(RoundedCornerShape(percent = containerShapePercent))
             .background(backgroundColor)
-            .clickable(enabled = isConnected && !isConnecting) { onDisconnect() }, // Нажатие для отключения
+            .border(
+                width = 2.dp,
+                color = if (isConnected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(percent = containerShapePercent)
+            ),
         contentAlignment = Alignment.CenterStart
     ) {
         // Centered Text
@@ -347,7 +431,7 @@ fun SwipeToConnectSlider(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.alpha(textAlpha * 0.5f)
+                    modifier = Modifier.alpha(textAlpha * 0.7f)
                 )
             }
         }
@@ -358,7 +442,7 @@ fun SwipeToConnectSlider(
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
                 .padding(start = padding)
                 .size(thumbSize)
-                .clip(CircleShape)
+                .clip(RoundedCornerShape(percent = thumbShapePercent))
                 .background(if (isConnected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surface)
                 .pointerInput(isConnecting, isConnected) {
                     if (isConnecting) return@pointerInput
@@ -430,20 +514,22 @@ fun InfoTile(
     modifier: Modifier = Modifier,
     title: String,
     value: String,
-    icon: ImageVector
+    icon: ImageVector,
+    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp)
 ) {
-    ElevatedCard(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+    Card(
+        modifier = modifier.height(90.dp).animateContentSize(),
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .fillMaxSize()
+                .padding(16.dp), // Increased padding for M3 standard look
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.Start
         ) {
             Icon(
                 imageVector = icon,
@@ -451,18 +537,30 @@ fun InfoTile(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                AnimatedContent(
+                    targetState = value,
+                    transitionSpec = {
+                        slideInVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)) { height -> height } + fadeIn() togetherWith
+                                slideOutVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)) { height -> -height } + fadeOut()
+                    },
+                    label = "valueAnimation"
+                ) { targetValue ->
+                    Text(
+                        text = targetValue,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }
@@ -471,22 +569,38 @@ fun InfoTile(
 @Composable
 fun DataUsageCard() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        modifier = Modifier.fillMaxWidth().height(160.dp).animateContentSize(),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Лимит трафика", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("1.2 ГБ / 5.0 ГБ (За сегодня)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(
+            modifier = Modifier.padding(20.dp).fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                Column {
+                    Text("Лимит трафика", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("За сегодня", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                }
+                Icon(Icons.Rounded.Info, contentDescription = null, modifier = Modifier.size(24.dp))
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            LinearProgressIndicator(
-                progress = { 1.2f / 5.0f },
-                modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                // TODO: Connect traffic usage counter to backend to get real data instead of hardcoded values
+                Text("Осталось", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                Text("3.8 ГБ", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                LinearProgressIndicator(
+                    progress = { 1.2f / 5.0f }, // TODO: Connect to backend for real progress
+                    modifier = Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+                )
+                Text("1.2 / 5.0", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

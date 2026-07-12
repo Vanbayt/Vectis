@@ -73,7 +73,6 @@ android {
         versionCode = getVersionProps("VERSION_CODE").toInt()
         versionName = getVersionProps("VERSION_NAME")
         base.archivesName.set("SFA-${versionName}")
-        // TODO: Replace with the actual local IP address of your FastAPI backend (e.g., "http://192.168.1.100:8000")
         buildConfigField("String", "API_BASE_URL", "\"http://144.31.97.178:18000/\"")
         
         externalNativeBuild {
@@ -119,7 +118,7 @@ android {
             minSdk = 23
         }
         create("otherLegacy") {
-            minSdk = 21
+            minSdk = 23
         }
     }
 

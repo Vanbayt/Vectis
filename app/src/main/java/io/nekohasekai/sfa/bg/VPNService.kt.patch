@@ -1,0 +1,21 @@
+--- app/src/main/java/io/nekohasekai/sfa/bg/VPNService.kt
++++ app/src/main/java/io/nekohasekai/sfa/bg/VPNService.kt
+@@ -73,6 +73,7 @@
+ 
+         val inet4Address = options.inet4Address
++        var hasAddress = false
+         while (inet4Address.hasNext()) {
+             val address = inet4Address.next()
+             builder.addAddress(address.address(), address.prefix())
++            hasAddress = true
++            Log.e("VPN_ERROR", "Added IPv4 address: ${address.address()} / ${address.prefix()}")
+         }
+ 
+         val inet6Address = options.inet6Address
+         while (inet6Address.hasNext()) {
+             val address = inet6Address.next()
+             builder.addAddress(address.address(), address.prefix())
++            hasAddress = true
++            Log.e("VPN_ERROR", "Added IPv6 address: ${address.address()} / ${address.prefix()}")
+         }
++        Log.e("VPN_ERROR", "Total addresses added? $hasAddress")
