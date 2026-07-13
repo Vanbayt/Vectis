@@ -116,7 +116,9 @@ fun SFANavHost(
                     serviceStatus = serviceStatus,
                     showStartFab = showStartFab,
                     showStatusBar = showStatusBar,
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToProfile = { navController.navigate("profile") },
+                    onNavigateToNotifications = { navController.navigate("notifications") },
+                    onNavigateToTraffic = { navController.navigate("traffic") },
                     viewModel = dashboardViewModel,
                 )
             } else {
@@ -124,7 +126,9 @@ fun SFANavHost(
                     serviceStatus = serviceStatus,
                     showStartFab = showStartFab,
                     showStatusBar = showStatusBar,
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                    onNavigateToProfile = { navController.navigate("profile") },
+                    onNavigateToNotifications = { navController.navigate("notifications") },
+                    onNavigateToTraffic = { navController.navigate("traffic") }
                 )
             }
         }
@@ -144,6 +148,36 @@ fun SFANavHost(
                     showStatusBar = showStatusBar,
                 )
             }
+        }
+
+        composable(
+            route = "notifications",
+            enterTransition = slideInFromRight,
+            exitTransition = slideOutToLeft,
+            popEnterTransition = slideInFromLeft,
+            popExitTransition = slideOutToRight,
+        ) {
+            io.nekohasekai.sfa.compose.screen.dashboard.NotificationsScreen(navController = navController)
+        }
+
+        composable(
+            route = "profile",
+            enterTransition = slideInFromRight,
+            exitTransition = slideOutToLeft,
+            popEnterTransition = slideInFromLeft,
+            popExitTransition = slideOutToRight,
+        ) {
+            io.nekohasekai.sfa.compose.screen.dashboard.ProfileScreen(navController = navController)
+        }
+
+        composable(
+            route = "traffic",
+            enterTransition = slideInFromRight,
+            exitTransition = slideOutToLeft,
+            popEnterTransition = slideInFromLeft,
+            popExitTransition = slideOutToRight,
+        ) {
+            io.nekohasekai.sfa.compose.screen.dashboard.TrafficLimitScreen(navController = navController)
         }
 
         composable(Screen.Groups.route) {
@@ -212,7 +246,13 @@ fun SFANavHost(
             }
         }
 
-        composable(Screen.Tools.route) {
+        composable(
+            route = Screen.Tools.route,
+            enterTransition = slideInFromRight,
+            exitTransition = slideOutToLeft,
+            popEnterTransition = slideInFromLeft,
+            popExitTransition = slideOutToRight,
+        ) {
             val tailscaleViewModel: TailscaleStatusViewModel = tailscaleStatusViewModel ?: viewModel()
             val sshSharedViewModel: TailscaleSSHSharedViewModel = tailscaleSSHSharedViewModel ?: viewModel()
             ToolsScreen(navController = navController, serviceStatus = serviceStatus, tailscaleViewModel = tailscaleViewModel, sshSharedViewModel = sshSharedViewModel)

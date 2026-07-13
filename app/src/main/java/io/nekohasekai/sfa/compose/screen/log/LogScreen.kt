@@ -492,39 +492,45 @@ fun LogScreen(
                     showStatusBar -> 74.dp
                     else -> 0.dp
                 }
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding =
-                    PaddingValues(
-                        start = 8.dp,
-                        end = 8.dp,
-                        top = 8.dp,
-                        bottom = bottomPadding,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                Card(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp).padding(bottom = bottomPadding),
+                    shape = RoundedCornerShape(32.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    itemsIndexed(
-                        items = uiState.logs,
-                        key = { _, log -> log.id },
-                    ) { index, log ->
-                        LogItem(
-                            annotatedString = log.annotatedString,
-                            index = index,
-                            isSelected = uiState.selectedLogIndices.contains(index),
-                            isSelectionMode = uiState.isSelectionMode,
-                            onLongClick = {
-                                if (!uiState.isSelectionMode) {
-                                    resolvedViewModel.toggleSelectionMode()
-                                    resolvedViewModel.toggleLogSelection(index)
-                                }
-                            },
-                            onClick = {
-                                if (uiState.isSelectionMode) {
-                                    resolvedViewModel.toggleLogSelection(index)
-                                }
-                            },
-                        )
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding =
+                        PaddingValues(
+                            start = 8.dp,
+                            end = 8.dp,
+                            top = 16.dp,
+                            bottom = 16.dp,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        itemsIndexed(
+                            items = uiState.logs,
+                            key = { _, log -> log.id },
+                        ) { index, log ->
+                            LogItem(
+                                annotatedString = log.annotatedString,
+                                index = index,
+                                isSelected = uiState.selectedLogIndices.contains(index),
+                                isSelectionMode = uiState.isSelectionMode,
+                                onLongClick = {
+                                    if (!uiState.isSelectionMode) {
+                                        resolvedViewModel.toggleSelectionMode()
+                                        resolvedViewModel.toggleLogSelection(index)
+                                    }
+                                },
+                                onClick = {
+                                    if (uiState.isSelectionMode) {
+                                        resolvedViewModel.toggleLogSelection(index)
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -892,9 +898,9 @@ fun LogItem(
         CardDefaults.cardColors(
             containerColor =
             if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                androidx.compose.ui.graphics.Color.Transparent
             },
         ),
         border =

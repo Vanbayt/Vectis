@@ -97,7 +97,9 @@ fun DashboardScreen(
     serviceStatus: Status = Status.Stopped,
     showStartFab: Boolean = false,
     showStatusBar: Boolean = false,
-    onNavigateToSettings: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToTraffic: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
 ) {
     val isConnected = serviceStatus == Status.Started || serviceStatus == Status.Starting
@@ -165,11 +167,11 @@ fun DashboardScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Row {
-                    IconButton(onClick = { /* TODO: Navigate to Profile */ }) {
+                    IconButton(onClick = onNavigateToProfile) {
                         Icon(Icons.Rounded.AccountCircle, contentDescription = "Profile", modifier = Modifier.size(28.dp))
                     }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Rounded.Settings, contentDescription = "Settings", modifier = Modifier.size(28.dp))
+                    IconButton(onClick = onNavigateToNotifications) {
+                        Icon(Icons.Rounded.Notifications, contentDescription = "Notifications", modifier = Modifier.size(28.dp))
                     }
                 }
             }
@@ -193,7 +195,11 @@ fun DashboardScreen(
                     ) + fadeIn(animationSpec = tween(400, delayMillis = 0))
                 ) {
                     Box(modifier = Modifier.padding(horizontal = 8.dp).bounceClick { }) {
-                        DataUsageCard()
+                        DataUsageCard(
+                            trafficUsed = state.trafficUsed,
+                            trafficLimit = state.trafficLimit,
+                            onClick = onNavigateToTraffic
+                        )
                     }
                 }
 
@@ -408,12 +414,7 @@ fun SwipeToConnectSlider(
             .size(width = width, height = height)
             .bounceClick { if (isConnected && !isConnecting) onDisconnect() }
             .clip(RoundedCornerShape(percent = containerShapePercent))
-            .background(backgroundColor)
-            .border(
-                width = 2.dp,
-                color = if (isConnected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant,
-                shape = RoundedCornerShape(percent = containerShapePercent)
-            ),
+            .background(backgroundColor),
         contentAlignment = Alignment.CenterStart
     ) {
         // Centered Text
@@ -567,9 +568,14 @@ fun InfoTile(
 }
 
 @Composable
-fun DataUsageCard() {
+fun DataUsageCard(trafficUsed: Long = 0L, trafficLimit: Long = 5L * 1024 * 1024 * 1024, onClick: () -> Unit = {}) {
+    val usedGb = trafficUsed.toFloat() / (1024 * 1024 * 1024)
+    val limitGb = trafficLimit.toFloat() / (1024 * 1024 * 1024)
+    val remainingGb = maxOf(0f, limitGb - usedGb)
+    val progress = if (limitGb > 0) (usedGb / limitGb).coerceIn(0f, 1f) else 0f
+    
     Card(
-        modifier = Modifier.fillMaxWidth().height(160.dp).animateContentSize(),
+        modifier = Modifier.fillMaxWidth().height(160.dp).clickable { onClick() }.animateContentSize(),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -588,18 +594,17 @@ fun DataUsageCard() {
                 Icon(Icons.Rounded.Info, contentDescription = null, modifier = Modifier.size(24.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
-                // TODO: Connect traffic usage counter to backend to get real data instead of hardcoded values
                 Text("Осталось", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                Text("3.8 ГБ", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                Text(String.format("%.1f ГБ", remainingGb), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 LinearProgressIndicator(
-                    progress = { 1.2f / 5.0f }, // TODO: Connect to backend for real progress
+                    progress = { progress },
                     modifier = Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
                 )
-                Text("1.2 / 5.0", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                Text(String.format("%.1f / %.1f", usedGb, limitGb), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -129,6 +129,8 @@ object Settings {
     var token by dataStore.string(SettingsKey.TOKEN) { "" }
     var lastProtocol by dataStore.string(SettingsKey.LAST_PROTOCOL) { "—" }
     var lastLocation by dataStore.string(SettingsKey.LAST_LOCATION) { "—" }
+    var trafficLimit by dataStore.long(SettingsKey.TRAFFIC_LIMIT) { 5L * 1024 * 1024 * 1024 } // 5 GB
+    var trafficUsed by dataStore.long(SettingsKey.TRAFFIC_USED) { 0L }
 
     fun serviceClass(): Class<*> = VPNService::class.java
 

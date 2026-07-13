@@ -635,23 +635,21 @@ class MainActivity :
         val dashboardUiState by dashboardViewModel.uiState.collectAsState()
 
         val isSettingsSubScreen = currentRoute?.startsWith("settings/") == true
-        val isToolsSubScreen = currentRoute?.startsWith("tools/") == true
-        val isConnectionsDetail = currentRoute?.startsWith("connections/detail") == true
+        val isToolsSubScreen = currentRoute?.startsWith("tools/") == true || currentRoute == Screen.Tools.route
         val isProfileRoute = currentRoute?.startsWith("profile/") == true
-        val currentRootRoute =
-            when {
-                isSettingsSubScreen -> Screen.Settings.route
-                isToolsSubScreen -> Screen.Tools.route
-                currentRoute?.startsWith(Screen.Connections.route) == true -> Screen.Connections.route
-                currentRoute?.startsWith(Screen.Log.route) == true -> Screen.Log.route
-                isProfileRoute -> Screen.Dashboard.route
-                else -> currentRoute
-            }
+        val isConnectionsDetail = currentRoute?.startsWith("connections/detail") == true
+
+        val currentRootRoute = when {
+            isSettingsSubScreen || isToolsSubScreen || isProfileRoute -> Screen.Settings.route
+            isConnectionsDetail -> Screen.Connections.route
+            else -> currentRoute
+        }
+
         val isConnectionsRoute = currentRootRoute == Screen.Connections.route
         val isGroupsRoute = currentRootRoute == Screen.Groups.route
         val isLogRoute = currentRootRoute == Screen.Log.route
 
-        val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute || currentRoute == Screen.Settings.route
+        val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute
         // Get LogViewModel instance if we're on the Log screen
         val logViewModel: LogViewModel? =
             if (isLogRoute) {
@@ -900,12 +898,9 @@ class MainActivity :
                                 bottomNavigationScreens.forEach { screen ->
                                     NavigationBarItem(
                                         icon = {
-                                            if (screen == Screen.Settings && hasUpdate) {
-                                                BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.primary) }) {
-                                                    Icon(screen.icon, contentDescription = null)
-                                                }
-                                            } else if (screen == Screen.Tools && toolsUnreadCount > 0) {
-                                                BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.error) { Text("$toolsUnreadCount") } }) {
+                                            if (screen == Screen.Settings && (hasUpdate || toolsUnreadCount > 0)) {
+                                                val badgeColor = if (toolsUnreadCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                                BadgedBox(badge = { Badge(containerColor = badgeColor) { if (toolsUnreadCount > 0) Text("$toolsUnreadCount") } }) {
                                                     Icon(screen.icon, contentDescription = null)
                                                 }
                                             } else {

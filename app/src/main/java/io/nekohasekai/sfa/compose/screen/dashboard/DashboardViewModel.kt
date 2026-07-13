@@ -72,6 +72,8 @@ data class DashboardUiState(
     val downlinkTotal: String = "0 B",
     val uplinkHistory: List<Float> = List(30) { 0f },
     val downlinkHistory: List<Float> = List(30) { 0f },
+    val trafficLimit: Long = 5L * 1024 * 1024 * 1024,
+    val trafficUsed: Long = 0L,
     // Clash Mode
     val clashModeVisible: Boolean = false,
     val clashModes: List<String> = emptyList(),
@@ -151,6 +153,8 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
         return DashboardUiState(
             cardOrder = savedOrder,
             visibleCards = visibleCards,
+            trafficUsed = Settings.trafficUsed,
+            trafficLimit = Settings.trafficLimit
         )
     }
 
@@ -470,6 +474,12 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
                 // Format the total values
                 val newUplinkTotal = Libbox.formatBytes(status.uplinkTotal)
                 val newDownlinkTotal = Libbox.formatBytes(status.downlinkTotal)
+                
+                // Accumulate traffic
+                val currentTraffic = status.uplink + status.downlink
+                if (currentTraffic > 0) {
+                    Settings.trafficUsed += currentTraffic
+                }
 
                 copy(
                     memory = Libbox.formatBytes(status.memory),
@@ -486,6 +496,8 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
                     downlinkTotal = if (newDownlinkTotal != downlinkTotal) newDownlinkTotal else downlinkTotal,
                     uplinkHistory = newUplinkHistory,
                     downlinkHistory = newDownlinkHistory,
+                    trafficUsed = Settings.trafficUsed,
+                    trafficLimit = Settings.trafficLimit,
                 )
             }
         }

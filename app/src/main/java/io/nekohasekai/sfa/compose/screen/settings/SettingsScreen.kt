@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Badge
@@ -126,6 +127,11 @@ fun SettingsScreen(navController: NavController) {
                     hasBadge = hasPendingPrivilegeDowngrade || hasPendingPrivilegeUpdate,
                     badgeColor = if (hasPendingPrivilegeDowngrade) MaterialTheme.colorScheme.error else Color(0xFFFFC107)
                 )
+                SettingTile(
+                    icon = Icons.Outlined.Terminal,
+                    title = stringResource(R.string.title_tools),
+                    onClick = { navController.navigate("tools") }
+                )
             }
         }
         Spacer(modifier = Modifier.height(32.dp))
@@ -133,7 +139,7 @@ fun SettingsScreen(navController: NavController) {
 }
 
 @Composable
-private fun SettingTile(
+fun SettingTile(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     onClick: () -> Unit,

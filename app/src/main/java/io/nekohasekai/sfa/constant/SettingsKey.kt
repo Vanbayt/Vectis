@@ -58,4 +58,6 @@ object SettingsKey {
     const val TOKEN = "token"
     const val LAST_PROTOCOL = "last_protocol"
     const val LAST_LOCATION = "last_location"
+    const val TRAFFIC_LIMIT = "traffic_limit"
+    const val TRAFFIC_USED = "traffic_used"
 }
