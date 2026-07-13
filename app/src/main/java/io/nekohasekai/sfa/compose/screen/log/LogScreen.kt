@@ -502,12 +502,12 @@ fun LogScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding =
                         PaddingValues(
-                            start = 8.dp,
-                            end = 8.dp,
-                            top = 16.dp,
-                            bottom = 16.dp,
+                            start = 12.dp,
+                            end = 12.dp,
+                            top = 20.dp,
+                            bottom = 20.dp,
                         ),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         itemsIndexed(
                             items = uiState.logs,
@@ -893,14 +893,14 @@ fun LogItem(
                 onClick = onClick,
                 onLongClick = onLongClick,
             ),
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(12.dp),
         colors =
         CardDefaults.cardColors(
             containerColor =
             if (isSelected) {
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             } else {
-                androidx.compose.ui.graphics.Color.Transparent
+                MaterialTheme.colorScheme.surfaceContainerHigh
             },
         ),
         border =

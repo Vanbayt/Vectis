@@ -15,6 +15,8 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +29,7 @@ import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(navController: NavController) {
+    val coroutineScope = rememberCoroutineScope()
     OverrideTopBar {
         TopAppBar(
             title = { Text("Профиль", fontWeight = FontWeight.Bold) },
@@ -125,6 +128,17 @@ fun ProfileScreen(navController: NavController) {
                     icon = Icons.Rounded.Lock,
                     title = "Изменить пароль",
                     onClick = { /* TODO */ }
+                )
+                SettingTile(
+                    icon = Icons.AutoMirrored.Rounded.Logout,
+                    title = "Выйти",
+                    onClick = {
+                        coroutineScope.launch {
+                            io.nekohasekai.sfa.database.Settings.clearSession()
+                            io.nekohasekai.sfa.compose.base.GlobalEventBus.emit(io.nekohasekai.sfa.compose.base.UiEvent.Logout)
+                        }
+                    },
+                    badgeColor = MaterialTheme.colorScheme.error
                 )
             }
         }

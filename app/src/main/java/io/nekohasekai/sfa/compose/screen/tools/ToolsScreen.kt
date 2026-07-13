@@ -20,14 +20,11 @@ import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NetworkCheck
 import androidx.compose.material3.Badge
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -52,6 +49,7 @@ import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.terminal.TailscaleSSHPresentedSession
+import io.nekohasekai.sfa.compose.screen.settings.SettingTile
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -94,22 +92,13 @@ fun ToolsScreen(
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
             )
 
-            Card(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                ),
             ) {
                 val endpoints = tailscaleState.endpoints
                 endpoints.forEachIndexed { index, endpoint ->
-                    val shape = when {
-                        endpoints.size == 1 -> RoundedCornerShape(12.dp)
-                        index == 0 -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                        index == endpoints.size - 1 -> RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-                        else -> RoundedCornerShape(0.dp)
-                    }
                     var showSSHMenu by remember { mutableStateOf(false) }
                     val sshPeers = remember(endpoint) {
                         endpoint.userGroups.flatMap { it.peers }.filter { peer ->
@@ -118,37 +107,14 @@ fun ToolsScreen(
                         }
                     }
                     Box {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    if (endpoints.size == 1) {
-                                        stringResource(R.string.tailscale)
-                                    } else {
-                                        stringResource(R.string.tailscale_with_tag, endpoint.endpointTag)
-                                    },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
+                        SettingTile(
+                            icon = Icons.Outlined.Hub,
+                            title = if (endpoints.size == 1) {
+                                stringResource(R.string.tailscale)
+                            } else {
+                                stringResource(R.string.tailscale_with_tag, endpoint.endpointTag)
                             },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Hub,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                            },
-                            modifier = Modifier
-                                .clip(shape)
-                                .combinedClickable(
-                                    onClick = {
-                                        navController.navigate("tools/tailscale/${Uri.encode(endpoint.endpointTag)}")
-                                    },
-                                    onLongClick = {
-                                        if (sshPeers.isNotEmpty()) {
-                                            showSSHMenu = true
-                                        }
-                                    },
-                                ),
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            onClick = { navController.navigate("tools/tailscale/${Uri.encode(endpoint.endpointTag)}") }
                         )
                         DropdownMenu(
                             expanded = showSSHMenu,
@@ -207,51 +173,20 @@ fun ToolsScreen(
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
         )
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
+        Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
         ) {
-            ListItem(
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.network_quality),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Outlined.NetworkCheck,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                    .clickable { navController.navigate("tools/network_quality") },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            SettingTile(
+                icon = Icons.Outlined.NetworkCheck,
+                title = stringResource(R.string.network_quality),
+                onClick = { navController.navigate("tools/network_quality") }
             )
-            ListItem(
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.stun_test),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Outlined.NetworkCheck,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                    .clickable { navController.navigate("tools/stun_test") },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            SettingTile(
+                icon = Icons.Outlined.NetworkCheck,
+                title = stringResource(R.string.stun_test),
+                onClick = { navController.navigate("tools/stun_test") }
             )
         }
 
@@ -262,65 +197,22 @@ fun ToolsScreen(
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
         )
 
-        Card(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
         ) {
-            ListItem(
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.crash_report),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Outlined.BugReport,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                },
-                trailingContent = {
-                    if (crashUnreadCount > 0) {
-                        Badge(containerColor = MaterialTheme.colorScheme.primary) {
-                            Text("$crashUnreadCount")
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                    .clickable { navController.navigate("tools/crash_report") },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            SettingTile(
+                icon = Icons.Outlined.BugReport,
+                title = stringResource(R.string.crash_report),
+                onClick = { navController.navigate("tools/crash_report") },
+                badgeText = if (crashUnreadCount > 0) crashUnreadCount.toString() else null
             )
-            ListItem(
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.oom_report),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Outlined.Memory,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                },
-                trailingContent = {
-                    if (oomUnreadCount > 0) {
-                        Badge(containerColor = MaterialTheme.colorScheme.primary) {
-                            Text("$oomUnreadCount")
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                    .clickable { navController.navigate("tools/oom_report") },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+            SettingTile(
+                icon = Icons.Outlined.Memory,
+                title = stringResource(R.string.oom_report),
+                onClick = { navController.navigate("tools/oom_report") },
+                badgeText = if (oomUnreadCount > 0) oomUnreadCount.toString() else null
             )
         }
     }

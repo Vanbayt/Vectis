@@ -144,6 +144,7 @@ fun SettingTile(
     title: String,
     onClick: () -> Unit,
     hasBadge: Boolean = false,
+    badgeText: String? = null,
     badgeColor: Color = MaterialTheme.colorScheme.primary
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -190,8 +191,12 @@ fun SettingTile(
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (hasBadge) {
-                Badge(containerColor = badgeColor)
+            if (hasBadge || badgeText != null) {
+                Badge(containerColor = badgeColor) {
+                    if (badgeText != null) {
+                        Text(badgeText)
+                    }
+                }
                 Spacer(modifier = Modifier.width(8.dp))
             }
             Icon(

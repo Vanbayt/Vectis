@@ -376,9 +376,9 @@ fun SwipeToConnectSlider(
     var lastHapticPosition by remember { mutableFloatStateOf(0f) }
     val haptic = LocalHapticFeedback.current
     
-    val width = 280.dp
-    val height = 80.dp
-    val thumbSize = 64.dp
+    val width = 340.dp
+    val height = 88.dp
+    val thumbSize = 72.dp
     val padding = 8.dp
     
     val maxSwipePx = with(LocalDensity.current) { (width - thumbSize - (padding * 2)).toPx() }
