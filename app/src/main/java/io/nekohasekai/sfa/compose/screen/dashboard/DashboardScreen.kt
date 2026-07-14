@@ -571,8 +571,21 @@ fun InfoTile(
 fun DataUsageCard(trafficUsed: Long = 0L, trafficLimit: Long = 5L * 1024 * 1024 * 1024, onClick: () -> Unit = {}) {
     val usedGb = trafficUsed.toFloat() / (1024 * 1024 * 1024)
     val limitGb = trafficLimit.toFloat() / (1024 * 1024 * 1024)
-    val remainingGb = maxOf(0f, limitGb - usedGb)
     val progress = if (limitGb > 0) (usedGb / limitGb).coerceIn(0f, 1f) else 0f
+    
+    val formatBytes: (Long) -> String = { bytes ->
+        when {
+            bytes >= 1024 * 1024 * 1024 -> String.format("%.2f ГБ", bytes.toFloat() / (1024 * 1024 * 1024))
+            bytes >= 1024 * 1024 -> String.format("%.2f МБ", bytes.toFloat() / (1024 * 1024))
+            bytes >= 1024 -> String.format("%.2f КБ", bytes.toFloat() / 1024)
+            else -> "$bytes Б"
+        }
+    }
+    
+    val remainingBytes = maxOf(0L, trafficLimit - trafficUsed)
+    val usedStr = formatBytes(trafficUsed)
+    val limitStr = formatBytes(trafficLimit)
+    val remainingStr = formatBytes(remainingBytes)
     
     Card(
         modifier = Modifier.fillMaxWidth().height(160.dp).clickable { onClick() }.animateContentSize(),
@@ -589,13 +602,13 @@ fun DataUsageCard(trafficUsed: Long = 0L, trafficLimit: Long = 5L * 1024 * 1024 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                 Column {
                     Text("Лимит трафика", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("За сегодня", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                    Text("За все время", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                 }
                 Icon(Icons.Rounded.Info, contentDescription = null, modifier = Modifier.size(24.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text("Осталось", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                Text(String.format("%.1f ГБ", remainingGb), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                Text(remainingStr, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 LinearProgressIndicator(
@@ -604,7 +617,7 @@ fun DataUsageCard(trafficUsed: Long = 0L, trafficLimit: Long = 5L * 1024 * 1024 
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
                 )
-                Text(String.format("%.1f / %.1f", usedGb, limitGb), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                Text("$usedStr / $limitStr", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
             }
         }
     }
