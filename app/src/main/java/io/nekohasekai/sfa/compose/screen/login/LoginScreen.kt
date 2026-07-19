@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.animation.togetherWith
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -89,10 +90,12 @@ fun LoginScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 32.dp),
+                    .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+                var isLoginMode by remember { mutableStateOf(true) }
+                
                 Text(
                     text = "Vectis",
                     style = MaterialTheme.typography.displayLarge,
@@ -102,84 +105,195 @@ fun LoginScreen(
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                Text(
-                    text = "Secure your connection",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                androidx.compose.animation.AnimatedContent(
+                    targetState = isLoginMode,
+                    transitionSpec = {
+                        (androidx.compose.animation.fadeIn(animationSpec = tween(300)) + androidx.compose.animation.slideInVertically { height -> height }).togetherWith(
+                            androidx.compose.animation.fadeOut(animationSpec = tween(300)) + androidx.compose.animation.slideOutVertically { height -> -height }
+                        )
+                    },
+                    label = "header"
+                ) { loginMode ->
+                    Text(
+                        text = if (loginMode) "Безопасное подключение" else "Создание аккаунта",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Username") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.Person,
-                            contentDescription = null
-                        )
-                    },
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.Lock,
-                            contentDescription = null
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Button(
-                    onClick = { viewModel.login(username, password) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(28.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    shape = RoundedCornerShape(32.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
                     ),
-                    enabled = username.isNotBlank() && password.isNotBlank() && uiState !is LoginUiState.Loading
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    if (uiState is LoginUiState.Loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        OutlinedTextField(
+                            value = username,
+                            onValueChange = { username = it },
+                            label = { Text("Имя пользователя") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Person,
+                                    contentDescription = null
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(24.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            )
                         )
-                    } else {
-                        Text(
-                            text = "Login",
-                            style = MaterialTheme.typography.titleMedium
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            label = { Text("Пароль") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Lock,
+                                    contentDescription = null
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            )
                         )
+
+                        var confirmPassword by remember { mutableStateOf("") }
+                        val passwordsMatch = password == confirmPassword || confirmPassword.isEmpty()
+
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !isLoginMode,
+                            enter = androidx.compose.animation.expandVertically(animationSpec = spring(stiffness = Spring.StiffnessLow)) + androidx.compose.animation.fadeIn(),
+                            exit = androidx.compose.animation.shrinkVertically(animationSpec = spring(stiffness = Spring.StiffnessLow)) + androidx.compose.animation.fadeOut()
+                        ) {
+                            Column {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                OutlinedTextField(
+                                    value = confirmPassword,
+                                    onValueChange = { confirmPassword = it },
+                                    label = { Text("Подтвердите пароль") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Lock,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    shape = RoundedCornerShape(24.dp),
+                                    isError = !passwordsMatch && confirmPassword.isNotEmpty(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                        unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                        errorBorderColor = MaterialTheme.colorScheme.error,
+                                        errorLeadingIconColor = MaterialTheme.colorScheme.error,
+                                        errorLabelColor = MaterialTheme.colorScheme.error
+                                    )
+                                )
+                                androidx.compose.animation.AnimatedVisibility(visible = !passwordsMatch && confirmPassword.isNotEmpty()) {
+                                    Text(
+                                        text = "Пароли не совпадают",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        val isFormValid = if (isLoginMode) {
+                            username.isNotBlank() && password.isNotBlank()
+                        } else {
+                            username.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank() && passwordsMatch
+                        }
+
+                        Button(
+                            onClick = { 
+                                if (isLoginMode) {
+                                    viewModel.login(username, password)
+                                } else {
+                                    viewModel.register(username, password)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(28.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            enabled = isFormValid && uiState !is LoginUiState.Loading
+                        ) {
+                            androidx.compose.animation.AnimatedContent(
+                                targetState = uiState is LoginUiState.Loading,
+                                label = "button_content"
+                            ) { isLoading ->
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text(
+                                        text = if (isLoginMode) "Войти" else "Зарегистрироваться",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        TextButton(
+                            onClick = { 
+                                isLoginMode = !isLoginMode
+                                if (isLoginMode) {
+                                    confirmPassword = ""
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            androidx.compose.animation.AnimatedContent(
+                                targetState = isLoginMode,
+                                label = "switch_mode"
+                            ) { loginMode ->
+                                Text(
+                                    text = if (loginMode) "Нет аккаунта? Зарегистрироваться" else "Уже есть аккаунт? Войти",
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -28,10 +28,13 @@ class HTTPClient : Closeable {
         client.modernTLS()
     }
 
-    fun getString(url: String): String {
+    fun getString(url: String, token: String? = null): String {
         val request = client.newRequest()
         request.setUserAgent(userAgent)
         request.setURL(url)
+        if (token != null && token.isNotEmpty()) {
+            request.setHeader("Authorization", "Bearer $token")
+        }
         val response = request.execute()
         return response.content.unwrap
     }

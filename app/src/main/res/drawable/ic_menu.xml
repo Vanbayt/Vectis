@@ -1,6 +1,6 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
+    android:width="24dp"
+    android:height="24dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <group
@@ -10,6 +10,6 @@
         android:translateY="18.9">
         <path
             android:pathData="M18 35.5704C18 32.8097 21.0229 31.0966 23.4153 32.5017L52.1735 49.3919C53.3001 50.0536 54.6999 50.0536 55.8265 49.3919L84.5847 32.5017C86.9771 31.0966 90 32.8097 90 35.5704V72.435C90 74.4039 88.3932 76 86.4112 76H21.5888C19.6068 76 18 74.4039 18 72.435V35.5704Z"
-            android:fillColor="#000000" />
+            android:fillColor="#FFFFFF" />
     </group>
 </vector>

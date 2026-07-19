@@ -582,10 +582,10 @@ fun DataUsageCard(trafficUsed: Long = 0L, trafficLimit: Long = 5L * 1024 * 1024 
         }
     }
     
-    val remainingBytes = maxOf(0L, trafficLimit - trafficUsed)
     val usedStr = formatBytes(trafficUsed)
-    val limitStr = formatBytes(trafficLimit)
-    val remainingStr = formatBytes(remainingBytes)
+    val limitStr = if (trafficLimit <= 0L) "∞" else formatBytes(trafficLimit)
+    val remainingBytes = maxOf(0L, trafficLimit - trafficUsed)
+    val remainingStr = if (trafficLimit <= 0L) "∞" else formatBytes(remainingBytes)
     
     Card(
         modifier = Modifier.fillMaxWidth().height(160.dp).clickable { onClick() }.animateContentSize(),

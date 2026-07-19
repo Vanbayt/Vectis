@@ -74,6 +74,7 @@ data class DashboardUiState(
     val downlinkHistory: List<Float> = List(30) { 0f },
     val trafficLimit: Long = 5L * 1024 * 1024 * 1024,
     val trafficUsed: Long = 0L,
+    val userProfile: io.nekohasekai.sfa.network.UserProfileResponse? = null,
     // Clash Mode
     val clashModeVisible: Boolean = false,
     val clashModes: List<String> = emptyList(),
@@ -118,7 +119,10 @@ data class DashboardUiState(
 // DashboardViewModel now only uses UiEvent for all events
 // No need for DashboardEvent anymore as all events are handled globally
 
-class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnRepository) :
+class DashboardViewModel(
+    private val repository: io.nekohasekai.sfa.network.VpnRepository,
+    private val userRepository: io.nekohasekai.sfa.network.UserRepository
+) :
     BaseViewModel<DashboardUiState, UiEvent>(),
     CommandClient.Handler {
     private val _serviceStatus = MutableStateFlow(Status.Stopped)
@@ -159,10 +163,21 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
     }
 
     init {
-        // Validate token on start to trigger 401 logout if expired
+        // Fetch user profile and validate token
         if (Settings.token.isNotEmpty()) {
             viewModelScope.launch(Dispatchers.IO) {
                 try {
+                    val profile = userRepository.fetchProfile(Settings.token)
+                    withContext(Dispatchers.Main) {
+                        updateState {
+                            copy(
+                                trafficUsed = profile.traffic_used,
+                                trafficLimit = profile.traffic_limit,
+                                userProfile = profile
+                            )
+                        }
+                    }
+                    // Fetch VPN config as well
                     repository.fetchAndDecryptConfig(Settings.token)
                 } catch (e: Exception) {
                     // Ignore, 401 will be caught by AppModule interceptor
@@ -187,7 +202,21 @@ class DashboardViewModel(private val repository: io.nekohasekai.sfa.network.VpnR
         commandClient.disconnect()
     }
 
-
+    fun changePassword(oldPassword: String, newPassword: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val req = io.nekohasekai.sfa.network.UserPasswordUpdateRequest(oldPassword, newPassword)
+                userRepository.changePassword(Settings.token, req)
+                withContext(Dispatchers.Main) {
+                    onSuccess()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onError(e.message ?: "Failed to change password")
+                }
+            }
+        }
+    }
 
     private fun checkDeprecatedNotes() {
         viewModelScope.launch(Dispatchers.IO) {

@@ -631,6 +631,8 @@ class MainActivity :
         val dashboardViewModel: DashboardViewModel = koinViewModel()
         if (!::dashboardViewModel.isInitialized) {
             this.dashboardViewModel = dashboardViewModel
+            // Instantly sync the status from the ServiceConnection so the slider doesn't get stuck
+            dashboardViewModel.updateServiceStatus(currentServiceStatus)
         }
         val dashboardUiState by dashboardViewModel.uiState.collectAsState()
 
@@ -638,10 +640,12 @@ class MainActivity :
         val isToolsSubScreen = currentRoute?.startsWith("tools/") == true || currentRoute == Screen.Tools.route
         val isProfileRoute = currentRoute?.startsWith("profile/") == true
         val isConnectionsDetail = currentRoute?.startsWith("connections/detail") == true
+        val isTrafficRoute = currentRoute == "traffic"
 
         val currentRootRoute = when {
             isSettingsSubScreen || isToolsSubScreen || isProfileRoute -> Screen.Settings.route
             isConnectionsDetail -> Screen.Connections.route
+            isTrafficRoute -> Screen.Dashboard.route
             else -> currentRoute
         }
 
@@ -649,7 +653,7 @@ class MainActivity :
         val isGroupsRoute = currentRootRoute == Screen.Groups.route
         val isLogRoute = currentRootRoute == Screen.Log.route
 
-        val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute
+        val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute || isTrafficRoute
         // Get LogViewModel instance if we're on the Log screen
         val logViewModel: LogViewModel? =
             if (isLogRoute) {

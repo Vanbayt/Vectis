@@ -32,6 +32,18 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 
+    fun register(username: String, pass: String) {
+        _uiState.value = LoginUiState.Loading
+        viewModelScope.launch {
+            try {
+                authRepository.register(username, pass)
+                _uiState.value = LoginUiState.Success
+            } catch (e: Exception) {
+                _uiState.value = LoginUiState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
     fun resetState() {
         _uiState.value = LoginUiState.Idle
     }

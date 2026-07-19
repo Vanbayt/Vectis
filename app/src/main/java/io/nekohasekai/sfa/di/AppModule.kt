@@ -13,6 +13,8 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 import io.nekohasekai.sfa.network.AuthApi
 import io.nekohasekai.sfa.network.AuthRepository
+import io.nekohasekai.sfa.network.UserApi
+import io.nekohasekai.sfa.network.UserRepository
 import io.nekohasekai.sfa.compose.screen.login.LoginViewModel
 import io.nekohasekai.sfa.BuildConfig
 import kotlinx.coroutines.launch
@@ -59,6 +61,10 @@ val appModule = module {
     }
 
     single {
+        get<Retrofit>().create(UserApi::class.java)
+    }
+
+    single {
         VpnRepository(get())
     }
 
@@ -66,8 +72,12 @@ val appModule = module {
         AuthRepository(get())
     }
 
+    single {
+        UserRepository(get())
+    }
+
     viewModel {
-        DashboardViewModel(get())
+        DashboardViewModel(get(), get())
     }
 
     viewModel {

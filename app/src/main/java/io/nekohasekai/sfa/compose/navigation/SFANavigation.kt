@@ -167,7 +167,8 @@ fun SFANavHost(
             popEnterTransition = slideInFromLeft,
             popExitTransition = slideOutToRight,
         ) {
-            io.nekohasekai.sfa.compose.screen.dashboard.ProfileScreen(navController = navController)
+            val viewModel: DashboardViewModel = dashboardViewModel ?: org.koin.androidx.compose.koinViewModel()
+            io.nekohasekai.sfa.compose.screen.dashboard.ProfileScreen(navController = navController, viewModel = viewModel)
         }
 
         composable(

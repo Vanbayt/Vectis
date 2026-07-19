@@ -75,7 +75,8 @@ class UpdateProfileWork {
                     continue
                 }
                 try {
-                    val content = HTTPClient().use { it.getString(profile.typed.remoteURL) }
+                    val token = Settings.token
+                    val content = HTTPClient().use { it.getString(profile.typed.remoteURL, token) }
                     Libbox.checkConfig(content)
                     if (profile.id == selectedProfile) {
                         selectedProfileUpdated = true
