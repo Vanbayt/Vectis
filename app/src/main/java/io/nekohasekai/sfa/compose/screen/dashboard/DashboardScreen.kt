@@ -284,13 +284,35 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
+                                val tierName = state.userProfile?.subscription_tier?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: "Загрузка..."
                                 Text(
-                                    text = "Premium Active",
+                                    text = "$tierName Active",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                 )
+                                val daysLeftText = remember(state.userProfile?.subscription_end) {
+                                    val endStr = state.userProfile?.subscription_end
+                                    if (endStr == null) {
+                                        "Безлимитно"
+                                    } else {
+                                        try {
+                                            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+                                            sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                            val date = sdf.parse(endStr)
+                                            if (date != null) {
+                                                val diff = date.time - System.currentTimeMillis()
+                                                val days = diff / (1000 * 60 * 60 * 24)
+                                                if (days < 0) "Истекла" else "Осталось дней: $days"
+                                            } else {
+                                                endStr
+                                            }
+                                        } catch (e: Exception) {
+                                            endStr
+                                        }
+                                    }
+                                }
                                 Text(
-                                    text = "14 days left",
+                                    text = daysLeftText,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
