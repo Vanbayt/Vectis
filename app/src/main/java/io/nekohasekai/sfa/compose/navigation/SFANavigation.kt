@@ -26,6 +26,7 @@ import io.nekohasekai.sfa.compose.screen.dashboard.DashboardScreen
 import io.nekohasekai.sfa.compose.screen.dashboard.DashboardViewModel
 import io.nekohasekai.sfa.compose.screen.dashboard.GroupsCard
 import io.nekohasekai.sfa.compose.screen.dashboard.groups.GroupsViewModel
+import io.nekohasekai.sfa.compose.screen.protocol.ProtocolSelectionScreen
 import io.nekohasekai.sfa.compose.screen.log.HookLogScreen
 import io.nekohasekai.sfa.compose.screen.log.LogScreen
 import io.nekohasekai.sfa.compose.screen.log.LogViewModel
@@ -119,6 +120,7 @@ fun SFANavHost(
                     onNavigateToProfile = { navController.navigate("profile") },
                     onNavigateToNotifications = { navController.navigate("notifications") },
                     onNavigateToTraffic = { navController.navigate("traffic") },
+                    onNavigateToProtocolSelection = { navController.navigate("protocol_selection") },
                     viewModel = dashboardViewModel,
                 )
             } else {
@@ -128,9 +130,14 @@ fun SFANavHost(
                     showStatusBar = showStatusBar,
                     onNavigateToProfile = { navController.navigate("profile") },
                     onNavigateToNotifications = { navController.navigate("notifications") },
-                    onNavigateToTraffic = { navController.navigate("traffic") }
+                    onNavigateToTraffic = { navController.navigate("traffic") },
+                    onNavigateToProtocolSelection = { navController.navigate("protocol_selection") }
                 )
             }
+        }
+
+        composable("protocol_selection") {
+            ProtocolSelectionScreen(navController = navController)
         }
 
         composable(Screen.Log.route) {

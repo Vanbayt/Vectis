@@ -100,12 +100,31 @@ fun DashboardScreen(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToTraffic: () -> Unit = {},
+    onNavigateToProtocolSelection: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
 ) {
     val isConnected = serviceStatus == Status.Started || serviceStatus == Status.Starting
     val isConnecting = serviceStatus == Status.Starting
     val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.uiState.collectAsState()
+
+    var showUpgradeDialog by remember { mutableStateOf(false) }
+
+    if (showUpgradeDialog) {
+        AlertDialog(
+            onDismissRequest = { showUpgradeDialog = false },
+            icon = { Icon(Icons.Rounded.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            title = { Text("Доступно в тарифе Maximum") },
+            text = {
+                Text("Ручной выбор конкретного протокола и сервера доступен для пользователей с подпиской Maximum. Обновите тариф в профиле!")
+            },
+            confirmButton = {
+                TextButton(onClick = { showUpgradeDialog = false }) {
+                    Text("Понятно")
+                }
+            }
+        )
+    }
 
     // Подписываемся на ошибки из ViewModel
     // Подписываемся на ошибки из ViewModel
@@ -246,7 +265,13 @@ fun DashboardScreen(
                                 shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 32.dp)
                             )
                             InfoTile(
-                                modifier = Modifier.weight(1f).bounceClick { },
+                                modifier = Modifier.weight(1f).bounceClick {
+                                    if (io.nekohasekai.sfa.utils.SubscriptionAccess.canSelectProtocol(state.userProfile?.subscription_tier)) {
+                                        onNavigateToProtocolSelection()
+                                    } else {
+                                        showUpgradeDialog = true
+                                    }
+                                },
                                 title = "Protocol",
                                 value = state.protocol,
                                 icon = Icons.Rounded.Lock,

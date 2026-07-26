@@ -7,6 +7,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import android.widget.Toast
+import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Logout
@@ -153,12 +156,33 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
         }
 
         // Settings list
+        val context = LocalContext.current
+        var isUploadingLogs by remember { mutableStateOf(false) }
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(32.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
+                SettingTile(
+                    icon = Icons.Rounded.BugReport,
+                    title = if (isUploadingLogs) "Отправка логов..." else "Отправить логи разработчику",
+                    onClick = {
+                        if (!isUploadingLogs) {
+                            isUploadingLogs = true
+                            coroutineScope.launch {
+                                val result = io.nekohasekai.sfa.network.AppLogCollector.uploadLogs(context)
+                                isUploadingLogs = false
+                                result.onSuccess { msg ->
+                                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                }.onFailure { err ->
+                                    Toast.makeText(context, err.message ?: "Ошибка отправки", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    }
+                )
                 SettingTile(
                     icon = Icons.Rounded.Lock,
                     title = "Изменить пароль",

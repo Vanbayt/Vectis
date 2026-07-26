@@ -133,6 +133,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
             }
 
             DefaultNetworkMonitor.start()
+            io.nekohasekai.sfa.network.UdpProber.startMonitoring(Application.application)
 
             try {
                 commandServer.startOrReloadService(
@@ -182,6 +183,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
     }
 
     override fun serviceStop() {
+        io.nekohasekai.sfa.network.UdpProber.stopMonitoring(Application.application)
         notification.close()
         status.postValue(Status.Starting)
         val pfd = fileDescriptor

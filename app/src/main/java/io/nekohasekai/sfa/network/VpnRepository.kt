@@ -86,10 +86,24 @@ class VpnRepository(private val vpnApi: VpnApi) {
                         }
                     }
                 }
-                io.nekohasekai.sfa.database.Settings.lastProtocol = parsedProtocol
-                io.nekohasekai.sfa.database.Settings.lastLocation = parsedLocation
+                val userSelectedTag = io.nekohasekai.sfa.database.Settings.selectedOutboundTag
+                if (userSelectedTag.isBlank() || userSelectedTag == "auto") {
+                    io.nekohasekai.sfa.database.Settings.lastProtocol = "Auto"
+                    io.nekohasekai.sfa.database.Settings.lastLocation = "Auto"
+                } else {
+                    val tag = userSelectedTag
+                    val country = if (tag.contains("germany", ignoreCase = true) || tag.contains("ger", ignoreCase = true)) "Германия" else "Голландия"
+                    val proto = when {
+                        tag.contains("hysteria", ignoreCase = true) || tag.contains("hy2", ignoreCase = true) || tag.contains("9") || tag.contains("2") -> "Hysteria 2"
+                        tag.contains("grpc", ignoreCase = true) || tag.contains("5") || tag.contains("3") -> "VLESS gRPC"
+                        else -> "VLESS Reality"
+                    }
+                    io.nekohasekai.sfa.database.Settings.lastLocation = country
+                    io.nekohasekai.sfa.database.Settings.lastProtocol = proto
+                }
                 
-                json.toString().toByteArray(Charsets.UTF_8)
+                val injectedJson = ConfigInjector.inject(json.toString(), UdpProber.currentState)
+                injectedJson.toByteArray(Charsets.UTF_8)
             } catch (e: java.net.SocketTimeoutException) {
                 throw Exception("TCP-таймаут: Приложение не может достучаться до API сервера. Проверьте: 1) Не включен ли 'Always-on VPN' (Блокировать соединения без VPN). 2) Не запрещен ли доступ к Wi-Fi/данным для этого приложения в настройках Android. Оригинальная ошибка: ${e.message}", e)
             } catch (e: java.net.ConnectException) {

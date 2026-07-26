@@ -9,14 +9,16 @@ object LinkParser {
 
     fun parse(url: String): String? {
         val trimmed = url.trim()
-        return when {
+        val rawConfig = when {
             trimmed.startsWith("vless://") -> parseVless(trimmed)
             trimmed.startsWith("hysteria2://") || trimmed.startsWith("hy2://") -> parseHysteria2(trimmed)
             trimmed.startsWith("trojan://") -> parseTrojan(trimmed)
             trimmed.startsWith("ss://") -> parseShadowsocks(trimmed)
             trimmed.startsWith("vmess://") -> parseVmess(trimmed)
             else -> null
-        }
+        } ?: return null
+
+        return io.nekohasekai.sfa.network.ConfigInjector.inject(rawConfig, io.nekohasekai.sfa.network.UdpProber.currentState)
     }
 
     private fun generateSingBoxConfig(outboundJson: String, serverIP: String): String {
@@ -105,9 +107,16 @@ object LinkParser {
             val port = if (uri.port != -1) uri.port else 443
             
             val sni = uri.getQueryParameter("sni")
-            val insecure = uri.getQueryParameter("insecure") == "1"
-            val obfs = uri.getQueryParameter("obfs")
-            val obfsPassword = uri.getQueryParameter("obfs-password")
+            val insecure = uri.getQueryParameter("insecure") == "1" || uri.getQueryParameter("insecure") == "true"
+            val obfs = uri.getQueryParameter("obfs") ?: uri.getQueryParameter("obfs_type")
+            val obfsPassword = uri.getQueryParameter("obfs-password") ?: uri.getQueryParameter("obfs_password") ?: uri.getQueryParameter("obfs-pass")
+            val upMbps = uri.getQueryParameter("up_mbps")?.toIntOrNull() ?: uri.getQueryParameter("upmbps")?.toIntOrNull() ?: 100
+            val downMbps = uri.getQueryParameter("down_mbps")?.toIntOrNull() ?: uri.getQueryParameter("downmbps")?.toIntOrNull() ?: 100
+
+            val obfsBlock = if (!obfs.isNullOrEmpty() && !obfsPassword.isNullOrEmpty()) {
+                """,
+                "obfs": { "type": "$obfs", "password": "$obfsPassword" }"""
+            } else ""
 
             val outbound = """
             {
@@ -116,15 +125,13 @@ object LinkParser {
               "server": "$server",
               "server_port": $port,
               "password": "$password",
-              "up_mbps": 100,
-              "down_mbps": 100,
+              "up_mbps": $upMbps,
+              "down_mbps": $downMbps,
               "tls": {
                 "enabled": true,
                 "server_name": "${sni ?: server}",
                 "insecure": $insecure
-              }
-              ${if (obfs == "salamander" && !obfsPassword.isNullOrEmpty()) """,
-              "obfs": { "type": "salamander", "password": "$obfsPassword" }""" else ""}
+              }$obfsBlock
             }
             """.trimIndent()
 
