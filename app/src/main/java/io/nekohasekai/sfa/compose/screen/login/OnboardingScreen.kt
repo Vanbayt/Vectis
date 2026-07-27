@@ -4,12 +4,18 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.CardGiftcard
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpOffset
@@ -37,48 +45,62 @@ fun OnboardingScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             
-            // Dynamic Offsets for Blobs based on currentPage
+            // Dynamic Offsets for Background Blobs based on currentPage
             val blob1OffsetX by animateDpAsState(
-                targetValue = if (pagerState.currentPage == 2) (-100).dp else (-150).dp,
+                targetValue = when (pagerState.currentPage) {
+                    0 -> (-150).dp
+                    1 -> (-80).dp
+                    else -> (-120).dp
+                },
                 animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 label = "blob1x"
             )
             val blob1OffsetY by animateDpAsState(
-                targetValue = if (pagerState.currentPage == 2) (-100).dp else 250.dp,
+                targetValue = when (pagerState.currentPage) {
+                    0 -> 250.dp
+                    1 -> 100.dp
+                    else -> (-80).dp
+                },
                 animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 label = "blob1y"
             )
             
             val blob2OffsetX by animateDpAsState(
-                targetValue = if (pagerState.currentPage == 2) 100.dp else 180.dp,
+                targetValue = when (pagerState.currentPage) {
+                    0 -> 180.dp
+                    1 -> 120.dp
+                    else -> 150.dp
+                },
                 animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 label = "blob2x"
             )
             val blob2OffsetY by animateDpAsState(
-                targetValue = if (pagerState.currentPage == 2) 300.dp else 100.dp,
+                targetValue = when (pagerState.currentPage) {
+                    0 -> 100.dp
+                    1 -> 320.dp
+                    else -> 200.dp
+                },
                 animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
                 label = "blob2y"
             )
 
-            // Immersive Background
+            // Immersive Background Blobs
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                // Blob 1
                 AnimatedBlob(
                     shape = remember { WavyCookieShape(points = 12, waveDepth = 0.12f) },
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                    size = 500.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.09f),
+                    size = 520.dp,
                     offset = DpOffset(x = blob1OffsetX, y = blob1OffsetY),
                     durationMillis = 30000
                 )
                 
-                // Blob 2
                 AnimatedBlob(
                     shape = remember { WavyCookieShape(points = 14, waveDepth = 0.1f) },
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.04f),
-                    size = 400.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                    size = 420.dp,
                     offset = DpOffset(x = blob2OffsetX, y = blob2OffsetY),
                     durationMillis = 25000,
                     reverse = true
@@ -98,44 +120,30 @@ fun OnboardingScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     when (page) {
-                        0 -> {
-                            Text(
-                                text = "Welcome",
-                                style = MaterialTheme.typography.displayLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "TODO: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                        1 -> {
-                            Text(
-                                text = "TODO: Screen 2",
-                                style = MaterialTheme.typography.displayMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        2 -> {
-                            Text(
-                                text = "TODO: Screen 3",
-                                style = MaterialTheme.typography.displayMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        0 -> OnboardingCard(
+                            icon = Icons.Rounded.Security,
+                            title = "Добро пожаловать в Vectis",
+                            subtitle = "Сверхбыстрое и защищенное соединение нового поколения на протоколах VLESS, Reality и Hysteria 2 с устойчивостью к блокировкам."
+                        )
+                        1 -> OnboardingCard(
+                            icon = Icons.Rounded.CardGiftcard,
+                            title = "5 ГБ в подарок каждому",
+                            subtitle = "Приятный старт без необходимости сразу оплачивать подписку. Бесплатный лимит автоматически закрепляется за вашим устройством."
+                        )
+                        2 -> OnboardingCard(
+                            icon = Icons.Rounded.Speed,
+                            title = "Умный выбор маршрута",
+                            subtitle = "Автоматический выбор наилучшего сервера с минимальным пингом, интеллектуальное переключение Wi-Fi/LTE и экономия батареи."
+                        )
                     }
                 }
             }
 
-            // Skip Button
+            // Skip Button (Top Right)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(top = 40.dp, end = 24.dp),
                 contentAlignment = Alignment.TopEnd
             ) {
                 androidx.compose.animation.AnimatedVisibility(
@@ -146,87 +154,174 @@ fun OnboardingScreen(
                     WavyButton(
                         onClick = onNavigateToLogin,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     ) {
-                        Text("Skip", style = MaterialTheme.typography.labelLarge)
+                        Text("Пропустить", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
 
-            // Bottom Navigation Bar
-            Row(
+            // Bottom Control Area (Page Indicators + Navigation)
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(32.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 32.dp, vertical = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Left Arrow (Hidden on first page)
-                Box(modifier = Modifier.size(56.dp)) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = pagerState.currentPage > 0,
-                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInHorizontally(initialOffsetX = { -it / 2 }),
-                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -it / 2 })
-                    ) {
-                        WavyButton(
-                            onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(
-                                        page = pagerState.currentPage - 1,
-                                        animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
-                                    )
-                                }
-                            },
-                            modifier = Modifier.size(56.dp),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Previous")
-                        }
+                // Page Indicator Dots
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 28.dp)
+                ) {
+                    repeat(3) { index ->
+                        val isSelected = pagerState.currentPage == index
+                        val width by animateDpAsState(
+                            targetValue = if (isSelected) 28.dp else 8.dp,
+                            animationSpec = tween(durationMillis = 300),
+                            label = "dotWidth"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp)
+                                .height(8.dp)
+                                .width(width)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary 
+                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                                )
+                        )
                     }
                 }
 
-                // Right side controls
-                Box(contentAlignment = Alignment.CenterEnd) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = pagerState.currentPage < 2,
-                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it / 2 }),
-                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it / 2 })
-                    ) {
-                        // Right Arrow
-                        WavyButton(
-                            onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(
-                                        page = pagerState.currentPage + 1,
-                                        animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
-                                    )
-                                }
-                            },
-                            modifier = Modifier.size(56.dp),
-                            contentPadding = PaddingValues(0.dp)
+                // Navigation Buttons Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Left Back Arrow
+                    Box(modifier = Modifier.size(56.dp)) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = pagerState.currentPage > 0,
+                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInHorizontally(initialOffsetX = { -it / 2 }),
+                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutHorizontally(targetOffsetX = { -it / 2 })
                         ) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "Next")
+                            WavyButton(
+                                onClick = {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(
+                                            page = pagerState.currentPage - 1,
+                                            animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.size(56.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
+                            }
                         }
                     }
 
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = pagerState.currentPage == 2,
-                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it / 2 }),
-                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it / 2 })
-                    ) {
-                        // Login Button on the last page
-                        WavyButton(
-                            onClick = onNavigateToLogin,
-                            modifier = Modifier.height(56.dp)
+                    // Right Forward Button or Finish Button
+                    Box(contentAlignment = Alignment.CenterEnd) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = pagerState.currentPage < 2,
+                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it / 2 }),
+                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it / 2 })
                         ) {
-                            Text("Login", style = MaterialTheme.typography.titleMedium)
+                            WavyButton(
+                                onClick = {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(
+                                            page = pagerState.currentPage + 1,
+                                            animationSpec = tween(durationMillis = 550, easing = FastOutSlowInEasing)
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.size(56.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "Далее")
+                            }
+                        }
+
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = pagerState.currentPage == 2,
+                            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it / 2 }),
+                            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it / 2 })
+                        ) {
+                            Button(
+                                onClick = onNavigateToLogin,
+                                modifier = Modifier.height(56.dp),
+                                shape = RoundedCornerShape(28.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Text(
+                                    text = "Начать работу",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun OnboardingCard(
+    icon: ImageVector,
+    title: String,
+    subtitle: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(100.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(36.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
     }
 }
