@@ -25,8 +25,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.text.font.FontWeight
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,12 +61,6 @@ fun ToolsScreen(
     tailscaleViewModel: TailscaleStatusViewModel,
     sshSharedViewModel: TailscaleSSHSharedViewModel,
 ) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.title_tools)) },
-        )
-    }
-
     val crashUnreadCount by CrashReportManager.unreadCount.collectAsState()
     val oomUnreadCount by OOMReportManager.unreadCount.collectAsState()
     val tailscaleState by tailscaleViewModel.uiState.collectAsState()
@@ -76,13 +73,22 @@ fun ToolsScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.title_tools), fontWeight = FontWeight.Bold) },
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+        ) {
+
         if (tailscaleState.endpoints.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.tailscale_endpoints),
@@ -216,6 +222,12 @@ fun ToolsScreen(
         }
     }
 }
+}
+
+
+
+
+
 
 internal fun handleSSHNavigation(
     navController: NavController,

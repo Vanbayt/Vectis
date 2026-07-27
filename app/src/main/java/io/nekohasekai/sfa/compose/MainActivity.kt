@@ -881,6 +881,7 @@ class MainActivity :
 
                     Scaffold(
                         modifier = Modifier.weight(1f),
+                        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                         topBar = {},
                     ) { paddingValues ->
@@ -890,9 +891,11 @@ class MainActivity :
             } else {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                     topBar = {},
                     bottomBar = {
+
                         if (!isSubScreen) {
                             val hasUpdate by UpdateState.hasUpdate
                             NavigationBar(

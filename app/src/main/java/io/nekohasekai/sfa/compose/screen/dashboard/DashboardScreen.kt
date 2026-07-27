@@ -169,8 +169,10 @@ fun DashboardScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .padding(bottom = 24.dp)
         ) {
+
             // Header Row replacing TopAppBar
             Row(
                 modifier = Modifier
