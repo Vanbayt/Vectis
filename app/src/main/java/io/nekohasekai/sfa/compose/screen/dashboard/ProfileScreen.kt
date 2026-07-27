@@ -40,7 +40,12 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val userProfile = uiState.userProfile
     
+    LaunchedEffect(Unit) {
+        viewModel.refreshUserProfile()
+    }
+    
     var showPasswordDialog by remember { mutableStateOf(false) }
+
 
     if (showPasswordDialog) {
         ChangePasswordDialog(
@@ -122,8 +127,16 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Тариф: ${userProfile?.subscription_tier ?: "Загрузка..."}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    val tierName = when (userProfile?.subscription_tier) {
+                        "free" -> "Бесплатный (5 ГБ)"
+                        "premium" -> "Премиум"
+                        "unlimited" -> "Безлимитный"
+                        null -> "Загрузка..."
+                        else -> userProfile.subscription_tier
+                    }
+                    Text("Тариф: $tierName", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(4.dp))
+
                     
                     val dateText = remember(userProfile?.subscription_end) {
                         if (userProfile?.subscription_end == null) {

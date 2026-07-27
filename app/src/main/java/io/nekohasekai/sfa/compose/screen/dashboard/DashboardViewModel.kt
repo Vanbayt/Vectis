@@ -163,29 +163,10 @@ class DashboardViewModel(
     }
 
     init {
-        // Fetch user profile and validate token
-        if (Settings.token.isNotEmpty()) {
-            viewModelScope.launch(Dispatchers.IO) {
-                try {
-                    val profile = userRepository.fetchProfile(Settings.token)
-                    withContext(Dispatchers.Main) {
-                        updateState {
-                            copy(
-                                trafficUsed = profile.traffic_used,
-                                trafficLimit = profile.traffic_limit,
-                                userProfile = profile
-                            )
-                        }
-                    }
-                    // Fetch VPN config as well
-                    repository.fetchAndDecryptConfig(Settings.token)
-                } catch (e: Exception) {
-                    // Ignore, 401 will be caught by AppModule interceptor
-                }
-            }
-        }
+        refreshUserProfile()
 
         viewModelScope.launch {
+
             AppLifecycleObserver.isForeground.collect { foreground ->
                 if (_serviceStatus.value != Status.Started) return@collect
                 if (foreground) {
@@ -202,7 +183,30 @@ class DashboardViewModel(
         commandClient.disconnect()
     }
 
+    fun refreshUserProfile() {
+        if (Settings.token.isNotEmpty()) {
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    val profile = userRepository.fetchProfile(Settings.token)
+                    withContext(Dispatchers.Main) {
+                        updateState {
+                            copy(
+                                trafficUsed = profile.traffic_used,
+                                trafficLimit = profile.traffic_limit,
+                                userProfile = profile
+                            )
+                        }
+                    }
+                    repository.fetchAndDecryptConfig(Settings.token)
+                } catch (e: Exception) {
+                    android.util.Log.e("DashboardViewModel", "Failed to fetch user profile: ${e.message}", e)
+                }
+            }
+        }
+    }
+
     fun changePassword(oldPassword: String, newPassword: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val req = io.nekohasekai.sfa.network.UserPasswordUpdateRequest(oldPassword, newPassword)

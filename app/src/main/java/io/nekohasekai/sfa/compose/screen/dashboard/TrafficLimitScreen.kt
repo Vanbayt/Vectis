@@ -79,7 +79,11 @@ fun checkUsageAccess(context: Context): Boolean {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewModel = koinViewModel()) {
+    LaunchedEffect(Unit) {
+        viewModel.refreshUserProfile()
+    }
     val state by viewModel.uiState.collectAsState()
+
     val isUnlimited = state.trafficLimit <= 0L
     val usedGb = state.trafficUsed.toFloat() / (1024 * 1024 * 1024)
     val limitGb = state.trafficLimit.toFloat() / (1024 * 1024 * 1024)
