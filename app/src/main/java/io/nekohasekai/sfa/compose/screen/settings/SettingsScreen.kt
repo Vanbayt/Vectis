@@ -1,5 +1,6 @@
 package io.nekohasekai.sfa.compose.screen.settings
 
+import android.widget.Toast
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -13,11 +14,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -46,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,22 +61,32 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import io.nekohasekai.sfa.BuildConfig
 import io.nekohasekai.sfa.R
+import io.nekohasekai.sfa.update.UpdateState
 import io.nekohasekai.sfa.utils.HookModuleUpdateNotifier
 import io.nekohasekai.sfa.utils.HookStatusClient
+import io.nekohasekai.sfa.vendor.Vendor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val hookStatus by HookStatusClient.status.collectAsState()
     val hasPendingPrivilegeDowngrade = HookModuleUpdateNotifier.isDowngrade(hookStatus)
     val hasPendingPrivilegeUpdate = HookModuleUpdateNotifier.isUpgrade(hookStatus)
+    val hasAppUpdate by UpdateState.hasUpdate
+
     LaunchedEffect(Unit) {
         HookStatusClient.refresh()
     }
 
     Scaffold(
+        modifier = Modifier.statusBarsPadding(),
         topBar = {
             TopAppBar(
                 title = { 
@@ -81,6 +96,7 @@ fun SettingsScreen(navController: NavController) {
                         fontWeight = FontWeight.Bold
                     ) 
                 },
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 )
@@ -93,7 +109,7 @@ fun SettingsScreen(navController: NavController) {
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.surface)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Section 1: Main & Per-App Proxy
@@ -204,6 +220,44 @@ fun SettingsScreen(navController: NavController) {
                         title = stringResource(R.string.title_tools),
                         subtitle = stringResource(R.string.tools_settings_subtitle),
                         onClick = { navController.navigate("tools") }
+                    )
+                }
+            }
+
+            // Section 5: App Updates
+            Text(
+                text = stringResource(R.string.settings_section_update),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    val currentVersion = BuildConfig.VERSION_NAME
+                    SettingTile(
+                        icon = Icons.Outlined.SystemUpdate,
+                        title = stringResource(R.string.check_for_updates),
+                        subtitle = stringResource(R.string.check_for_updates_subtitle, currentVersion),
+                        hasBadge = hasAppUpdate,
+                        badgeText = if (hasAppUpdate) "NEW" else null,
+                        badgeColor = MaterialTheme.colorScheme.primary,
+                        onClick = {
+                            coroutineScope.launch {
+                                Toast.makeText(context, "Проверка обновлений...", Toast.LENGTH_SHORT).show()
+                                val updateInfo = withContext(Dispatchers.IO) { Vendor.checkUpdateAsync() }
+                                if (updateInfo != null) {
+                                    UpdateState.setUpdate(updateInfo)
+                                    Toast.makeText(context, "Доступно обновление: ${updateInfo.versionName}", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, "У вас установлена последняя версия Vectis (v$currentVersion)", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
                     )
                 }
             }

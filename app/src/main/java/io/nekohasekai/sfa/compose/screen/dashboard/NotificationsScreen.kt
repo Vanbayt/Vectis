@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.items
+
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -130,6 +132,7 @@ fun NotificationsScreen(
     }
 
     Scaffold(
+        modifier = Modifier.statusBarsPadding(),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.notifications_title), fontWeight = FontWeight.Bold) },
@@ -138,6 +141,7 @@ fun NotificationsScreen(
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
                     }
                 },
+                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 actions = {
                     if (notificationsList.isNotEmpty()) {
                         IconButton(onClick = { notificationsList.clear() }) {
@@ -152,6 +156,7 @@ fun NotificationsScreen(
             )
         }
     ) { paddingValues ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()

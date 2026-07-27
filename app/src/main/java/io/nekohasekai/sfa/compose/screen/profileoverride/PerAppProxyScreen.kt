@@ -53,7 +53,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -320,133 +323,138 @@ fun PerAppProxyScreen(
         isLoading = false
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.per_app_proxy)) },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-            actions = {
-                IconButton(
-                    onClick = {
-                        isSearchActive = !isSearchActive
-                        if (!isSearchActive) {
-                            searchQuery = ""
-                            updateCurrentPackages("")
-                            focusManager.clearFocus()
-                        }
-                    },
-                ) {
-                    Icon(
-                        imageVector = if (isSearchActive) Icons.Default.Close else Icons.Default.Search,
-                        contentDescription = stringResource(R.string.search),
-                    )
-                }
-                PerAppProxyMenus(
-                    proxyMode = proxyMode,
-                    sortMode = sortMode,
-                    sortReverse = sortReverse,
-                    hideSystemApps = hideSystemApps,
-                    hideOfflineApps = hideOfflineApps,
-                    hideDisabledApps = hideDisabledApps,
-                    onModeChange = { mode ->
-                        proxyMode = mode
-                        coroutineScope.launch {
-                            withContext(Dispatchers.IO) {
-                                Settings.perAppProxyMode = mode
+    Scaffold(
+        modifier = Modifier.statusBarsPadding(),
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.per_app_proxy), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+                actions = {
+                    IconButton(
+                        onClick = {
+                            isSearchActive = !isSearchActive
+                            if (!isSearchActive) {
+                                searchQuery = ""
+                                updateCurrentPackages("")
+                                focusManager.clearFocus()
                             }
-                            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
-                        }
-                    },
-                    onSortModeChange = { mode ->
-                        sortMode = mode
-                        applyFilter()
-                    },
-                    onSortReverseToggle = {
-                        sortReverse = !sortReverse
-                        applyFilter()
-                    },
-                    onHideSystemAppsToggle = {
-                        hideSystemApps = !hideSystemApps
-                        applyFilter()
-                    },
-                    onHideOfflineAppsToggle = {
-                        hideOfflineApps = !hideOfflineApps
-                        applyFilter()
-                    },
-                    onHideDisabledAppsToggle = {
-                        hideDisabledApps = !hideDisabledApps
-                        applyFilter()
-                    },
-                    onSelectAll = {
-                        val newSelected = currentPackages.map { it.uid }.toSet()
-                        postSaveSelectedApplications(newSelected)
-                    },
-                    onDeselectAll = {
-                        postSaveSelectedApplications(emptySet())
-                    },
-                    onImport = {
-                        val packageNames =
-                            clipboardText?.split("\n")?.distinct()
-                                ?.takeIf { it.isNotEmpty() && it[0].isNotEmpty() }
-                        if (packageNames.isNullOrEmpty()) {
-                            Toast.makeText(
-                                context,
-                                R.string.toast_clipboard_empty,
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                        } else {
-                            val newSelected =
+                        },
+                    ) {
+                        Icon(
+                            imageVector = if (isSearchActive) Icons.Default.Close else Icons.Default.Search,
+                            contentDescription = stringResource(R.string.search),
+                        )
+                    }
+                    PerAppProxyMenus(
+                        proxyMode = proxyMode,
+                        sortMode = sortMode,
+                        sortReverse = sortReverse,
+                        hideSystemApps = hideSystemApps,
+                        hideOfflineApps = hideOfflineApps,
+                        hideDisabledApps = hideDisabledApps,
+                        onModeChange = { mode ->
+                            proxyMode = mode
+                            coroutineScope.launch {
+                                withContext(Dispatchers.IO) {
+                                    Settings.perAppProxyMode = mode
+                                }
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                            }
+                        },
+                        onSortModeChange = { mode ->
+                            sortMode = mode
+                            applyFilter()
+                        },
+                        onSortReverseToggle = {
+                            sortReverse = !sortReverse
+                            applyFilter()
+                        },
+                        onHideSystemAppsToggle = {
+                            hideSystemApps = !hideSystemApps
+                            applyFilter()
+                        },
+                        onHideOfflineAppsToggle = {
+                            hideOfflineApps = !hideOfflineApps
+                            applyFilter()
+                        },
+                        onHideDisabledAppsToggle = {
+                            hideDisabledApps = !hideDisabledApps
+                            applyFilter()
+                        },
+                        onSelectAll = {
+                            val newSelected = currentPackages.map { it.uid }.toSet()
+                            postSaveSelectedApplications(newSelected)
+                        },
+                        onDeselectAll = {
+                            postSaveSelectedApplications(emptySet())
+                        },
+                        onImport = {
+                            val packageNames =
+                                clipboardText?.split("\n")?.distinct()
+                                    ?.takeIf { it.isNotEmpty() && it[0].isNotEmpty() }
+                            if (packageNames.isNullOrEmpty()) {
+                                Toast.makeText(
+                                    context,
+                                    R.string.toast_clipboard_empty,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            } else {
+                                val newSelected =
+                                    packages.mapNotNull { packageCache ->
+                                        if (packageNames.contains(packageCache.packageName)) {
+                                            packageCache.uid
+                                        } else {
+                                            null
+                                        }
+                                    }.toSet()
+                                postSaveSelectedApplications(newSelected)
+                                Toast.makeText(
+                                    context,
+                                    R.string.toast_imported_from_clipboard,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        },
+                        onExport = {
+                            val packageList =
                                 packages.mapNotNull { packageCache ->
-                                    if (packageNames.contains(packageCache.packageName)) {
-                                        packageCache.uid
+                                    if (selectedUids.contains(packageCache.uid)) {
+                                        packageCache.packageName
                                     } else {
                                         null
                                     }
-                                }.toSet()
-                            postSaveSelectedApplications(newSelected)
+                                }
+                            clipboardText = packageList.joinToString("\n")
                             Toast.makeText(
                                 context,
-                                R.string.toast_imported_from_clipboard,
+                                R.string.toast_copied_to_clipboard,
                                 Toast.LENGTH_SHORT,
                             ).show()
-                        }
-                    },
-                    onExport = {
-                        val packageList =
-                            packages.mapNotNull { packageCache ->
-                                if (selectedUids.contains(packageCache.uid)) {
-                                    packageCache.packageName
-                                } else {
-                                    null
-                                }
-                            }
-                        clipboardText = packageList.joinToString("\n")
-                        Toast.makeText(
-                            context,
-                            R.string.toast_copied_to_clipboard,
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    },
-                    onScanChinaApps = { startScan() },
-                )
-            },
-            colors =
-            TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                titleContentColor = MaterialTheme.colorScheme.onSurface,
-            ),
-        )
-    }
+                        },
+                        onScanChinaApps = { startScan() },
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+        ) {
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
         AnimatedVisibility(
             visible = isLoading,
             enter = fadeIn(),
@@ -587,6 +595,9 @@ fun PerAppProxyScreen(
             }
         }
     }
+}
+
+
 
     if (scanProgress != null) {
         val progress = scanProgress

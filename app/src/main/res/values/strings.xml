@@ -617,7 +617,11 @@
     <string name="core_settings_subtitle">sing-box core parameters</string>
     <string name="privilege_settings_subtitle">Privileged mode and Xposed</string>
     <string name="tools_settings_subtitle">STUN, speed test, log files</string>
+    <string name="settings_section_update">APP UPDATE</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="check_for_updates_subtitle">App version %s (Tap to check)</string>
 </resources>
+
 
 
 

@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
@@ -40,6 +43,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.R
@@ -156,7 +161,7 @@ fun AppSelectionCard(
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
     var showCopyMenu by remember { mutableStateOf(false) }
-    val cardShape = MaterialTheme.shapes.medium
+    val cardShape = RoundedCornerShape(20.dp)
     val cardModifier =
         if (enableCopyActions) {
             Modifier
@@ -177,20 +182,19 @@ fun AppSelectionCard(
         Card(
             modifier = cardModifier,
             shape = cardShape,
-            colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            colors = CardDefaults.cardColors(
+                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceContainer,
             ),
         ) {
             Row(
-                modifier = Modifier.padding(12.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Image(
                     bitmap = packageCache.applicationIcon,
                     contentDescription = stringResource(R.string.content_description_app_icon),
-                    modifier = Modifier.size(40.dp),
+                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)),
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -198,14 +202,17 @@ fun AppSelectionCard(
                     Text(
                         text = packageCache.applicationLabel,
                         style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "${packageCache.packageName} (${packageCache.uid})",
+                        text = packageCache.packageName,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        softWrap = true,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Switch(
@@ -214,6 +221,7 @@ fun AppSelectionCard(
                 )
             }
         }
+
 
         if (enableCopyActions) {
             DropdownMenu(

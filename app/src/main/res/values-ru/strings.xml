@@ -609,7 +609,11 @@
     <string name="core_settings_subtitle">Параметры ячеек и ядра sing-box</string>
     <string name="privilege_settings_subtitle">Привилегированный режим и Xposed</string>
     <string name="tools_settings_subtitle">STUN, скорость сети, лог-файлы</string>
+    <string name="settings_section_update">ОБНОВЛЕНИЕ ПРИЛОЖЕНИЯ</string>
+    <string name="check_for_updates">Проверить обновления</string>
+    <string name="check_for_updates_subtitle">Версия приложения %s (Нажмите для проверки)</string>
 </resources>
+
 
 
 

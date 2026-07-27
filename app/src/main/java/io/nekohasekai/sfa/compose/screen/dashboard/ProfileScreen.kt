@@ -64,6 +64,7 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
     }
 
     Scaffold(
+        modifier = Modifier.statusBarsPadding(),
         topBar = {
             TopAppBar(
                 title = { Text(androidx.compose.ui.res.stringResource(io.nekohasekai.sfa.R.string.profile_title), fontWeight = FontWeight.Bold) },
@@ -72,6 +73,7 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = androidx.compose.ui.res.stringResource(io.nekohasekai.sfa.R.string.content_description_back))
                     }
                 },
+                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -79,6 +81,7 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
             )
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
