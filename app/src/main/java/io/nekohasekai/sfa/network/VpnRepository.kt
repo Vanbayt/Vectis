@@ -94,8 +94,8 @@ class VpnRepository(private val vpnApi: VpnApi) {
                     val tag = userSelectedTag
                     val country = if (tag.contains("germany", ignoreCase = true) || tag.contains("ger", ignoreCase = true)) "Германия" else "Голландия"
                     val proto = when {
-                        tag.contains("hysteria", ignoreCase = true) || tag.contains("hy2", ignoreCase = true) || tag.contains("9") || tag.contains("2") -> "Hysteria 2"
-                        tag.contains("grpc", ignoreCase = true) || tag.contains("5") || tag.contains("3") -> "VLESS gRPC"
+                        tag.contains("hysteria", ignoreCase = true) || tag.contains("hy2", ignoreCase = true) || tag.endsWith("-8") || tag.endsWith("-2") || tag.endsWith("-9") -> "Hysteria 2"
+                        tag.contains("grpc", ignoreCase = true) || tag.endsWith("-5") || tag.endsWith("-3") -> "VLESS gRPC"
                         else -> "VLESS Reality"
                     }
                     io.nekohasekai.sfa.database.Settings.lastLocation = country
