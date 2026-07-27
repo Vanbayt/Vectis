@@ -73,7 +73,18 @@ class LogViewModel :
 
     override fun onConnected() {
         _uiState.update { it.copy(isConnected = true) }
+        if (allLogs.isEmpty()) {
+            appendLogs(
+                listOf(
+                    LogEntry().apply {
+                        level = 2
+                        message = "Vectis Core Service active — monitoring connection events..."
+                    }
+                )
+            )
+        }
     }
+
 
     override fun onDisconnected() {
         _uiState.update { it.copy(isConnected = false) }

@@ -31,4 +31,23 @@ class UserRepository(private val userApi: UserApi) {
             }
         }
     }
+
+    suspend fun fetchNotifications(token: String): List<AppNotification> {
+        return withContext(Dispatchers.IO) {
+            try {
+                userApi.getNotifications("Bearer $token")
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+    }
+
+    suspend fun markNotificationRead(token: String, notificationId: Int) {
+        withContext(Dispatchers.IO) {
+            try {
+                userApi.markNotificationRead("Bearer $token", notificationId)
+            } catch (_: Exception) {}
+        }
+    }
 }
+

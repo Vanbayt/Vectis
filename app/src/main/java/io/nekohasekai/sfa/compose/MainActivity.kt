@@ -638,7 +638,8 @@ class MainActivity :
 
         val isSettingsSubScreen = currentRoute?.startsWith("settings/") == true
         val isToolsSubScreen = currentRoute?.startsWith("tools/") == true || currentRoute == Screen.Tools.route
-        val isProfileRoute = currentRoute?.startsWith("profile/") == true
+        val isProfileRoute = currentRoute == "profile" || currentRoute?.startsWith("profile/") == true
+        val isNotificationsRoute = currentRoute == "notifications"
         val isConnectionsDetail = currentRoute?.startsWith("connections/detail") == true
         val isTrafficRoute = currentRoute == "traffic"
         val isProtocolRoute = currentRoute == "protocol_selection"
@@ -646,7 +647,7 @@ class MainActivity :
         val currentRootRoute = when {
             isSettingsSubScreen || isToolsSubScreen || isProfileRoute -> Screen.Settings.route
             isConnectionsDetail -> Screen.Connections.route
-            isTrafficRoute || isProtocolRoute -> Screen.Dashboard.route
+            isTrafficRoute || isProtocolRoute || isNotificationsRoute -> Screen.Dashboard.route
             else -> currentRoute
         }
 
@@ -654,7 +655,8 @@ class MainActivity :
         val isGroupsRoute = currentRootRoute == Screen.Groups.route
         val isLogRoute = currentRootRoute == Screen.Log.route
 
-        val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute || isTrafficRoute || isProtocolRoute
+        val isSubScreen = isSettingsSubScreen || isToolsSubScreen || isConnectionsDetail || isProfileRoute || isNotificationsRoute || isTrafficRoute || isProtocolRoute
+
         // Get LogViewModel instance if we're on the Log screen
         val logViewModel: LogViewModel? =
             if (isLogRoute) {

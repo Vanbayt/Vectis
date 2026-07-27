@@ -127,7 +127,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
             val content = String(configBytes, Charsets.UTF_8)
             configBytes.fill(0) // Zero out the decrypted config in memory
 
-            lastProfileName = "Vectis API Config"
+            lastProfileName = "Vectis • VPN"
             withContext(Dispatchers.Main) {
                 notification.show(lastProfileName, R.string.status_starting)
             }
@@ -216,7 +216,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
         val content = String(configBytes, Charsets.UTF_8)
         configBytes.fill(0) // Zero out the decrypted config in memory
-        lastProfileName = "Vectis API Config"
+        lastProfileName = "Vectis • VPN"
         try {
             commandServer.startOrReloadService(
                 content,

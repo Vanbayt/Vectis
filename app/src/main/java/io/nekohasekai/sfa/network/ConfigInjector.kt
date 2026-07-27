@@ -18,10 +18,12 @@ object ConfigInjector {
         return try {
             val json = JSONObject(jsonString)
             sanitizeDeprecatedFields(json)
+            injectLogConfig(json)
             injectOutbounds(json, udpState)
             injectDns(json)
             injectRouteRules(json)
             json.toString(2)
+
         } catch (e: Exception) {
             android.util.Log.e("ConfigInjector", "Failed to inject anti-DPI settings: ${e.message}", e)
             jsonString
@@ -258,4 +260,14 @@ object ConfigInjector {
             currentRules.put(icmpRule)
         }
     }
+
+    private fun injectLogConfig(json: JSONObject) {
+        val log = json.optJSONObject("log") ?: JSONObject().also { json.put("log", it) }
+        if (!log.has("level") || log.optString("level") == "panic" || log.optString("level") == "warn") {
+            log.put("level", "info")
+        }
+        log.put("disabled", false)
+        log.put("timestamp", true)
+    }
 }
+

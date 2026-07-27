@@ -65,20 +65,25 @@ import io.nekohasekai.sfa.compose.screen.tools.ToolsScreen
 import io.nekohasekai.sfa.constant.Status
 
 private val slideInFromRight: AnimatedContentTransitionScope<*>.() -> androidx.compose.animation.EnterTransition = {
-    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300))
+    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
+            fadeIn(animationSpec = tween(350))
 }
 
 private val slideOutToRight: AnimatedContentTransitionScope<*>.() -> androidx.compose.animation.ExitTransition = {
-    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300))
+    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
+            fadeOut(animationSpec = tween(350))
 }
 
 private val slideInFromLeft: AnimatedContentTransitionScope<*>.() -> androidx.compose.animation.EnterTransition = {
-    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(300))
+    slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
+            fadeIn(animationSpec = tween(350))
 }
 
 private val slideOutToLeft: AnimatedContentTransitionScope<*>.() -> androidx.compose.animation.ExitTransition = {
-    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(300))
+    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left, animationSpec = tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) +
+            fadeOut(animationSpec = tween(350))
 }
+
 
 @Composable
 fun SFANavHost(

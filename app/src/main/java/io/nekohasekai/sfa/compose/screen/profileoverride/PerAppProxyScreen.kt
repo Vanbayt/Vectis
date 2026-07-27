@@ -141,6 +141,30 @@ fun PerAppProxyScreen(
         packages.find { it.uid == uid }?.packageName
     }.toSet()
 
+    fun applyRussianPreset(presetPackages: Set<String>) {
+        val newSelected = packages.mapNotNull { packageCache ->
+            if (presetPackages.contains(packageCache.packageName)) {
+                packageCache.uid
+            } else {
+                null
+            }
+        }.toSet()
+        val packageNames = buildPackageList(newSelected)
+        coroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                Settings.perAppProxyList = packageNames
+            }
+            selectedUids = newSelected
+            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+        }
+        Toast.makeText(
+            context,
+            "Применен пресет: выбрано ${newSelected.size} прил.",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+
     fun updateCurrentPackages(filterQuery: String) {
         currentPackages =
             if (filterQuery.isEmpty()) {
@@ -435,17 +459,63 @@ fun PerAppProxyScreen(
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
-            Text(
-                text =
-                if (proxyMode == Settings.PER_APP_PROXY_INCLUDE) {
-                    stringResource(R.string.per_app_proxy_mode_include_description)
-                } else {
-                    stringResource(R.string.per_app_proxy_mode_exclude_description)
-                },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+                Text(
+                    text =
+                    if (proxyMode == Settings.PER_APP_PROXY_INCLUDE) {
+                        stringResource(R.string.per_app_proxy_mode_include_description)
+                    } else {
+                        stringResource(R.string.per_app_proxy_mode_exclude_description)
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                androidx.compose.foundation.lazy.LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        androidx.compose.material3.AssistChip(
+                            onClick = { applyRussianPreset(RussianAppPreset.allRussianPackages) },
+                            label = { Text("🇷🇺 Все РФ прил.") }
+                        )
+                    }
+                    item {
+                        androidx.compose.material3.AssistChip(
+                            onClick = { applyRussianPreset(RussianAppPreset.yandexPackages + RussianAppPreset.vkPackages) },
+                            label = { Text("🟢 Яндекс и VK") }
+                        )
+                    }
+                    item {
+                        androidx.compose.material3.AssistChip(
+                            onClick = { applyRussianPreset(RussianAppPreset.bankingPackages) },
+                            label = { Text("🏦 Банки") }
+                        )
+                    }
+                    item {
+                        androidx.compose.material3.AssistChip(
+                            onClick = { applyRussianPreset(RussianAppPreset.marketplacePackages) },
+                            label = { Text("🛒 Маркетплейсы") }
+                        )
+                    }
+                    item {
+                        androidx.compose.material3.AssistChip(
+                            onClick = { applyRussianPreset(RussianAppPreset.gosuslugiPackages) },
+                            label = { Text("🏛️ Госуслуги") }
+                        )
+                    }
+                    item {
+                        androidx.compose.material3.AssistChip(
+                            onClick = { applyRussianPreset(RussianAppPreset.mediaPackages) },
+                            label = { Text("🎬 Медиа РФ") }
+                        )
+                    }
+                }
+            }
         }
+
 
         AnimatedVisibility(
             visible = isSearchActive,

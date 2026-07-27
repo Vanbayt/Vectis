@@ -14,4 +14,16 @@ interface UserApi {
         @Header("Authorization") authorization: String,
         @retrofit2.http.Body request: UserPasswordUpdateRequest
     )
+
+    @GET("/api/v1/user/notifications")
+    suspend fun getNotifications(
+        @Header("Authorization") authorization: String
+    ): List<AppNotification>
+
+    @retrofit2.http.POST("/api/v1/user/notifications/{id}/read")
+    suspend fun markNotificationRead(
+        @Header("Authorization") authorization: String,
+        @retrofit2.http.Path("id") notificationId: Int
+    )
 }
+

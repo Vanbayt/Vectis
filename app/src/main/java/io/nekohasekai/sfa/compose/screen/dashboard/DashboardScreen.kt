@@ -459,11 +459,12 @@ fun SwipeToConnectSlider(
     Box(
         modifier = Modifier
             .size(width = width, height = height)
-            .bounceClick { if (isConnected && !isConnecting) onDisconnect() }
-            .clip(RoundedCornerShape(percent = containerShapePercent))
-            .background(backgroundColor),
+            .clip(CircleShape)
+            .background(backgroundColor)
+            .bounceClick { if (isConnected && !isConnecting) onDisconnect() },
         contentAlignment = Alignment.CenterStart
     ) {
+
         // Centered Text
         val textAlpha = 1f - (offsetX.value / maxSwipePx * 1.5f).coerceIn(0f, 1f)
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -100,7 +100,7 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
             service,
             notificationId,
             notificationBuilder
-                .setContentTitle(lastProfileName.takeIf { it.isNotBlank() } ?: "sing-box")
+                .setContentTitle(lastProfileName.takeIf { it.isNotBlank() && it != "Vectis API Config" } ?: "Vectis • VPN")
                 .setContentText(service.getString(contentTextId)).build(),
             type
         )
@@ -128,12 +128,16 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
 
     override fun updateStatus(status: StatusMessage) {
         val content =
-            Libbox.formatBytes(status.uplink) + "/s ↑\t" + Libbox.formatBytes(status.downlink) + "/s ↓"
+            "↑ " + Libbox.formatBytes(status.uplink) + "/s   ↓ " + Libbox.formatBytes(status.downlink) + "/s"
         Application.notificationManager.notify(
             notificationId,
-            notificationBuilder.setContentText(content).build(),
+            notificationBuilder
+                .setContentTitle("Vectis • VPN")
+                .setContentText(content)
+                .build(),
         )
     }
+
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {

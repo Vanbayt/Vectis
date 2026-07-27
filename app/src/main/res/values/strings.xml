@@ -600,4 +600,12 @@
     <string name="privilege_module_restart_notification_title">Reboot required</string>
     <string name="privilege_module_restart_notification_message">LSPosed module updated. Reboot to apply changes.</string>
     <string name="privilege_module_restart_channel">LSPosed Module</string>
+    <!-- Vectis Notifications & Customizations -->
+    <string name="notifications_title">Notifications</string>
+    <string name="no_notifications_title">No new notifications</string>
+    <string name="no_notifications_subtitle">Important messages about your subscription and limits will appear here</string>
+    <string name="profile_title">Profile</string>
+    <string name="ru_apps_preset">Russian Apps Preset</string>
 </resources>
+
+

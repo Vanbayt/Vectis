@@ -63,30 +63,33 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
         )
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text("Профиль", fontWeight = FontWeight.Bold) },
-            navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                titleContentColor = MaterialTheme.colorScheme.onSurface,
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(androidx.compose.ui.res.stringResource(io.nekohasekai.sfa.R.string.profile_title), fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = androidx.compose.ui.res.stringResource(io.nekohasekai.sfa.R.string.content_description_back))
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                )
             )
-        )
-    }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
         // Avatar and Header
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
@@ -216,6 +219,8 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
             }
         }
     }
+}
+
 }
 
 @Composable

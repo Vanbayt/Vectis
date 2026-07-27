@@ -183,7 +183,9 @@ fun LoginScreen(
                         )
 
                         var confirmPassword by remember { mutableStateOf("") }
-                        val passwordsMatch = password == confirmPassword || confirmPassword.isEmpty()
+                        val isPrefixMatch = confirmPassword.isEmpty() || password.startsWith(confirmPassword)
+                        val passwordsMatch = password == confirmPassword && confirmPassword.isNotEmpty()
+                        val isConfirmPasswordError = !isPrefixMatch && confirmPassword.isNotEmpty()
 
                         androidx.compose.animation.AnimatedVisibility(
                             visible = !isLoginMode,
@@ -206,7 +208,7 @@ fun LoginScreen(
                                     singleLine = true,
                                     visualTransformation = PasswordVisualTransformation(),
                                     shape = RoundedCornerShape(24.dp),
-                                    isError = !passwordsMatch && confirmPassword.isNotEmpty(),
+                                    isError = isConfirmPasswordError,
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedContainerColor = MaterialTheme.colorScheme.surface,
                                         unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
@@ -217,7 +219,7 @@ fun LoginScreen(
                                         errorLabelColor = MaterialTheme.colorScheme.error
                                     )
                                 )
-                                androidx.compose.animation.AnimatedVisibility(visible = !passwordsMatch && confirmPassword.isNotEmpty()) {
+                                androidx.compose.animation.AnimatedVisibility(visible = isConfirmPasswordError) {
                                     Text(
                                         text = "Пароли не совпадают",
                                         color = MaterialTheme.colorScheme.error,
@@ -233,8 +235,9 @@ fun LoginScreen(
                         val isFormValid = if (isLoginMode) {
                             username.isNotBlank() && password.isNotBlank()
                         } else {
-                            username.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank() && passwordsMatch
+                            username.isNotBlank() && password.isNotBlank() && passwordsMatch
                         }
+
 
                         val context = androidx.compose.ui.platform.LocalContext.current
                         val deviceId = remember(context) { io.nekohasekai.sfa.utils.DeviceUtils.getDeviceId(context) }
