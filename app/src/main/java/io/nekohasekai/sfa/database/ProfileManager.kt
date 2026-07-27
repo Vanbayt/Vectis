@@ -65,7 +65,7 @@ object ProfileManager {
     }
 
     suspend fun delete(profile: Profile): Int {
-        val removed = profiles.removeIf { it.id == profile.id }
+        val removed = profiles.removeAll { it.id == profile.id }
         if (removed) {
             for (callback in callbacks.toList()) {
                 callback()
@@ -78,7 +78,7 @@ object ProfileManager {
     suspend fun delete(deleteProfiles: List<Profile>): Int {
         var count = 0
         for (profile in deleteProfiles) {
-            if (profiles.removeIf { it.id == profile.id }) {
+            if (profiles.removeAll { it.id == profile.id }) {
                 count++
             }
         }
