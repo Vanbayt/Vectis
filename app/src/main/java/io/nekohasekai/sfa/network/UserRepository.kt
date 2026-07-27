@@ -12,10 +12,11 @@ class UserRepository(private val userApi: UserApi) {
                 val response = userApi.getProfile("Bearer $token")
                 
                 // Update local settings with fetched traffic data
-                Settings.trafficUsed = response.traffic_used
-                Settings.trafficLimit = response.traffic_limit
+                Settings.trafficUsed = response.traffic_used ?: 0L
+                Settings.trafficLimit = response.traffic_limit ?: 0L
                 
                 response
+
             } catch (e: Exception) {
                 throw Exception("Failed to fetch user profile: ${e.message}", e)
             }

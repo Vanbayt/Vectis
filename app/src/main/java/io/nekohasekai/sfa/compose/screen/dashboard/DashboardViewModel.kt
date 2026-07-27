@@ -191,9 +191,10 @@ class DashboardViewModel(
                     withContext(Dispatchers.Main) {
                         updateState {
                             copy(
-                                trafficUsed = profile.traffic_used,
-                                trafficLimit = profile.traffic_limit,
+                                trafficUsed = profile.traffic_used ?: 0L,
+                                trafficLimit = profile.traffic_limit ?: 0L,
                                 userProfile = profile
+
                             )
                         }
                     }

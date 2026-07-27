@@ -8,9 +8,9 @@ import kotlinx.serialization.Serializable
 data class UserProfileResponse(
     val id: Int,
     val username: String,
-    val is_active: Boolean,
-    val subscription_tier: String,
+    val is_active: Boolean = true,
+    val subscription_tier: String = "free",
     val subscription_end: String? = null,
-    val traffic_used: Long,
-    val traffic_limit: Long
+    val traffic_used: Long? = 0L,
+    val traffic_limit: Long? = 0L
 )
