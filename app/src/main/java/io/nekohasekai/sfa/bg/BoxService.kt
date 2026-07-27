@@ -171,10 +171,18 @@ class BoxService(private val service: Service, private val platformInterface: Pl
                 }
             }
 
+            val selectedOutbound = Settings.selectedOutboundTag
+            if (selectedOutbound.isNotBlank()) {
+                runCatching {
+                    Libbox.newStandaloneCommandClient().selectOutbound("proxy", selectedOutbound)
+                }
+            }
+
             status.postValue(Status.Started)
             withContext(Dispatchers.Main) {
                 notification.show(lastProfileName, R.string.status_started)
             }
+
             notification.start()
         } catch (e: Exception) {
             stopAndAlert(Alert.StartService, e.message)

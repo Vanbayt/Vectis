@@ -161,9 +161,11 @@ fun DashboardScreen(
     // Staggered Entrance Animation State
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
+        viewModel.refreshLocationAndProtocol()
         delay(100)
         visible = true
     }
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(

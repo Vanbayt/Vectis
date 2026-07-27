@@ -331,13 +331,9 @@ class DashboardViewModel(
                 reloadSystemProxyStatus()
                 reloadStartedAt()
                 startPingJob()
-                updateState {
-                    copy(
-                        location = Settings.lastLocation,
-                        protocol = Settings.lastProtocol
-                    )
-                }
+                refreshLocationAndProtocol()
             }
+
 
             Status.Stopped -> {
                 commandClient.disconnect()
@@ -563,8 +559,48 @@ class DashboardViewModel(
             updateState {
                 copy(hasGroups = hasGroups, groupsCount = newGroups.size)
             }
+            refreshLocationAndProtocol(newGroups)
         }
     }
+
+    fun refreshLocationAndProtocol(newGroups: List<OutboundGroup>? = null) {
+        val proxyGroup = newGroups?.find { it.tag == "proxy" } ?: newGroups?.firstOrNull()
+        val autoGroup = newGroups?.find { it.tag == "auto" }
+
+        val savedTag = Settings.selectedOutboundTag
+        val activeTag = when {
+            savedTag.isNotBlank() && savedTag != "auto" -> savedTag
+            proxyGroup != null && proxyGroup.selected.isNotBlank() && proxyGroup.selected != "auto" -> proxyGroup.selected
+            autoGroup != null && autoGroup.selected.isNotBlank() -> autoGroup.selected
+            else -> savedTag.ifBlank { "auto" }
+        }
+
+        val formattedLocation = if (activeTag == "auto") {
+            "⚡ Автовыбор"
+        } else {
+            io.nekohasekai.sfa.utils.LocationLocalizer.formatLocation(activeTag)
+        }
+
+        val isHysteria = activeTag.contains("hysteria", ignoreCase = true) || activeTag.contains("hy2", ignoreCase = true) || activeTag.endsWith("-8") || activeTag.endsWith("-2") || activeTag.endsWith("-9")
+        val isGrpc = activeTag.contains("grpc", ignoreCase = true) || activeTag.endsWith("-5") || activeTag.endsWith("-3")
+        val formattedProtocol = when {
+            isHysteria -> "Hysteria 2 (UDP)"
+            isGrpc -> "VLESS gRPC"
+            activeTag == "auto" -> "Умный роутинг"
+            else -> "VLESS Reality (TCP)"
+        }
+
+        Settings.lastLocation = formattedLocation
+        Settings.lastProtocol = formattedProtocol
+
+        updateState {
+            copy(
+                location = formattedLocation,
+                protocol = formattedProtocol,
+            )
+        }
+    }
+
 
     fun toggleCardSettingsDialog() {
         updateState {
