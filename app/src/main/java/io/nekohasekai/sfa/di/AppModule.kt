@@ -27,7 +27,22 @@ val appModule = module {
             level = okhttp3.logging.HttpLoggingInterceptor.Level.BODY
         }
 
+        val deviceIdInterceptor = okhttp3.Interceptor { chain ->
+            val original = chain.request()
+            val deviceId = try {
+                io.nekohasekai.sfa.utils.DeviceUtils.getDeviceId(io.nekohasekai.sfa.Application.application)
+            } catch (_: Exception) { "" }
+
+            val request = if (deviceId.isNotEmpty()) {
+                original.newBuilder().header("X-Device-ID", deviceId).build()
+            } else {
+                original
+            }
+            chain.proceed(request)
+        }
+
         val client = OkHttpClient.Builder()
+            .addInterceptor(deviceIdInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
@@ -44,6 +59,7 @@ val appModule = module {
                 response
             }
             .build()
+
             
         Retrofit.Builder()
             .baseUrl(BuildConfig.API_BASE_URL)
