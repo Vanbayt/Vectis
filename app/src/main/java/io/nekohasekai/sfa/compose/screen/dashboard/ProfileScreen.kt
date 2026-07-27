@@ -132,14 +132,16 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    val tierName = when (userProfile?.subscription_tier) {
+                    val rawTier = userProfile?.subscription_tier
+                    val tierName = when (rawTier?.lowercase(java.util.Locale.ROOT)) {
                         "free" -> "Бесплатный (5 ГБ)"
                         "premium" -> "Премиум"
                         "unlimited" -> "Безлимитный"
                         null -> "Загрузка..."
-                        else -> userProfile.subscription_tier
+                        else -> rawTier.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() }
                     }
                     Text("Тариф: $tierName", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
                     Spacer(modifier = Modifier.height(4.dp))
 
                     

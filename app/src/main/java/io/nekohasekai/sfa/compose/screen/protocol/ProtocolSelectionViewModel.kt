@@ -148,9 +148,10 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
             try {
                 Settings.selectedOutboundTag = tag
                 Libbox.newStandaloneCommandClient().selectOutbound("proxy", tag)
-            } catch (e: Exception) {
-                // Ignore if service not running
+            } catch (_: Exception) {
             }
+            // Auto-reconnect / restart VPN if active
+            io.nekohasekai.sfa.bg.BoxService.start()
         }
     }
 
@@ -244,17 +245,9 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
     private fun formatOutboundItem(tag: String, delay: Int): ProtocolItemUi {
         val effectiveDelay = if (delay > 0) delay else io.nekohasekai.sfa.network.PreConnectPingManager.getPingForTag(tag)
 
-        val countryFlag = when {
-            tag.contains("holland", ignoreCase = true) || tag.contains("nl", ignoreCase = true) -> "🇳🇱"
-            tag.contains("germany", ignoreCase = true) || tag.contains("ger", ignoreCase = true) || tag.contains("de", ignoreCase = true) -> "🇩🇪"
-            else -> "🌐"
-        }
-
-        val countryName = when {
-            tag.contains("holland", ignoreCase = true) -> "Голландия"
-            tag.contains("germany", ignoreCase = true) -> "Германия"
-            else -> "Сервер"
-        }
+        val locInfo = io.nekohasekai.sfa.utils.LocationLocalizer.getLocationInfo(tag)
+        val countryFlag = locInfo.flag
+        val countryName = locInfo.nameRu
 
         val isHysteria = tag.contains("hysteria", ignoreCase = true) || tag.contains("hy2", ignoreCase = true) || tag.endsWith("-8") || tag.endsWith("-2") || tag.endsWith("-9")
         val isGrpc = tag.contains("grpc", ignoreCase = true) || tag.endsWith("-5") || tag.endsWith("-3")
@@ -283,8 +276,10 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
             else -> "Классический зашифрованный TCP-туннель с маскировкой под HTTPS. Максимальная скорость для веб-серфинга и видео."
         }
 
-        val title = "$countryFlag $countryName — $protocolName"
+        val formattedLoc = io.nekohasekai.sfa.utils.LocationLocalizer.formatLocation(tag)
+        val title = "$formattedLoc — $protocolName"
         val subtitle = "Протокол: $protocolName"
+
 
         return ProtocolItemUi(
             tag = tag,

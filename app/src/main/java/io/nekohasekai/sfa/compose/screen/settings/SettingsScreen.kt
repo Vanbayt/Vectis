@@ -251,12 +251,19 @@ fun SettingsScreen(navController: NavController) {
                                 val updateInfo = withContext(Dispatchers.IO) { Vendor.checkUpdateAsync() }
                                 if (updateInfo != null) {
                                     UpdateState.setUpdate(updateInfo)
-                                    Toast.makeText(context, "Доступно обновление: ${updateInfo.versionName}", Toast.LENGTH_LONG).show()
+                                    val activity = context as? android.app.Activity
+                                    if (activity != null) {
+                                        Toast.makeText(context, "Начинаем загрузку обновления v${updateInfo.versionName}...", Toast.LENGTH_LONG).show()
+                                        Vendor.downloadAndInstall(activity, updateInfo.downloadUrl)
+                                    } else {
+                                        Toast.makeText(context, "Доступно обновление: ${updateInfo.versionName}", Toast.LENGTH_LONG).show()
+                                    }
                                 } else {
                                     Toast.makeText(context, "У вас установлена последняя версия Vectis (v$currentVersion)", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
+
                     )
                 }
             }

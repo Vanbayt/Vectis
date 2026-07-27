@@ -65,10 +65,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.text.font.FontWeight
+
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -268,12 +272,42 @@ fun LogScreen(
         }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize().statusBarsPadding(),
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(resolvedTitle, fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = { resolvedViewModel.toggleSearch() }) {
+                        Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                    }
+                    IconButton(onClick = { resolvedViewModel.togglePause() }) {
+                        Icon(
+                            imageVector = if (uiState.isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                            contentDescription = stringResource(R.string.content_description_pause_logs)
+                        )
+                    }
+                    IconButton(onClick = { resolvedViewModel.requestClearLogs() }) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(R.string.clear_logs))
+                    }
+                    IconButton(onClick = { resolvedViewModel.toggleOptionsMenu() }) {
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Опции")
+                    }
+
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+
+
 
 
             // Show selection mode bar
@@ -876,8 +910,14 @@ fun LogScreen(
                 }
             }
         }
-    } // Close Box that contains Column, Options Menu and FAB
+    }
 }
+}
+
+
+
+
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -941,8 +981,7 @@ fun LogItem(
             }
             Text(
                 text = annotatedString,
-                modifier =
-                Modifier
+                modifier = Modifier
                     .weight(1f)
                     .padding(
                         start = if (isSelectionMode) 4.dp else 12.dp,
@@ -954,6 +993,9 @@ fun LogItem(
                 fontFamily = FontFamily.Monospace,
                 lineHeight = 18.sp,
             )
+
         }
     }
 }
+
+
