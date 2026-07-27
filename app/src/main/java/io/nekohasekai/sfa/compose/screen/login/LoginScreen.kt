@@ -236,14 +236,18 @@ fun LoginScreen(
                             username.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank() && passwordsMatch
                         }
 
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        val deviceId = remember(context) { io.nekohasekai.sfa.utils.DeviceUtils.getDeviceId(context) }
+
                         Button(
                             onClick = { 
                                 if (isLoginMode) {
                                     viewModel.login(username, password)
                                 } else {
-                                    viewModel.register(username, password)
+                                    viewModel.register(username, password, deviceId)
                                 }
                             },
+
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
