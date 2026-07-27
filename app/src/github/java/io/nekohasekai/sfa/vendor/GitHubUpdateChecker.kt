@@ -14,8 +14,8 @@ import java.io.Closeable
 
 class GitHubUpdateChecker : Closeable {
     companion object {
-        private const val RELEASES_URL = "https://api.github.com/repos/SagerNet/sing-box/releases"
-        private const val METADATA_FILENAME = "SFA-version-metadata.json"
+        private const val RELEASES_URL = "https://api.github.com/repos/Vanbayt/Vectis/releases"
+        private const val METADATA_FILENAME = "Vectis-version-metadata.json"
     }
 
     private val client = Libbox.newHTTPClient().apply {
@@ -26,15 +26,18 @@ class GitHubUpdateChecker : Closeable {
     private val json = Json { ignoreUnknownKeys = true }
 
     fun checkUpdate(track: UpdateTrack): UpdateInfo? {
-        val releases = getReleases()
+        val releases = runCatching { getReleases() }.getOrNull() ?: return null
         var selected: ReleaseCandidate? = null
 
         for (release in releases) {
             if (!isReleaseInTrack(release, track)) {
                 continue
             }
-            val metadata = runCatching { downloadMetadata(release) }.getOrNull() ?: continue
-            if (!isNewerThanCurrent(metadata.versionName)) {
+            val metadata = downloadMetadata(release) ?: VersionMetadata(
+                versionCode = 0,
+                versionName = release.tagName.removePrefix("v").trim(),
+            )
+            if (metadata.versionName.isEmpty() || !isNewerThanCurrent(metadata.versionName)) {
                 continue
             }
             val currentBest = selected
@@ -46,12 +49,7 @@ class GitHubUpdateChecker : Closeable {
         val release = selected?.release ?: return null
         val metadata = selected.metadata
 
-        val isLegacy = Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-        val apkAsset = release.assets.find { asset ->
-            asset.name.endsWith(".apk") &&
-                !asset.name.contains("play") &&
-                asset.name.contains("legacy-android-5") == isLegacy
-        }
+        val apkAsset = findBestApkAsset(release.assets)
 
         return UpdateInfo(
             versionCode = metadata.versionCode,
@@ -62,6 +60,25 @@ class GitHubUpdateChecker : Closeable {
             isPrerelease = release.prerelease,
             fileSize = apkAsset?.size ?: 0,
         )
+    }
+
+    private fun findBestApkAsset(assets: List<GitHubAsset>): GitHubAsset? {
+        val apkAssets = assets.filter { it.name.endsWith(".apk", ignoreCase = true) && !it.name.contains("play", ignoreCase = true) }
+        if (apkAssets.isEmpty()) return null
+        if (apkAssets.size == 1) return apkAssets.first()
+
+        val supportedAbis = Build.SUPPORTED_ABIS ?: emptyArray()
+        for (abi in supportedAbis) {
+            val match = apkAssets.find { it.name.contains(abi, ignoreCase = true) }
+            if (match != null) return match
+        }
+
+        val universalMatch = apkAssets.find {
+            it.name.contains("universal", ignoreCase = true) || it.name.contains("all", ignoreCase = true)
+        }
+        if (universalMatch != null) return universalMatch
+
+        return apkAssets.first()
     }
 
     private fun getReleases(): List<GitHubRelease> {
@@ -106,10 +123,10 @@ class GitHubUpdateChecker : Closeable {
         request.setURL(metadataAsset.browserDownloadUrl)
         request.setUserAgent(HTTPClient.userAgent)
 
-        val response = request.execute()
+        val response = runCatching { request.execute() }.getOrNull() ?: return null
         val content = response.content.unwrap
 
-        return json.decodeFromString<VersionMetadata>(content)
+        return runCatching { json.decodeFromString<VersionMetadata>(content) }.getOrNull()
     }
 
     override fun close() {
@@ -145,3 +162,4 @@ class GitHubUpdateChecker : Closeable {
         val metadata: VersionMetadata,
     )
 }
+

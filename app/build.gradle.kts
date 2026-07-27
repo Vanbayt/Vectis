@@ -72,7 +72,7 @@ android {
         targetSdk = 35
         versionCode = getVersionProps("VERSION_CODE").toInt()
         versionName = getVersionProps("VERSION_NAME")
-        base.archivesName.set("SFA-${versionName}")
+        base.archivesName.set("Vectis-${versionName}")
         buildConfigField("String", "API_BASE_URL", "\"http://144.31.97.178:18000/\"")
         
         externalNativeBuild {
