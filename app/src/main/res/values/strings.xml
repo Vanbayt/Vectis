@@ -606,6 +606,18 @@
     <string name="no_notifications_subtitle">Important messages about your subscription and limits will appear here</string>
     <string name="profile_title">Profile</string>
     <string name="ru_apps_preset">Russian Apps Preset</string>
+    <string name="settings_section_main">MAIN &amp; RULES</string>
+    <string name="settings_section_appearance">APPEARANCE &amp; APP</string>
+    <string name="settings_section_core">SERVICE &amp; CORE</string>
+    <string name="settings_section_tools">TOOLS &amp; DIAGNOSTICS</string>
+    <string name="per_app_proxy_subtitle">Russian apps presets (VK, Yandex, Banks)</string>
+    <string name="profile_override_subtitle">Routing rules, DNS and ports</string>
+    <string name="app_settings_subtitle">Theme, checks and autostart</string>
+    <string name="service_settings_subtitle">VPN mode, auto-reconnect</string>
+    <string name="core_settings_subtitle">sing-box core parameters</string>
+    <string name="privilege_settings_subtitle">Privileged mode and Xposed</string>
+    <string name="tools_settings_subtitle">STUN, speed test, log files</string>
 </resources>
+
 
 

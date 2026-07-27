@@ -37,6 +37,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -56,7 +57,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.utils.HookModuleUpdateNotifier
 import io.nekohasekai.sfa.utils.HookStatusClient
 
@@ -71,142 +71,145 @@ fun SettingsScreen(navController: NavController) {
         HookStatusClient.refresh()
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { 
-                Text(
-                    text = stringResource(R.string.title_settings), 
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
-                ) 
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        text = stringResource(R.string.title_settings), 
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold
+                    ) 
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                )
             )
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Section 1: Main & Per-App Proxy
-        Text(
-            text = "ОСНОВНЫЕ И ПРАВИЛА",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            shape = RoundedCornerShape(28.dp)
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                SettingTile(
-                    icon = Icons.Outlined.Apps,
-                    title = "Раздельное проксирование",
-                    subtitle = "Пресеты РФ приложений (ВК, Яндекс, Банки)",
-                    onClick = { navController.navigate("settings/profile_override/per_app_proxy") }
-                )
-                SettingTile(
-                    icon = Icons.Outlined.FilterAlt,
-                    title = stringResource(R.string.profile_override),
-                    subtitle = "Правила маршрутизации, DNS и порт",
-                    onClick = { navController.navigate("settings/profile_override") }
-                )
-            }
         }
-
-        // Section 2: General & Appearance
-        Text(
-            text = "ВНЕШНИЙ ВИД И ПРИЛОЖЕНИЕ",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            shape = RoundedCornerShape(28.dp)
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                SettingTile(
-                    icon = Icons.Outlined.Info,
-                    title = stringResource(R.string.title_app_settings),
-                    subtitle = "Тема оформления, проверки и автозапуск",
-                    onClick = { navController.navigate("settings/app") }
-                )
+            // Section 1: Main & Per-App Proxy
+            Text(
+                text = stringResource(R.string.settings_section_main),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    SettingTile(
+                        icon = Icons.Outlined.Apps,
+                        title = stringResource(R.string.per_app_proxy),
+                        subtitle = stringResource(R.string.per_app_proxy_subtitle),
+                        onClick = { navController.navigate("settings/profile_override/manage") }
+                    )
+                    SettingTile(
+                        icon = Icons.Outlined.FilterAlt,
+                        title = stringResource(R.string.profile_override),
+                        subtitle = stringResource(R.string.profile_override_subtitle),
+                        onClick = { navController.navigate("settings/profile_override") }
+                    )
+                }
             }
-        }
 
-        // Section 3: Core & Service
-        Text(
-            text = "СЛУЖБА И ЯДРО",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            shape = RoundedCornerShape(28.dp)
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                SettingTile(
-                    icon = Icons.Outlined.Tune,
-                    title = stringResource(R.string.service),
-                    subtitle = "Режим работы VPN, автопереподключение",
-                    onClick = { navController.navigate("settings/service") }
-                )
-                SettingTile(
-                    icon = Icons.Outlined.Settings,
-                    title = stringResource(R.string.core),
-                    subtitle = "Параметры ячеек и ядра sing-box",
-                    onClick = { navController.navigate("settings/core") }
-                )
-                SettingTile(
-                    icon = Icons.Outlined.AdminPanelSettings,
-                    title = stringResource(R.string.privilege_settings),
-                    subtitle = "Привилегированный режим и Xposed",
-                    onClick = { navController.navigate("settings/privilege") },
-                    hasBadge = hasPendingPrivilegeDowngrade || hasPendingPrivilegeUpdate,
-                    badgeColor = if (hasPendingPrivilegeDowngrade) MaterialTheme.colorScheme.error else Color(0xFFFFC107)
-                )
+            // Section 2: General & Appearance
+            Text(
+                text = stringResource(R.string.settings_section_appearance),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    SettingTile(
+                        icon = Icons.Outlined.Info,
+                        title = stringResource(R.string.title_app_settings),
+                        subtitle = stringResource(R.string.app_settings_subtitle),
+                        onClick = { navController.navigate("settings/app") }
+                    )
+                }
             }
-        }
 
-        // Section 4: Diagnostics & Tools
-        Text(
-            text = "ИНСТРУМЕНТЫ И ОТЛАДКА",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 8.dp)
-        )
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            shape = RoundedCornerShape(28.dp)
-        ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                SettingTile(
-                    icon = Icons.Outlined.Terminal,
-                    title = stringResource(R.string.title_tools),
-                    subtitle = "STUN, скорость сети, лог-файлы",
-                    onClick = { navController.navigate("tools") }
-                )
+            // Section 3: Core & Service
+            Text(
+                text = stringResource(R.string.settings_section_core),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    SettingTile(
+                        icon = Icons.Outlined.Tune,
+                        title = stringResource(R.string.service),
+                        subtitle = stringResource(R.string.service_settings_subtitle),
+                        onClick = { navController.navigate("settings/service") }
+                    )
+                    SettingTile(
+                        icon = Icons.Outlined.Settings,
+                        title = stringResource(R.string.core),
+                        subtitle = stringResource(R.string.core_settings_subtitle),
+                        onClick = { navController.navigate("settings/core") }
+                    )
+                    SettingTile(
+                        icon = Icons.Outlined.AdminPanelSettings,
+                        title = stringResource(R.string.privilege_settings),
+                        subtitle = stringResource(R.string.privilege_settings_subtitle),
+                        onClick = { navController.navigate("settings/privilege") },
+                        hasBadge = hasPendingPrivilegeDowngrade || hasPendingPrivilegeUpdate,
+                        badgeColor = if (hasPendingPrivilegeDowngrade) MaterialTheme.colorScheme.error else Color(0xFFFFC107)
+                    )
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            // Section 4: Diagnostics & Tools
+            Text(
+                text = stringResource(R.string.settings_section_tools),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                shape = RoundedCornerShape(28.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    SettingTile(
+                        icon = Icons.Outlined.Terminal,
+                        title = stringResource(R.string.title_tools),
+                        subtitle = stringResource(R.string.tools_settings_subtitle),
+                        onClick = { navController.navigate("tools") }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
     }
 }
 

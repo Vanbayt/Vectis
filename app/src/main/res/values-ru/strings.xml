@@ -50,7 +50,8 @@
     <string name="title_dashboard">Главная</string>
     <string name="title_configuration">Профили</string>
     <string name="title_log">Логи</string>
-    <string name="title_settings">Параметры</string>
+    <string name="title_settings">Настройки</string>
+
     <string name="title_app_settings">Приложение</string>
     <string name="title_new_profile">Новый профиль</string>
     <string name="title_edit_profile">Редактировать профиль</string>
@@ -597,6 +598,18 @@
     <string name="no_notifications_subtitle">Здесь будут появляться важные сообщения о вашей подписке и лимитах</string>
     <string name="profile_title">Профиль</string>
     <string name="ru_apps_preset">Пресет РФ приложений</string>
+    <string name="settings_section_main">ОСНОВНЫЕ И ПРАВИЛА</string>
+    <string name="settings_section_appearance">ВНЕШНИЙ ВИД И ПРИЛОЖЕНИЕ</string>
+    <string name="settings_section_core">СЛУЖБА И ЯДРО</string>
+    <string name="settings_section_tools">ИНСТРУМЕНТЫ И ОТЛАДКА</string>
+    <string name="per_app_proxy_subtitle">Пресеты РФ приложений (ВК, Яндекс, Банки)</string>
+    <string name="profile_override_subtitle">Правила маршрутизации, DNS и порт</string>
+    <string name="app_settings_subtitle">Тема оформления, проверки и автозапуск</string>
+    <string name="service_settings_subtitle">Режим работы VPN, автопереподключение</string>
+    <string name="core_settings_subtitle">Параметры ячеек и ядра sing-box</string>
+    <string name="privilege_settings_subtitle">Привилегированный режим и Xposed</string>
+    <string name="tools_settings_subtitle">STUN, скорость сети, лог-файлы</string>
 </resources>
+
 
 

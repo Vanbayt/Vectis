@@ -882,7 +882,7 @@ class MainActivity :
                     Scaffold(
                         modifier = Modifier.weight(1f),
                         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-                        topBar = topBarContent,
+                        topBar = {},
                     ) { paddingValues ->
                         scaffoldContent(paddingValues)
                     }
@@ -891,7 +891,7 @@ class MainActivity :
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-                    topBar = topBarContent,
+                    topBar = {},
                     bottomBar = {
                         if (!isSubScreen) {
                             val hasUpdate by UpdateState.hasUpdate
@@ -905,15 +905,15 @@ class MainActivity :
                                 bottomNavigationScreens.forEach { screen ->
                                     NavigationBarItem(
                                         icon = {
-                                            if (screen == Screen.Settings && (hasUpdate || toolsUnreadCount > 0)) {
-                                                val badgeColor = if (toolsUnreadCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                                                BadgedBox(badge = { Badge(containerColor = badgeColor) { if (toolsUnreadCount > 0) Text("$toolsUnreadCount") } }) {
+                                            if (screen == Screen.Settings && hasUpdate) {
+                                                BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.primary) }) {
                                                     Icon(screen.icon, contentDescription = null)
                                                 }
                                             } else {
                                                 Icon(screen.icon, contentDescription = null)
                                             }
                                         },
+
                                         label = null, // Floating nav bars look cleaner without labels, relying on M3 active pill indicator
                                         alwaysShowLabel = false,
                                         selected =
