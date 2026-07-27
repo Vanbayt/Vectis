@@ -244,14 +244,14 @@ fun DashboardScreen(
                         ) {
                             InfoTile(
                                 modifier = Modifier.weight(1f).bounceClick { },
-                                title = "Download",
+                                title = "Загрузка",
                                 value = state.downlink,
                                 icon = Icons.Rounded.ArrowDownward,
                                 shape = RoundedCornerShape(topStart = 32.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 4.dp)
                             )
                             InfoTile(
                                 modifier = Modifier.weight(1f).bounceClick { },
-                                title = "Upload",
+                                title = "Отдача",
                                 value = state.uplink,
                                 icon = Icons.Rounded.ArrowUpward,
                                 shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 32.dp, bottomStart = 4.dp)
@@ -263,7 +263,7 @@ fun DashboardScreen(
                         ) {
                             InfoTile(
                                 modifier = Modifier.weight(1f).bounceClick { },
-                                title = "Location",
+                                title = "Локация",
                                 value = state.location,
                                 icon = Icons.Rounded.Place,
                                 shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 32.dp)
@@ -276,7 +276,7 @@ fun DashboardScreen(
                                         showUpgradeDialog = true
                                     }
                                 },
-                                title = "Protocol",
+                                title = "Протокол",
                                 value = state.protocol,
                                 icon = Icons.Rounded.Lock,
                                 shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 32.dp, topEnd = 4.dp, bottomStart = 4.dp)
@@ -315,7 +315,7 @@ fun DashboardScreen(
                             Column {
                                 val tierName = state.userProfile?.subscription_tier?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: "Загрузка..."
                                 Text(
-                                    text = "$tierName Active",
+                                    text = "Тариф: $tierName",
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                 )
@@ -349,7 +349,7 @@ fun DashboardScreen(
                             }
                             Icon(
                                 imageVector = Icons.Rounded.AccountCircle,
-                                contentDescription = "Subscription",
+                                contentDescription = "Подписка",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(36.dp)
                             )
@@ -389,7 +389,7 @@ fun DashboardScreen(
             ) {
                 Icon(Icons.Rounded.Timer, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Uptime: $uptimeString", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Время работы: $uptimeString", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
                 Text("  •  ", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
@@ -403,7 +403,7 @@ fun DashboardScreen(
                     },
                     label = "ping"
                 ) { targetPing ->
-                    Text("Ping: $targetPing", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Пинг: $targetPing", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -480,7 +480,7 @@ fun SwipeToConnectSlider(
                 )
             } else {
                 Text(
-                    text = if (isConnected) "Tap or swipe to disconnect" else "Swipe to connect",
+                    text = if (isConnected) "Нажмите или свайп для отключения" else "Свайп для подключения",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -488,6 +488,7 @@ fun SwipeToConnectSlider(
                 )
             }
         }
+
 
         // Thumb
         Box(
