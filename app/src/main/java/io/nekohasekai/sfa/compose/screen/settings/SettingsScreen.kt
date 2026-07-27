@@ -86,7 +86,6 @@ fun SettingsScreen(navController: NavController) {
     }
 
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
         topBar = {
             TopAppBar(
                 title = { 
@@ -96,13 +95,13 @@ fun SettingsScreen(navController: NavController) {
                         fontWeight = FontWeight.Bold
                     ) 
                 },
-                windowInsets = WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 )
             )
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()

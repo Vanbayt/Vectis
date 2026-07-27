@@ -7,7 +7,10 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -161,7 +164,7 @@ fun AppSelectionCard(
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
     var showCopyMenu by remember { mutableStateOf(false) }
-    val cardShape = RoundedCornerShape(20.dp)
+    val cardShape = RoundedCornerShape(22.dp)
     val cardModifier =
         if (enableCopyActions) {
             Modifier
@@ -182,19 +185,20 @@ fun AppSelectionCard(
         Card(
             modifier = cardModifier,
             shape = cardShape,
+            border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)) else null,
             colors = CardDefaults.cardColors(
-                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Image(
                     bitmap = packageCache.applicationIcon,
                     contentDescription = stringResource(R.string.content_description_app_icon),
-                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)),
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -202,7 +206,7 @@ fun AppSelectionCard(
                     Text(
                         text = packageCache.applicationLabel,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -221,6 +225,7 @@ fun AppSelectionCard(
                 )
             }
         }
+
 
 
         if (enableCopyActions) {

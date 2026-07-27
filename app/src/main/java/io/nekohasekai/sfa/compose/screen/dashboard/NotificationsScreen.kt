@@ -132,7 +132,6 @@ fun NotificationsScreen(
     }
 
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.notifications_title), fontWeight = FontWeight.Bold) },
@@ -141,7 +140,6 @@ fun NotificationsScreen(
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
                     }
                 },
-                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 actions = {
                     if (notificationsList.isNotEmpty()) {
                         IconButton(onClick = { notificationsList.clear() }) {
@@ -156,6 +154,7 @@ fun NotificationsScreen(
             )
         }
     ) { paddingValues ->
+
 
         Box(
             modifier = Modifier

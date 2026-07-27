@@ -44,8 +44,11 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -324,7 +327,6 @@ fun PerAppProxyScreen(
     }
 
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.per_app_proxy), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
@@ -336,7 +338,6 @@ fun PerAppProxyScreen(
                         )
                     }
                 },
-                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 actions = {
                     IconButton(
                         onClick = {
@@ -463,67 +464,119 @@ fun PerAppProxyScreen(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        // Expressive M3 Mode & Presets Header Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
         ) {
-            Column(modifier = Modifier.padding(bottom = 8.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = if (proxyMode == Settings.PER_APP_PROXY_INCLUDE) {
+                            "⚡ РЕЖИМ: ВКЛЮЧЕНИЕ"
+                        } else {
+                            "🛡️ РЕЖИМ: ИСКЛЮЧЕНИЕ"
+                        },
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    TextButton(
+                        onClick = {
+                            val newMode = if (proxyMode == Settings.PER_APP_PROXY_INCLUDE) {
+                                Settings.PER_APP_PROXY_EXCLUDE
+                            } else {
+                                Settings.PER_APP_PROXY_INCLUDE
+                            }
+                            proxyMode = newMode
+                            coroutineScope.launch {
+                                withContext(Dispatchers.IO) { Settings.perAppProxyMode = newMode }
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                            }
+                        }
+                    ) {
+                        Text("Сменить режим", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
                 Text(
-                    text =
-                    if (proxyMode == Settings.PER_APP_PROXY_INCLUDE) {
+                    text = if (proxyMode == Settings.PER_APP_PROXY_INCLUDE) {
                         stringResource(R.string.per_app_proxy_mode_include_description)
                     } else {
                         stringResource(R.string.per_app_proxy_mode_exclude_description)
                     },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Пресеты РФ приложений:",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
                 androidx.compose.foundation.lazy.LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.allRussianPackages) },
-                            label = { Text("🇷🇺 Все РФ прил.") }
+                            label = { Text("🇷🇺 Все РФ прил.") },
+                            shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.yandexPackages + RussianAppPreset.vkPackages) },
-                            label = { Text("🟢 Яндекс и VK") }
+                            label = { Text("🟢 Яндекс и VK") },
+                            shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.bankingPackages) },
-                            label = { Text("🏦 Банки") }
+                            label = { Text("🏦 Банки") },
+                            shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.marketplacePackages) },
-                            label = { Text("🛒 Маркетплейсы") }
+                            label = { Text("🛒 Маркетплейсы") },
+                            shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.gosuslugiPackages) },
-                            label = { Text("🏛️ Госуслуги") }
+                            label = { Text("🏛️ Госуслуги") },
+                            shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.mediaPackages) },
-                            label = { Text("🎬 Медиа РФ") }
+                            label = { Text("🎬 Медиа РФ") },
+                            shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                 }
             }
         }
-
 
         AnimatedVisibility(
             visible = isSearchActive,
@@ -544,11 +597,17 @@ fun PerAppProxyScreen(
                     searchQuery = it
                     updateCurrentPackages(it)
                 },
-                modifier =
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
                     .focusRequester(focusRequester),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    unfocusedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                ),
                 placeholder = { Text(stringResource(R.string.search)) },
                 leadingIcon = {
                     Icon(
@@ -574,15 +633,36 @@ fun PerAppProxyScreen(
             )
         }
 
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 6.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = "Приложения",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            androidx.compose.material3.Badge(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Text("Выбрано: ${selectedUids.size} из ${currentPackages.size}")
+            }
+        }
+
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding =
-            androidx.compose.foundation.layout.PaddingValues(
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
                 horizontal = 16.dp,
-                vertical = 12.dp,
+                vertical = 8.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+
             items(currentPackages, key = { it.packageName }) { packageCache ->
                 AppSelectionCard(
                     packageCache = packageCache,
