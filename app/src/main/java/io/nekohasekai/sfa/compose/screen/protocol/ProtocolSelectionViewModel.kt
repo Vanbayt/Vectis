@@ -99,14 +99,15 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
 
             io.nekohasekai.sfa.network.AppLogCollector.appendLog("VectisHealth", "[AutoSelector] Sing-Box proxy selected: '${proxyGroup.selected}' | Auto group active node: '${autoGroup?.selected}' | Active UI selection: '$selected'")
 
+            val context = io.nekohasekai.sfa.Application.application
             val activeOutboundName = when {
-                realSelectedTag.endsWith("-7") || realSelectedTag.contains("holland-7") -> "🇳🇱 Голландия Reality TCP"
-                realSelectedTag.endsWith("-5") || realSelectedTag.contains("holland-5") -> "🇳🇱 Голландия gRPC"
-                realSelectedTag.endsWith("-8") || realSelectedTag.contains("holland-8") -> "🇳🇱 Голландия Hysteria 2 UDP"
-                realSelectedTag.endsWith("-1") || realSelectedTag.contains("germany-1") -> "🇩🇪 Германия Reality TCP"
-                realSelectedTag.endsWith("-2") || realSelectedTag.contains("germany-2") -> "🇩🇪 Германия Hysteria 2 UDP"
-                realSelectedTag.endsWith("-3") || realSelectedTag.contains("germany-3") -> "🇩🇪 Германия gRPC"
-                else -> realSelectedTag.ifEmpty { "Выбор..." }
+                realSelectedTag.endsWith("-7") || realSelectedTag.contains("holland-7") -> "🇳🇱 Netherlands Reality TCP"
+                realSelectedTag.endsWith("-5") || realSelectedTag.contains("holland-5") -> "🇳🇱 Netherlands gRPC"
+                realSelectedTag.endsWith("-8") || realSelectedTag.contains("holland-8") -> "🇳🇱 Netherlands Hysteria 2 UDP"
+                realSelectedTag.endsWith("-1") || realSelectedTag.contains("germany-1") -> "🇩🇪 Germany Reality TCP"
+                realSelectedTag.endsWith("-2") || realSelectedTag.contains("germany-2") -> "🇩🇪 Germany Hysteria 2 UDP"
+                realSelectedTag.endsWith("-3") || realSelectedTag.contains("germany-3") -> "🇩🇪 Germany gRPC"
+                else -> realSelectedTag.ifEmpty { context.getString(io.nekohasekai.sfa.R.string.protocol_selecting) }
             }
 
             val rawItems = proxyGroup.items.toList()
@@ -116,11 +117,11 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
             uiItems.add(
                 ProtocolItemUi(
                     tag = "auto",
-                    title = "⚡ Автоматический выбор (Auto)",
-                    subtitle = "Текущий выбор: $activeOutboundName",
-                    description = "Автоматически тестирует все узлы и подключает к самому быстрому и стабильному серверу.",
+                    title = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_title),
+                    subtitle = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_subtitle, activeOutboundName),
+                    description = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_desc),
                     countryFlag = "⚡",
-                    protocolBadge = "Умный роутинг",
+                    protocolBadge = context.getString(io.nekohasekai.sfa.R.string.protocol_badge_smart_routing),
                     badgeColorType = "primary",
                     isAuto = true
                 )
@@ -156,17 +157,18 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
     }
 
     private fun loadFallbackItems() {
+        val context = io.nekohasekai.sfa.Application.application
         val uiItems = mutableListOf<ProtocolItemUi>()
 
         // Auto item
         uiItems.add(
             ProtocolItemUi(
                 tag = "auto",
-                title = "⚡ Автоматический выбор (Auto)",
-                subtitle = "Автонастройка и переключение при сбоях",
-                description = "Автоматически тестирует все узлы и подключает к самому быстрому и стабильному серверу.",
+                title = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_title),
+                subtitle = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_subtitle_fallback),
+                description = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_desc),
                 countryFlag = "⚡",
-                protocolBadge = "Умный роутинг",
+                protocolBadge = context.getString(io.nekohasekai.sfa.R.string.protocol_badge_smart_routing),
                 badgeColorType = "primary",
                 isAuto = true
             )
@@ -243,11 +245,11 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
     }
 
     private fun formatOutboundItem(tag: String, delay: Int): ProtocolItemUi {
+        val context = io.nekohasekai.sfa.Application.application
         val effectiveDelay = if (delay > 0) delay else io.nekohasekai.sfa.network.PreConnectPingManager.getPingForTag(tag)
 
         val locInfo = io.nekohasekai.sfa.utils.LocationLocalizer.getLocationInfo(tag)
         val countryFlag = locInfo.flag
-        val countryName = locInfo.nameRu
 
         val isHysteria = tag.contains("hysteria", ignoreCase = true) || tag.contains("hy2", ignoreCase = true) || tag.endsWith("-8") || tag.endsWith("-2") || tag.endsWith("-9")
         val isGrpc = tag.contains("grpc", ignoreCase = true) || tag.endsWith("-5") || tag.endsWith("-3")
@@ -259,9 +261,9 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
         }
 
         val protocolBadge = when {
-            isHysteria -> "⚡ Мобильные сети"
-            isGrpc -> "🛡️ Обход DPI"
-            else -> "🚀 Макс. скорость"
+            isHysteria -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_mobile)
+            isGrpc -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_dpi)
+            else -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_speed)
         }
 
         val badgeColorType = when {
@@ -271,14 +273,14 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
         }
 
         val description = when {
-            isHysteria -> "Протокол на базе UDP (QUIC). Сохраняет полную скорость при высокой потере пакетов на 3G/4G и слабом Wi-Fi."
-            isGrpc -> "Мультиплексирование через gRPC. Создан для пробития тяжелых фильтров ТСПУ и глубокого анализа пакетов."
-            else -> "Классический зашифрованный TCP-туннель с маскировкой под HTTPS. Максимальная скорость для веб-серфинга и видео."
+            isHysteria -> context.getString(io.nekohasekai.sfa.R.string.protocol_desc_hysteria)
+            isGrpc -> context.getString(io.nekohasekai.sfa.R.string.protocol_desc_grpc)
+            else -> context.getString(io.nekohasekai.sfa.R.string.protocol_desc_vless)
         }
 
         val formattedLoc = io.nekohasekai.sfa.utils.LocationLocalizer.formatLocation(tag)
         val title = "$formattedLoc — $protocolName"
-        val subtitle = "Протокол: $protocolName"
+        val subtitle = context.getString(io.nekohasekai.sfa.R.string.protocol_item_subtitle, protocolName)
 
 
         return ProtocolItemUi(

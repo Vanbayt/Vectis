@@ -612,6 +612,141 @@
     <string name="settings_section_update">ОБНОВЛЕНИЕ ПРИЛОЖЕНИЯ</string>
     <string name="check_for_updates">Проверить обновления</string>
     <string name="check_for_updates_subtitle">Версия приложения %s (Нажмите для проверки)</string>
+    <!-- Vectis Localization Additions -->
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Добро пожаловать в Vectis</string>
+    <string name="onboarding_subtitle_1">Сверхбыстрое и защищенное соединение нового поколения на протоколах VLESS, Reality и Hysteria 2 с устойчивостью к блокировкам.</string>
+    <string name="onboarding_title_2">5 ГБ в подарок каждому</string>
+    <string name="onboarding_subtitle_2">Приятный старт без необходимости сразу оплачивать подписку. Бесплатный лимит автоматически закрепляется за вашим устройством.</string>
+    <string name="onboarding_title_3">Умный выбор маршрута</string>
+    <string name="onboarding_subtitle_3">Автоматический выбор наилучшего сервера с минимальным пингом, интеллектуальное переключение Wi-Fi/LTE и экономия батареи.</string>
+    <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_start">Начать работу</string>
+
+    <!-- Login & Register -->
+    <string name="login_title_secure_connection">Безопасное подключение</string>
+    <string name="login_title_create_account">Создание аккаунта</string>
+    <string name="login_label_username">Имя пользователя</string>
+    <string name="login_label_password">Пароль</string>
+    <string name="login_label_confirm_password">Подтвердите пароль</string>
+    <string name="login_error_passwords_mismatch">Пароли не совпадают</string>
+    <string name="login_btn_login">Войти</string>
+    <string name="login_btn_register">Зарегистрироваться</string>
+    <string name="login_link_no_account">Нет аккаунта? Зарегистрироваться</string>
+    <string name="login_link_has_account">Уже есть аккаунт? Войти</string>
+    <string name="session_expired">Сессия истекла. Пожалуйста, авторизуйтесь заново.</string>
+    <string name="service_start_error">Ошибка запуска сервиса: %s</string>
+    <string name="server_error_format">Ошибка сервера (%1$d): %2$s</string>
+    <string name="login_error_invalid_credentials">Неверный логин или пароль</string>
+    <string name="login_error_server_unavailable">Сервер недоступен</string>
+    <string name="login_error_connection">Ошибка подключения к серверу</string>
+    <string name="login_error_device_used">С этого устройства уже был получен бесплатный лимит 5 ГБ.</string>
+    <string name="login_error_user_exists">Пользователь с таким именем уже существует или некорректные данные</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_loading">Загрузка...</string>
+    <string name="logs_sent_success">Логи успешно отправлены разработчику!</string>
+    <string name="dashboard_download">Загрузка</string>
+    <string name="dashboard_upload">Отдача</string>
+    <string name="dashboard_location">Локация</string>
+    <string name="dashboard_protocol">Протокол</string>
+    <string name="dashboard_unknown">Неизвестно</string>
+    <string name="dashboard_expired_until">Истекла %s</string>
+    <string name="dashboard_uptime">Время работы: %s</string>
+    <string name="dashboard_ping">Пинг: %s</string>
+    <string name="dashboard_swipe_to_connect">Свайп для подключения</string>
+    <string name="dashboard_swipe_to_disconnect">Нажмите или свайп для отключения</string>
+    <string name="dashboard_all_time">За все время</string>
+
+    <!-- Notifications -->
+    <string name="notification_expired_title">Срок подписки истек</string>
+    <string name="notification_expired_msg">Ваша подписка Vectis завершилась. Пожалуйста, продлите её в профиле.</string>
+    <string name="notification_ending_title">Подписка заканчивается</string>
+    <string name="notification_ending_msg">До окончания подписки осталось %1$d дн. Продлите тариф, чтобы не потерять доступ.</string>
+
+    <!-- Profile -->
+    <string name="profile_tier_free">Бесплатный (5 ГБ)</string>
+    <string name="profile_tier_premium">Премиум</string>
+    <string name="profile_tier_unlimited">Безлимитный</string>
+    <string name="profile_label_tier">Тариф: %1$s</string>
+    <string name="profile_sub_permanent">Постоянный (Обновляется раз в месяц)</string>
+    <string name="profile_sub_unlimited_time">Безлимитно по времени</string>
+    <string name="profile_sub_active_until">Активна до %1$s</string>
+    <string name="profile_sub_expired">Истекла</string>
+    <string name="profile_devices">Устройств: %1$d / %2$d</string>
+    <string name="profile_traffic_used">Использовано трафика: %1$s / %2$s</string>
+    <string name="profile_traffic_limit_unlimited">Безлимитный</string>
+    <string name="profile_copy_id">ID: %1$s (Нажмите, чтобы скопировать)</string>
+    <string name="profile_id_copied">ID скопирован в буфер обмена</string>
+    <string name="profile_send_logs">Отправить логи разработчику</string>
+    <string name="profile_sending_logs">Отправка логов...</string>
+    <string name="profile_change_password">Изменить пароль</string>
+    <string name="profile_logout">Выйти</string>
+    <string name="profile_change_password_title">Смена пароля</string>
+    <string name="profile_old_password">Старый пароль</string>
+    <string name="profile_new_password">Новый пароль</string>
+    <string name="profile_repeat_new_password">Повторите новый пароль</string>
+    <string name="profile_passwords_mismatch">Новые пароли не совпадают</string>
+    <string name="profile_password_too_short">Пароль должен быть не менее 6 символов</string>
+    <string name="profile_change_button">Изменить</string>
+
+    <!-- Traffic Limit -->
+    <string name="traffic_limit_title">Лимит трафика</string>
+    <string name="traffic_remaining">Осталось</string>
+    <string name="traffic_reset_in">Через %1$d дн.</string>
+    <string name="traffic_used">Использовано</string>
+    <string name="traffic_total_available">Всего доступно</string>
+    <string name="traffic_limit_reset">Сброс лимита</string>
+    <string name="traffic_buy_more">Докупить трафик</string>
+    <string name="traffic_permission_required_title">Требуется разрешение</string>
+    <string name="traffic_permission_required_desc">Для отображения статистики по приложениям, необходимо предоставить разрешение на доступ к истории использования.</string>
+    <string name="traffic_grant_permission">Предоставить доступ</string>
+    <string name="traffic_apps_title">Трафик приложений (Общий на устройстве)</string>
+    <string name="traffic_apps_empty">Статистика появится после использования VPN.</string>
+    <string name="unit_gb">%s ГБ</string>
+    <string name="unit_mb">%s МБ</string>
+    <string name="unit_kb">%s КБ</string>
+    <string name="unit_b">%s Б</string>
+
+    <!-- Protocol Selection -->
+    <string name="protocol_selection_title">Выбор подключения</string>
+    <string name="protocol_selection_subtitle">Подберите протокол под свои задачи. Владельцы Maximum подписки могут зафиксировать конкретную ноду или доверить роутинг автоматике (Auto).</string>
+    <string name="protocol_check_ping">Проверить пинг</string>
+    <string name="protocol_testing">тестируется...</string>
+    <string name="protocol_auto_title">⚡ Автоматический выбор (Auto)</string>
+    <string name="protocol_auto_subtitle">Текущий выбор: %1$s</string>
+    <string name="protocol_auto_subtitle_fallback">Автонастройка и переключение при сбоях</string>
+    <string name="protocol_auto_desc">Автоматически тестирует все узлы и подключает к самому быстрому и стабильному серверу.</string>
+    <string name="protocol_badge_smart_routing">Умный роутинг</string>
+    <string name="protocol_badge_mobile">⚡ Мобильные сети</string>
+    <string name="protocol_badge_dpi">🛡️ Обход DPI</string>
+    <string name="protocol_badge_speed">🚀 Макс. скорость</string>
+    <string name="protocol_desc_hysteria">Протокол на базе UDP (QUIC). Сохраняет полную скорость при высокой потере пакетов на 3G/4G и слабом Wi-Fi.</string>
+    <string name="protocol_desc_grpc">Мультиплексирование через gRPC. Создан для пробития тяжелых фильтров ТСПУ и глубокого анализа пакетов.</string>
+    <string name="protocol_desc_vless">Классический зашифрованный TCP-туннель с маскировкой под HTTPS. Максимальная скорость для веб-серфинга и видео.</string>
+    <string name="protocol_selecting">Выбор...</string>
+    <string name="protocol_item_subtitle">Протокол: %1$s</string>
+
+    <!-- Per App Proxy -->
+    <string name="per_app_preset_applied">Применен пресет: выбрано %1$d прил.</string>
+    <string name="per_app_mode_include">⚡ РЕЖИМ: ВКЛЮЧЕНИЕ</string>
+    <string name="per_app_mode_exclude">🛡️ РЕЖИМ: ИСКЛЮЧЕНИЕ</string>
+    <string name="per_app_switch_mode">Сменить режим</string>
+    <string name="per_app_presets_rf">Пресеты РФ приложений:</string>
+    <string name="per_app_preset_all_rf">🇷🇺 Все РФ прил.</string>
+    <string name="per_app_preset_yandex_vk">🟢 Яндекс и VK</string>
+    <string name="per_app_preset_banks">🏦 Банки</string>
+    <string name="per_app_preset_marketplaces">🛒 Маркетплейсы</string>
+    <string name="per_app_preset_gosuslugi">🏛️ Госуслуги</string>
+    <string name="per_app_preset_media_rf">🎬 Медиа РФ</string>
+
+    <!-- Settings & Updates -->
+    <string name="settings_account">Аккаунт</string>
+    <string name="settings_logout">Выйти из аккаунта</string>
+    <string name="settings_checking_updates">Проверка обновлений...</string>
+    <string name="settings_downloading_update">Начинаем загрузку обновления v%1$s...</string>
+    <string name="settings_update_available">Доступно обновление: %1$s</string>
+    <string name="settings_latest_version">У вас установлена последняя версия Vectis (v%1$s)</string>
 </resources>
 
 

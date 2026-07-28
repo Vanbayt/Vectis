@@ -51,6 +51,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 
+import androidx.compose.ui.res.stringResource
+import io.nekohasekai.sfa.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProtocolSelectionScreen(
@@ -71,7 +74,7 @@ fun ProtocolSelectionScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Выбор подключения",
+                        text = stringResource(R.string.protocol_selection_title),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -80,7 +83,7 @@ fun ProtocolSelectionScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад"
+                            contentDescription = stringResource(R.string.content_description_back)
                         )
                     }
                 },
@@ -98,7 +101,7 @@ fun ProtocolSelectionScreen(
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Проверить пинг"
+                                contentDescription = stringResource(R.string.protocol_check_ping)
                             )
                         }
                     }
@@ -131,7 +134,7 @@ fun ProtocolSelectionScreen(
                 ) {
                     item {
                         Text(
-                            text = "Подберите протокол под свои задачи. Владельцы Maximum подписки могут зафиксировать конкретную ноду или доверить роутинг автоматике (Auto).",
+                            text = stringResource(R.string.protocol_selection_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 4.dp)
@@ -292,7 +295,7 @@ fun ProtocolCardItem(
                     }
                 } else if (!item.isAuto) {
                     Text(
-                        text = "тестируется...",
+                        text = stringResource(R.string.protocol_testing),
                         style = MaterialTheme.typography.labelSmall,
                         color = contentColor.copy(alpha = 0.5f)
                     )

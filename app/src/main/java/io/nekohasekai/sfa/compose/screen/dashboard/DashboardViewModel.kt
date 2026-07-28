@@ -278,7 +278,8 @@ class DashboardViewModel(
                 sendGlobalEvent(UiEvent.RequestStartService)
             } catch (e: Exception) {
                 updateServiceStatus(Status.Stopped)
-                _errorEvents.emit("Ошибка запуска сервиса: ${e.message}")
+                val context = io.nekohasekai.sfa.Application.application
+                _errorEvents.emit(context.getString(io.nekohasekai.sfa.R.string.service_start_error, e.message ?: ""))
             }
         }
     }

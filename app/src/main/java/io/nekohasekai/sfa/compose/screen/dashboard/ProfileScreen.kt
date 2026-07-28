@@ -33,6 +33,9 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
+import androidx.compose.ui.res.stringResource
+import io.nekohasekai.sfa.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
@@ -66,10 +69,10 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(androidx.compose.ui.res.stringResource(io.nekohasekai.sfa.R.string.profile_title), fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.profile_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = androidx.compose.ui.res.stringResource(io.nekohasekai.sfa.R.string.content_description_back))
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -110,7 +113,7 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = userProfile?.username ?: "Загрузка...",
+                text = userProfile?.username ?: stringResource(R.string.dashboard_loading),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -133,24 +136,32 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
             ) {
                 Column {
                     val rawTier = userProfile?.subscription_tier
+                    val tierFree = stringResource(R.string.profile_tier_free)
+                    val tierPremium = stringResource(R.string.profile_tier_premium)
+                    val tierUnlimited = stringResource(R.string.profile_tier_unlimited)
+                    val loadingStr = stringResource(R.string.dashboard_loading)
                     val tierName = when (rawTier?.lowercase(java.util.Locale.ROOT)) {
-                        "free" -> "Бесплатный (5 ГБ)"
-                        "premium" -> "Премиум"
-                        "unlimited" -> "Безлимитный"
-                        null -> "Загрузка..."
+                        "free" -> tierFree
+                        "premium" -> tierPremium
+                        "unlimited" -> tierUnlimited
+                        null -> loadingStr
                         else -> rawTier.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() }
                     }
-                    Text("Тариф: $tierName", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.profile_label_tier, tierName), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
                     Spacer(modifier = Modifier.height(4.dp))
 
+                    val subPermanent = stringResource(R.string.profile_sub_permanent)
+                    val subUnlimited = stringResource(R.string.profile_sub_unlimited_time)
+                    val unknownStr = stringResource(R.string.dashboard_unknown)
+                    val activeUntilFormat = stringResource(R.string.profile_sub_active_until, "%s")
                     
                     val dateText = remember(userProfile?.subscription_end) {
                         if (userProfile?.subscription_end == null) {
                             if (userProfile?.subscription_tier == "free") {
-                                "Постоянный (Обновляется раз в месяц)"
+                                subPermanent
                             } else {
-                                "Безлимитно по времени"
+                                subUnlimited
                             }
                         } else {
                             try {
@@ -158,9 +169,10 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
                                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                                 val date = sdf.parse(userProfile.subscription_end)
                                 val outSdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
-                                "Активна до ${date?.let { outSdf.format(it) } ?: "Неизвестно"}"
+                                val formattedDate = date?.let { outSdf.format(it) } ?: unknownStr
+                                String.format(activeUntilFormat, formattedDate)
                             } catch (e: Exception) {
-                                "Активна до ${userProfile.subscription_end}"
+                                String.format(activeUntilFormat, userProfile.subscription_end)
                             }
                         }
                     }
@@ -187,7 +199,7 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
             Column(modifier = Modifier.padding(16.dp)) {
                 SettingTile(
                     icon = Icons.Rounded.BugReport,
-                    title = if (isUploadingLogs) "Отправка логов..." else "Отправить логи разработчику",
+                    title = if (isUploadingLogs) stringResource(R.string.profile_sending_logs) else stringResource(R.string.profile_send_logs),
                     onClick = {
                         if (!isUploadingLogs) {
                             isUploadingLogs = true
@@ -197,7 +209,7 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
                                 result.onSuccess { msg ->
                                     Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
                                 }.onFailure { err ->
-                                    Toast.makeText(context, err.message ?: "Ошибка отправки", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, err.message ?: "Error sending logs", Toast.LENGTH_LONG).show()
                                 }
                             }
                         }
@@ -205,12 +217,12 @@ fun ProfileScreen(navController: NavController, viewModel: DashboardViewModel) {
                 )
                 SettingTile(
                     icon = Icons.Rounded.Lock,
-                    title = "Изменить пароль",
+                    title = stringResource(R.string.profile_change_password),
                     onClick = { showPasswordDialog = true }
                 )
                 SettingTile(
                     icon = Icons.AutoMirrored.Rounded.Logout,
-                    title = "Выйти",
+                    title = stringResource(R.string.profile_logout),
                     onClick = {
                         coroutineScope.launch {
                             io.nekohasekai.sfa.bg.BoxService.stop()
@@ -236,16 +248,18 @@ fun ChangePasswordDialog(
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf<String?>(null) }
+    val mismatchError = stringResource(R.string.profile_passwords_mismatch)
+    val shortError = stringResource(R.string.profile_password_too_short)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Смена пароля") },
+        title = { Text(stringResource(R.string.profile_change_password_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = oldPassword,
                     onValueChange = { oldPassword = it },
-                    label = { Text("Старый пароль") },
+                    label = { Text(stringResource(R.string.profile_old_password)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
@@ -253,7 +267,7 @@ fun ChangePasswordDialog(
                 OutlinedTextField(
                     value = newPassword,
                     onValueChange = { newPassword = it },
-                    label = { Text("Новый пароль") },
+                    label = { Text(stringResource(R.string.profile_new_password)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
@@ -261,7 +275,7 @@ fun ChangePasswordDialog(
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
-                    label = { Text("Повторите новый пароль") },
+                    label = { Text(stringResource(R.string.profile_repeat_new_password)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
@@ -275,20 +289,20 @@ fun ChangePasswordDialog(
             TextButton(
                 onClick = {
                     if (newPassword != confirmPassword) {
-                        errorText = "Новые пароли не совпадают"
+                        errorText = mismatchError
                     } else if (newPassword.length < 6) {
-                        errorText = "Пароль должен быть не менее 6 символов"
+                        errorText = shortError
                     } else {
                         onChangePassword(oldPassword, newPassword)
                     }
                 }
             ) {
-                Text("Изменить")
+                Text(stringResource(R.string.profile_change_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

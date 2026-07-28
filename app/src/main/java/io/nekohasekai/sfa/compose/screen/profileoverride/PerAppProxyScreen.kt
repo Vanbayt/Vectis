@@ -165,7 +165,7 @@ fun PerAppProxyScreen(
         }
         Toast.makeText(
             context,
-            "Применен пресет: выбрано ${newSelected.size} прил.",
+            context.getString(R.string.per_app_preset_applied, newSelected.size),
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -482,9 +482,9 @@ fun PerAppProxyScreen(
                 ) {
                     Text(
                         text = if (proxyMode == Settings.PER_APP_PROXY_INCLUDE) {
-                            "⚡ РЕЖИМ: ВКЛЮЧЕНИЕ"
+                            stringResource(R.string.per_app_mode_include)
                         } else {
-                            "🛡️ РЕЖИМ: ИСКЛЮЧЕНИЕ"
+                            stringResource(R.string.per_app_mode_exclude)
                         },
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
@@ -504,7 +504,7 @@ fun PerAppProxyScreen(
                             }
                         }
                     ) {
-                        Text("Сменить режим", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(R.string.per_app_switch_mode), style = MaterialTheme.typography.labelMedium)
                     }
                 }
                 Text(
@@ -522,7 +522,7 @@ fun PerAppProxyScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Пресеты РФ приложений:",
+                    text = stringResource(R.string.per_app_presets_rf),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -535,42 +535,42 @@ fun PerAppProxyScreen(
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.allRussianPackages) },
-                            label = { Text("🇷🇺 Все РФ прил.") },
+                            label = { Text(stringResource(R.string.per_app_preset_all_rf)) },
                             shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.yandexPackages + RussianAppPreset.vkPackages) },
-                            label = { Text("🟢 Яндекс и VK") },
+                            label = { Text(stringResource(R.string.per_app_preset_yandex_vk)) },
                             shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.bankingPackages) },
-                            label = { Text("🏦 Банки") },
+                            label = { Text(stringResource(R.string.per_app_preset_banks)) },
                             shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.marketplacePackages) },
-                            label = { Text("🛒 Маркетплейсы") },
+                            label = { Text(stringResource(R.string.per_app_preset_marketplaces)) },
                             shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.gosuslugiPackages) },
-                            label = { Text("🏛️ Госуслуги") },
+                            label = { Text(stringResource(R.string.per_app_preset_gosuslugi)) },
                             shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }
                     item {
                         androidx.compose.material3.AssistChip(
                             onClick = { applyRussianPreset(RussianAppPreset.mediaPackages) },
-                            label = { Text("🎬 Медиа РФ") },
+                            label = { Text(stringResource(R.string.per_app_preset_media_rf)) },
                             shape = androidx.compose.foundation.shape.CircleShape,
                         )
                     }

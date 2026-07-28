@@ -620,6 +620,142 @@
     <string name="settings_section_update">APP UPDATE</string>
     <string name="check_for_updates">Check for updates</string>
     <string name="check_for_updates_subtitle">App version %s (Tap to check)</string>
+    <!-- Vectis Localization Additions -->
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Welcome to Vectis</string>
+    <string name="onboarding_subtitle_1">Ultra-fast and secure next-generation connection using VLESS, Reality, and Hysteria 2 with resistance to blocking.</string>
+    <string name="onboarding_title_2">5 GB Gift for Everyone</string>
+    <string name="onboarding_subtitle_2">A pleasant start without needing to pay for a subscription right away. Free quota is automatically attached to your device.</string>
+    <string name="onboarding_title_3">Smart Route Selection</string>
+    <string name="onboarding_subtitle_3">Automatic selection of the best server with minimal ping, intelligent Wi-Fi/LTE switching, and battery saving.</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_start">Get Started</string>
+
+    <!-- Login & Register -->
+    <string name="login_title_secure_connection">Secure Connection</string>
+    <string name="login_title_create_account">Create Account</string>
+    <string name="login_label_username">Username</string>
+    <string name="login_label_password">Password</string>
+    <string name="login_label_confirm_password">Confirm password</string>
+    <string name="login_error_passwords_mismatch">Passwords do not match</string>
+    <string name="login_btn_login">Log In</string>
+    <string name="login_btn_register">Register</string>
+    <string name="login_link_no_account">No account? Register</string>
+    <string name="login_link_has_account">Already have an account? Log In</string>
+    <string name="login_error_auth">Authentication error: %s</string>
+    <string name="login_error_invalid_credentials">Invalid username or password</string>
+    <string name="login_error_server_unavailable">Server unavailable</string>
+    <string name="login_error_connection">Server connection error</string>
+    <string name="login_error_device_used">Free 5 GB limit has already been claimed on this device.</string>
+    <string name="login_error_user_exists">User with this name already exists or invalid data</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_loading">Loading...</string>
+    <string name="logs_sent_success">Logs successfully sent to developer!</string>
+    <string name="dashboard_download">Download</string>
+    <string name="dashboard_upload">Upload</string>
+    <string name="dashboard_location">Location</string>
+    <string name="dashboard_protocol">Protocol</string>
+    <string name="dashboard_unknown">Unknown</string>
+    <string name="session_expired">Session expired. Please log in again.</string>
+    <string name="service_start_error">Failed to start service: %s</string>
+    <string name="server_error_format">Server error (%1$d): %2$s</string>
+    <string name="dashboard_uptime">Uptime: %s</string>
+    <string name="dashboard_ping">Ping: %s</string>
+    <string name="dashboard_swipe_to_connect">Swipe to connect</string>
+    <string name="dashboard_swipe_to_disconnect">Tap or swipe to disconnect</string>
+    <string name="dashboard_all_time">All time</string>
+    <string name="dashboard_expired_until">Expired on %s</string>
+
+    <!-- Notifications -->
+    <string name="notification_expired_title">Subscription expired</string>
+    <string name="notification_expired_msg">Your Vectis subscription has ended. Please renew it in your profile.</string>
+    <string name="notification_ending_title">Subscription ending soon</string>
+    <string name="notification_ending_msg">Only %1$d days left on your subscription. Renew to keep your access.</string>
+
+    <!-- Profile -->
+    <string name="profile_tier_free">Free (5 GB)</string>
+    <string name="profile_tier_premium">Premium</string>
+    <string name="profile_tier_unlimited">Unlimited</string>
+    <string name="profile_label_tier">Plan: %1$s</string>
+    <string name="profile_sub_permanent">Permanent (Renews monthly)</string>
+    <string name="profile_sub_unlimited_time">Unlimited duration</string>
+    <string name="profile_sub_active_until">Active until %1$s</string>
+    <string name="profile_sub_expired">Expired</string>
+    <string name="profile_devices">Devices: %1$d / %2$d</string>
+    <string name="profile_traffic_used">Traffic used: %1$s / %2$s</string>
+    <string name="profile_traffic_limit_unlimited">Unlimited</string>
+    <string name="profile_copy_id">ID: %1$s (Tap to copy)</string>
+    <string name="profile_id_copied">ID copied to clipboard</string>
+    <string name="profile_send_logs">Send logs to developer</string>
+    <string name="profile_sending_logs">Sending logs...</string>
+    <string name="profile_change_password">Change password</string>
+    <string name="profile_logout">Log out</string>
+    <string name="profile_change_password_title">Change Password</string>
+    <string name="profile_old_password">Old password</string>
+    <string name="profile_new_password">New password</string>
+    <string name="profile_repeat_new_password">Repeat new password</string>
+    <string name="profile_passwords_mismatch">New passwords do not match</string>
+    <string name="profile_password_too_short">Password must be at least 6 characters</string>
+    <string name="profile_change_button">Change</string>
+
+    <!-- Traffic Limit -->
+    <string name="traffic_limit_title">Traffic Limit</string>
+    <string name="traffic_remaining">Remaining</string>
+    <string name="traffic_reset_in">In %1$d days</string>
+    <string name="traffic_used">Used</string>
+    <string name="traffic_total_available">Total available</string>
+    <string name="traffic_limit_reset">Limit reset</string>
+    <string name="traffic_buy_more">Buy more traffic</string>
+    <string name="traffic_permission_required_title">Permission required</string>
+    <string name="traffic_permission_required_desc">To display per-app usage statistics, you need to grant usage access permission.</string>
+    <string name="traffic_grant_permission">Grant access</string>
+    <string name="traffic_apps_title">App Traffic (Total on device)</string>
+    <string name="traffic_apps_empty">Statistics will appear after using VPN.</string>
+    <string name="unit_gb">%s GB</string>
+    <string name="unit_mb">%s MB</string>
+    <string name="unit_kb">%s KB</string>
+    <string name="unit_b">%s B</string>
+
+    <!-- Protocol Selection -->
+    <string name="protocol_selection_title">Select Connection</string>
+    <string name="protocol_selection_subtitle">Choose a protocol for your tasks. Maximum plan owners can lock a specific node or trust automation (Auto).</string>
+    <string name="protocol_check_ping">Check ping</string>
+    <string name="protocol_testing">testing...</string>
+    <string name="protocol_auto_title">⚡ Automatic Selection (Auto)</string>
+    <string name="protocol_auto_subtitle">Current selection: %1$s</string>
+    <string name="protocol_auto_subtitle_fallback">Auto-config and failover recovery</string>
+    <string name="protocol_auto_desc">Automatically tests all nodes and connects to the fastest and most stable server.</string>
+    <string name="protocol_badge_smart_routing">Smart Routing</string>
+    <string name="protocol_badge_mobile">⚡ Mobile Networks</string>
+    <string name="protocol_badge_dpi">🛡️ DPI Bypass</string>
+    <string name="protocol_badge_speed">🚀 Max Speed</string>
+    <string name="protocol_desc_hysteria">UDP (QUIC) based protocol. Maintains full speed despite packet loss on 3G/4G and weak Wi-Fi.</string>
+    <string name="protocol_desc_grpc">Multiplexing via gRPC. Built to bypass heavy DPI filtering and deep packet inspection.</string>
+    <string name="protocol_desc_vless">Classic encrypted TCP tunnel disguised as HTTPS. Maximum speed for web browsing and video.</string>
+    <string name="protocol_selecting">Selecting...</string>
+    <string name="protocol_item_subtitle">Protocol: %1$s</string>
+
+    <!-- Per App Proxy -->
+    <string name="per_app_preset_applied">Applied preset: selected %1$d apps</string>
+    <string name="per_app_mode_include">⚡ MODE: INCLUDE</string>
+    <string name="per_app_mode_exclude">🛡️ MODE: EXCLUDE</string>
+    <string name="per_app_switch_mode">Switch Mode</string>
+    <string name="per_app_presets_rf">Russian App Presets:</string>
+    <string name="per_app_preset_all_rf">🇷🇺 All RU Apps</string>
+    <string name="per_app_preset_yandex_vk">🟢 Yandex &amp; VK</string>
+    <string name="per_app_preset_banks">🏦 Banks</string>
+    <string name="per_app_preset_marketplaces">🛒 Marketplaces</string>
+    <string name="per_app_preset_gosuslugi">🏛️ Gosuslugi</string>
+    <string name="per_app_preset_media_rf">🎬 Media RU</string>
+
+    <!-- Settings & Updates -->
+    <string name="settings_account">Account</string>
+    <string name="settings_logout">Log out of account</string>
+    <string name="settings_checking_updates">Checking for updates...</string>
+    <string name="settings_downloading_update">Downloading update v%1$s...</string>
+    <string name="settings_update_available">Update available: %1$s</string>
+    <string name="settings_latest_version">You have the latest version of Vectis (v%1$s)</string>
 </resources>
 
 

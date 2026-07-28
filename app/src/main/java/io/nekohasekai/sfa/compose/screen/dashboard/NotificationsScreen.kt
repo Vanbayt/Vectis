@@ -74,6 +74,7 @@ fun NotificationsScreen(
     navController: NavController,
     userRepository: UserRepository = koinInject()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(true) }
     val notificationsList = remember { mutableStateListOf<AppNotification>() }
@@ -104,8 +105,8 @@ fun NotificationsScreen(
                             0,
                             AppNotification(
                                 id = -1,
-                                title = "Срок подписки истек",
-                                message = "Ваша подписка Vectis завершилась. Пожалуйста, продлите её в профиле.",
+                                title = context.getString(R.string.notification_expired_title),
+                                message = context.getString(R.string.notification_expired_msg),
                                 type = "subscription",
                                 created_at = null,
                                 is_read = false
@@ -116,8 +117,8 @@ fun NotificationsScreen(
                             0,
                             AppNotification(
                                 id = -2,
-                                title = "Подписка заканчивается",
-                                message = "До окончания подписки осталось $daysLeft дн. Продлите тариф, чтобы не потерять доступ.",
+                                title = context.getString(R.string.notification_ending_title),
+                                message = context.getString(R.string.notification_ending_msg, daysLeft.toInt()),
                                 type = "subscription",
                                 created_at = null,
                                 is_read = false
@@ -143,7 +144,7 @@ fun NotificationsScreen(
                 actions = {
                     if (notificationsList.isNotEmpty()) {
                         IconButton(onClick = { notificationsList.clear() }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = "Clear all", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.clear), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 },

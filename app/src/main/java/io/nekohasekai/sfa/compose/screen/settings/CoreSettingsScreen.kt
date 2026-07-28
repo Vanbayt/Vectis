@@ -47,17 +47,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.stringResource
+import io.nekohasekai.sfa.R
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.ktx.clipboardText
@@ -369,7 +369,7 @@ fun CoreSettingsScreen(navController: NavController) {
         // Session Section
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Аккаунт", // Or stringResource if available, but hardcoding for now since R.string.account might not exist
+            text = stringResource(R.string.settings_account),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
@@ -388,7 +388,7 @@ fun CoreSettingsScreen(navController: NavController) {
             ListItem(
                 headlineContent = {
                     Text(
-                        "Выйти из аккаунта",
+                        stringResource(R.string.settings_logout),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error,
                     )

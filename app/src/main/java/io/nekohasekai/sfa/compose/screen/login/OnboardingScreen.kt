@@ -27,8 +27,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import io.nekohasekai.sfa.R
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -122,18 +124,18 @@ fun OnboardingScreen(
                     when (page) {
                         0 -> OnboardingCard(
                             icon = Icons.Rounded.Security,
-                            title = "Добро пожаловать в Vectis",
-                            subtitle = "Сверхбыстрое и защищенное соединение нового поколения на протоколах VLESS, Reality и Hysteria 2 с устойчивостью к блокировкам."
+                            title = stringResource(R.string.onboarding_title_1),
+                            subtitle = stringResource(R.string.onboarding_subtitle_1)
                         )
                         1 -> OnboardingCard(
                             icon = Icons.Rounded.CardGiftcard,
-                            title = "5 ГБ в подарок каждому",
-                            subtitle = "Приятный старт без необходимости сразу оплачивать подписку. Бесплатный лимит автоматически закрепляется за вашим устройством."
+                            title = stringResource(R.string.onboarding_title_2),
+                            subtitle = stringResource(R.string.onboarding_subtitle_2)
                         )
                         2 -> OnboardingCard(
                             icon = Icons.Rounded.Speed,
-                            title = "Умный выбор маршрута",
-                            subtitle = "Автоматический выбор наилучшего сервера с минимальным пингом, интеллектуальное переключение Wi-Fi/LTE и экономия батареи."
+                            title = stringResource(R.string.onboarding_title_3),
+                            subtitle = stringResource(R.string.onboarding_subtitle_3)
                         )
                     }
                 }
@@ -158,7 +160,7 @@ fun OnboardingScreen(
                             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     ) {
-                        Text("Пропустить", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(R.string.onboarding_skip), style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
@@ -223,7 +225,7 @@ fun OnboardingScreen(
                                 modifier = Modifier.size(56.dp),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
-                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
+                                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.previous))
                             }
                         }
                     }
@@ -247,7 +249,7 @@ fun OnboardingScreen(
                                 modifier = Modifier.size(56.dp),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
-                                Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "Далее")
+                                Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = stringResource(R.string.next))
                             }
                         }
 
@@ -266,7 +268,7 @@ fun OnboardingScreen(
                                 )
                             ) {
                                 Text(
-                                    text = "Начать работу",
+                                    text = stringResource(R.string.onboarding_start),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 16.dp)

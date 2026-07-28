@@ -49,6 +49,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 
+import androidx.compose.ui.res.stringResource
+import io.nekohasekai.sfa.R
+
 data class AppTrafficData(
     val packageCache: PackageCache?,
     val uid: Int,
@@ -57,12 +60,13 @@ data class AppTrafficData(
     val totalBytes: Long
 )
 
+@Composable
 fun formatBytes(bytes: Long): String {
     return when {
-        bytes >= 1024 * 1024 * 1024 -> String.format("%.2f ГБ", bytes.toFloat() / (1024 * 1024 * 1024))
-        bytes >= 1024 * 1024 -> String.format("%.2f МБ", bytes.toFloat() / (1024 * 1024))
-        bytes >= 1024 -> String.format("%.2f КБ", bytes.toFloat() / 1024)
-        else -> "$bytes Б"
+        bytes >= 1024 * 1024 * 1024 -> stringResource(R.string.unit_gb, String.format("%.2f", bytes.toFloat() / (1024 * 1024 * 1024)))
+        bytes >= 1024 * 1024 -> stringResource(R.string.unit_mb, String.format("%.2f", bytes.toFloat() / (1024 * 1024)))
+        bytes >= 1024 -> stringResource(R.string.unit_kb, String.format("%.2f", bytes.toFloat() / 1024))
+        else -> stringResource(R.string.unit_b, bytes.toString())
     }
 }
 
@@ -89,14 +93,14 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
     val limitGb = state.trafficLimit.toFloat() / (1024 * 1024 * 1024)
     val remainingGb = maxOf(0f, limitGb - usedGb)
     val progress = if (isUnlimited) 0f else if (limitGb > 0) (usedGb / limitGb).coerceIn(0f, 1f) else 0f
-    val remainingStr = if (isUnlimited) "∞" else String.format("%.1f ГБ", remainingGb)
-    val limitStr = if (isUnlimited) "∞" else String.format("%.1f ГБ", limitGb)
+    val remainingStr = if (isUnlimited) "∞" else stringResource(R.string.unit_gb, String.format("%.1f", remainingGb))
+    val limitStr = if (isUnlimited) "∞" else stringResource(R.string.unit_gb, String.format("%.1f", limitGb))
 
     val calendarReset = java.util.Calendar.getInstance()
     val currentDay = calendarReset.get(java.util.Calendar.DAY_OF_MONTH)
     val daysInMonth = calendarReset.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
     val daysUntilReset = daysInMonth - currentDay + 1
-    val resetStr = "Через $daysUntilReset дн."
+    val resetStr = stringResource(R.string.traffic_reset_in, daysUntilReset)
 
     val context = LocalContext.current
     var hasUsageAccess by remember { mutableStateOf(checkUsageAccess(context)) }
@@ -186,10 +190,10 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
 
     OverrideTopBar {
         TopAppBar(
-            title = { Text("Лимит трафика", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.traffic_limit_title), fontWeight = FontWeight.Bold) },
             navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -225,7 +229,7 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Осталось",
+                    text = stringResource(R.string.traffic_remaining),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -247,9 +251,9 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.DataUsage, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Использовано", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.traffic_used), style = MaterialTheme.typography.titleMedium)
                     }
-                    Text(String.format("%.1f ГБ", usedGb), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.unit_gb, String.format("%.1f", usedGb)), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Row(
@@ -257,7 +261,7 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Всего доступно", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.traffic_total_available), style = MaterialTheme.typography.titleMedium)
                     Text(limitStr, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -266,7 +270,7 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Сброс лимита", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.traffic_limit_reset), style = MaterialTheme.typography.titleMedium)
                     Text(resetStr, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             }
@@ -281,7 +285,7 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
             ) {
                 Icon(Icons.Rounded.AddShoppingCart, contentDescription = null)
                 Spacer(modifier = Modifier.width(12.dp))
-                Text("Докупить трафик", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.traffic_buy_more), style = MaterialTheme.typography.titleMedium)
             }
         }
 
@@ -293,14 +297,14 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
             ) {
                 Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "Требуется разрешение",
+                        stringResource(R.string.traffic_permission_required_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Для отображения статистики по приложениям, необходимо предоставить разрешение на доступ к истории использования.",
+                        stringResource(R.string.traffic_permission_required_desc),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -311,7 +315,7 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onErrorContainer, contentColor = MaterialTheme.colorScheme.errorContainer)
                     ) {
-                        Text("Предоставить доступ")
+                        Text(stringResource(R.string.traffic_grant_permission))
                     }
                 }
             }
@@ -325,10 +329,10 @@ fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewMod
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
                     Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text("Трафик приложений (Общий на устройстве)", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.traffic_apps_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         if (appTrafficList.isEmpty()) {
                             Text(
-                                "Статистика появится после использования VPN.",
+                                stringResource(R.string.traffic_apps_empty),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

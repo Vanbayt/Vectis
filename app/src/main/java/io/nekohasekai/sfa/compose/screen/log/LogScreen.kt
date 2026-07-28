@@ -290,7 +290,7 @@ fun LogScreen(
                         Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(R.string.clear_logs))
                     }
                     IconButton(onClick = { resolvedViewModel.toggleOptionsMenu() }) {
-                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Опции")
+                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
                     }
 
                 },

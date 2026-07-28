@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
+import androidx.compose.ui.res.stringResource
+import io.nekohasekai.sfa.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -244,14 +247,14 @@ fun DashboardScreen(
                         ) {
                             InfoTile(
                                 modifier = Modifier.weight(1f).bounceClick { },
-                                title = "Загрузка",
+                                title = stringResource(R.string.dashboard_download),
                                 value = state.downlink,
                                 icon = Icons.Rounded.ArrowDownward,
                                 shape = RoundedCornerShape(topStart = 32.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 4.dp)
                             )
                             InfoTile(
                                 modifier = Modifier.weight(1f).bounceClick { },
-                                title = "Отдача",
+                                title = stringResource(R.string.dashboard_upload),
                                 value = state.uplink,
                                 icon = Icons.Rounded.ArrowUpward,
                                 shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 32.dp, bottomStart = 4.dp)
@@ -263,7 +266,7 @@ fun DashboardScreen(
                         ) {
                             InfoTile(
                                 modifier = Modifier.weight(1f).bounceClick { },
-                                title = "Локация",
+                                title = stringResource(R.string.dashboard_location),
                                 value = state.location,
                                 icon = Icons.Rounded.Place,
                                 shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 32.dp)
@@ -276,7 +279,7 @@ fun DashboardScreen(
                                         showUpgradeDialog = true
                                     }
                                 },
-                                title = "Протокол",
+                                title = stringResource(R.string.dashboard_protocol),
                                 value = state.protocol,
                                 icon = Icons.Rounded.Lock,
                                 shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 32.dp, topEnd = 4.dp, bottomStart = 4.dp)
@@ -313,16 +316,19 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                val tierName = state.userProfile?.subscription_tier?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: "Загрузка..."
+                                val loadingStr = stringResource(R.string.dashboard_loading)
+                                val unlimitedTimeStr = stringResource(R.string.profile_sub_unlimited_time)
+                                val expiredStr = stringResource(R.string.profile_sub_expired)
+                                val tierName = state.userProfile?.subscription_tier?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: loadingStr
                                 Text(
-                                    text = "Тариф: $tierName",
+                                    text = stringResource(R.string.profile_label_tier, tierName),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                 )
                                 val daysLeftText = remember(state.userProfile?.subscription_end) {
                                     val endStr = state.userProfile?.subscription_end
                                     if (endStr == null) {
-                                        "Безлимитно"
+                                        unlimitedTimeStr
                                     } else {
                                         try {
                                             val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
@@ -331,7 +337,7 @@ fun DashboardScreen(
                                             if (date != null) {
                                                 val diff = date.time - System.currentTimeMillis()
                                                 val days = diff / (1000 * 60 * 60 * 24)
-                                                if (days < 0) "Истекла" else "Осталось дней: $days"
+                                                if (days < 0) expiredStr else endStr
                                             } else {
                                                 endStr
                                             }
@@ -349,7 +355,7 @@ fun DashboardScreen(
                             }
                             Icon(
                                 imageVector = Icons.Rounded.AccountCircle,
-                                contentDescription = "Подписка",
+                                contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(36.dp)
                             )
@@ -389,7 +395,7 @@ fun DashboardScreen(
             ) {
                 Icon(Icons.Rounded.Timer, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Время работы: $uptimeString", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.dashboard_uptime, uptimeString), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
                 Text("  •  ", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
@@ -403,7 +409,7 @@ fun DashboardScreen(
                     },
                     label = "ping"
                 ) { targetPing ->
-                    Text("Пинг: $targetPing", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.dashboard_ping, targetPing), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -480,7 +486,7 @@ fun SwipeToConnectSlider(
                 )
             } else {
                 Text(
-                    text = if (isConnected) "Нажмите или свайп для отключения" else "Свайп для подключения",
+                    text = if (isConnected) stringResource(R.string.dashboard_swipe_to_disconnect) else stringResource(R.string.dashboard_swipe_to_connect),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -626,12 +632,13 @@ fun DataUsageCard(trafficUsed: Long = 0L, trafficLimit: Long = 5L * 1024 * 1024 
     val limitGb = trafficLimit.toFloat() / (1024 * 1024 * 1024)
     val progress = if (limitGb > 0) (usedGb / limitGb).coerceIn(0f, 1f) else 0f
     
+    val context = LocalContext.current
     val formatBytes: (Long) -> String = { bytes ->
         when {
-            bytes >= 1024 * 1024 * 1024 -> String.format("%.2f ГБ", bytes.toFloat() / (1024 * 1024 * 1024))
-            bytes >= 1024 * 1024 -> String.format("%.2f МБ", bytes.toFloat() / (1024 * 1024))
-            bytes >= 1024 -> String.format("%.2f КБ", bytes.toFloat() / 1024)
-            else -> "$bytes Б"
+            bytes >= 1024 * 1024 * 1024 -> context.getString(R.string.unit_gb, String.format("%.2f", bytes.toFloat() / (1024 * 1024 * 1024)))
+            bytes >= 1024 * 1024 -> context.getString(R.string.unit_mb, String.format("%.2f", bytes.toFloat() / (1024 * 1024)))
+            bytes >= 1024 -> context.getString(R.string.unit_kb, String.format("%.2f", bytes.toFloat() / 1024))
+            else -> context.getString(R.string.unit_b, bytes.toString())
         }
     }
     
@@ -654,13 +661,13 @@ fun DataUsageCard(trafficUsed: Long = 0L, trafficLimit: Long = 5L * 1024 * 1024 
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                 Column {
-                    Text("Лимит трафика", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("За все время", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                    Text(stringResource(R.string.traffic_limit_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.dashboard_all_time), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                 }
                 Icon(Icons.Rounded.Info, contentDescription = null, modifier = Modifier.size(24.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text("Осталось", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                Text(stringResource(R.string.traffic_remaining), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
                 Text(remainingStr, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {

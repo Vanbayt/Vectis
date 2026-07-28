@@ -146,14 +146,15 @@ object AppLogCollector {
                 os.write(jsonBody.toString().toByteArray(Charsets.UTF_8))
             }
 
+            val context = io.nekohasekai.sfa.Application.application
             val responseCode = conn.responseCode
             if (responseCode in 200..299) {
                 Log.i(TAG, "Logs successfully uploaded to backend API")
-                Result.success("Логи успешно отправлены разработчику!")
+                Result.success(context.getString(io.nekohasekai.sfa.R.string.logs_sent_success))
             } else {
                 val err = conn.errorStream?.bufferedReader()?.readText() ?: "HTTP $responseCode"
                 Log.e(TAG, "Failed to upload logs: $err")
-                Result.failure(Exception("Ошибка сервера ($responseCode): $err"))
+                Result.failure(Exception(context.getString(io.nekohasekai.sfa.R.string.server_error_format, responseCode, err)))
             }
         } catch (e: Exception) {
             Log.e(TAG, "Exception during log upload: ${e.message}", e)

@@ -247,19 +247,19 @@ fun SettingsScreen(navController: NavController) {
                         badgeColor = MaterialTheme.colorScheme.primary,
                         onClick = {
                             coroutineScope.launch {
-                                Toast.makeText(context, "Проверка обновлений...", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.settings_checking_updates), Toast.LENGTH_SHORT).show()
                                 val updateInfo = withContext(Dispatchers.IO) { Vendor.checkUpdateAsync() }
                                 if (updateInfo != null) {
                                     UpdateState.setUpdate(updateInfo)
                                     val activity = context as? android.app.Activity
                                     if (activity != null) {
-                                        Toast.makeText(context, "Начинаем загрузку обновления v${updateInfo.versionName}...", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, context.getString(R.string.settings_downloading_update, updateInfo.versionName), Toast.LENGTH_LONG).show()
                                         Vendor.downloadAndInstall(activity, updateInfo.downloadUrl)
                                     } else {
-                                        Toast.makeText(context, "Доступно обновление: ${updateInfo.versionName}", Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, context.getString(R.string.settings_update_available, updateInfo.versionName), Toast.LENGTH_LONG).show()
                                     }
                                 } else {
-                                    Toast.makeText(context, "У вас установлена последняя версия Vectis (v$currentVersion)", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.settings_latest_version, currentVersion), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }

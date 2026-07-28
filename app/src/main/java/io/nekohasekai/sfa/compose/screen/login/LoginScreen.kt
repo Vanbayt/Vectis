@@ -36,6 +36,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 
+import androidx.compose.ui.res.stringResource
+import io.nekohasekai.sfa.R
+
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -115,7 +118,7 @@ fun LoginScreen(
                     label = "header"
                 ) { loginMode ->
                     Text(
-                        text = if (loginMode) "Безопасное подключение" else "Создание аккаунта",
+                        text = if (loginMode) stringResource(R.string.login_title_secure_connection) else stringResource(R.string.login_title_create_account),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -140,7 +143,7 @@ fun LoginScreen(
                         OutlinedTextField(
                             value = username,
                             onValueChange = { username = it },
-                            label = { Text("Имя пользователя") },
+                            label = { Text(stringResource(R.string.login_label_username)) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Rounded.Person,
@@ -163,7 +166,7 @@ fun LoginScreen(
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
-                            label = { Text("Пароль") },
+                            label = { Text(stringResource(R.string.login_label_password)) },
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Rounded.Lock,
@@ -197,7 +200,7 @@ fun LoginScreen(
                                 OutlinedTextField(
                                     value = confirmPassword,
                                     onValueChange = { confirmPassword = it },
-                                    label = { Text("Подтвердите пароль") },
+                                    label = { Text(stringResource(R.string.login_label_confirm_password)) },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Rounded.Lock,
@@ -221,7 +224,7 @@ fun LoginScreen(
                                 )
                                 androidx.compose.animation.AnimatedVisibility(visible = isConfirmPasswordError) {
                                     Text(
-                                        text = "Пароли не совпадают",
+                                        text = stringResource(R.string.login_error_passwords_mismatch),
                                         color = MaterialTheme.colorScheme.error,
                                         style = MaterialTheme.typography.bodySmall,
                                         modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -273,7 +276,7 @@ fun LoginScreen(
                                     )
                                 } else {
                                     Text(
-                                        text = if (isLoginMode) "Войти" else "Зарегистрироваться",
+                                        text = if (isLoginMode) stringResource(R.string.login_btn_login) else stringResource(R.string.login_btn_register),
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                 }
@@ -296,7 +299,7 @@ fun LoginScreen(
                                 label = "switch_mode"
                             ) { loginMode ->
                                 Text(
-                                    text = if (loginMode) "Нет аккаунта? Зарегистрироваться" else "Уже есть аккаунт? Войти",
+                                    text = if (loginMode) stringResource(R.string.login_link_no_account) else stringResource(R.string.login_link_has_account),
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }

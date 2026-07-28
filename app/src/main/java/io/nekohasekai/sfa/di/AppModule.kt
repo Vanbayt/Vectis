@@ -52,7 +52,8 @@ val appModule = module {
                 if (response.code == 401) {
                     io.nekohasekai.sfa.database.Settings.clearSession()
                     kotlinx.coroutines.GlobalScope.launch {
-                        io.nekohasekai.sfa.compose.base.GlobalEventBus.emit(io.nekohasekai.sfa.compose.base.UiEvent.ErrorMessage("Сессия истекла. Пожалуйста, авторизуйтесь заново."))
+                        val sessionExpiredMsg = io.nekohasekai.sfa.Application.application.getString(io.nekohasekai.sfa.R.string.session_expired)
+                        io.nekohasekai.sfa.compose.base.GlobalEventBus.emit(io.nekohasekai.sfa.compose.base.UiEvent.ErrorMessage(sessionExpiredMsg))
                         io.nekohasekai.sfa.compose.base.GlobalEventBus.emit(io.nekohasekai.sfa.compose.base.UiEvent.Logout)
                     }
                 }
