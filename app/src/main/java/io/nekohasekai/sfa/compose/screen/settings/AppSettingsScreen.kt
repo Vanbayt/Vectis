@@ -53,7 +53,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -101,29 +103,7 @@ fun AppSettingsScreen(
     navController: NavController,
     serviceStatus: Status = Status.Stopped,
 ) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { 
-                Text(
-                    text = stringResource(R.string.title_app_settings), 
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                ) 
-            },
 
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-            )
-        )
-    }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -238,14 +218,39 @@ fun AppSettingsScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        text = stringResource(R.string.title_app_settings), 
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
         // App Info
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -409,6 +414,8 @@ fun AppSettingsScreen(
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
+}
+
 
 @Composable
 fun SettingsTileM3(

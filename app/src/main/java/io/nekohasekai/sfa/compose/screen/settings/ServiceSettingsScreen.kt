@@ -32,9 +32,12 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,19 +77,7 @@ fun ServiceSettingsScreen(
     serviceConnection: ServiceConnection? = null,
     serviceStatus: Status = Status.Stopped,
 ) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.service)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-        )
-    }
+
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -114,14 +105,33 @@ fun ServiceSettingsScreen(
         }
     }
 
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.service), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+        ) {
         if (!isBatteryOptimizationIgnored && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Card(
                 modifier =
@@ -282,6 +292,8 @@ fun ServiceSettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+}
+
 
 private const val ALLOW_BYPASS_DOC_URL =
     "https://developer.android.com/reference/android/net/VpnService.Builder#allowBypass()"

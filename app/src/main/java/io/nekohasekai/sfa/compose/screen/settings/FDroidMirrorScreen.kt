@@ -34,8 +34,11 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -71,19 +74,7 @@ private data class MirrorEntry(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FDroidMirrorScreen(navController: NavController) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.fdroid_mirror)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-        )
-    }
+
 
     val scope = rememberCoroutineScope()
     var selectedMirrorUrl by remember { mutableStateOf(Settings.fdroidMirrorUrl) }
@@ -155,13 +146,32 @@ fun FDroidMirrorScreen(navController: NavController) {
     }
     val countryOrder = remember(grouped) { grouped.keys.toList() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.fdroid_mirror), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+        ) {
         FilledTonalButton(
             onClick = { testAllMirrors() },
             enabled = !isTesting,
@@ -423,6 +433,8 @@ fun FDroidMirrorScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+}
+
 
 @Composable
 private fun LatencyBadge(

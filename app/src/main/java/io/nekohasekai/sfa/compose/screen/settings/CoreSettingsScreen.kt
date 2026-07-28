@@ -38,9 +38,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -68,19 +71,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CoreSettingsScreen(navController: NavController) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.core)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-        )
-    }
+
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -103,14 +94,33 @@ fun CoreSettingsScreen(navController: NavController) {
         }
     }
 
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.core), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+        ) {
         // Core Information Card
         Card(
             modifier =
@@ -419,6 +429,8 @@ fun CoreSettingsScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+}
+
 
 private fun openInFileManager(context: Context) {
     val authority = "${context.packageName}.workingdir"

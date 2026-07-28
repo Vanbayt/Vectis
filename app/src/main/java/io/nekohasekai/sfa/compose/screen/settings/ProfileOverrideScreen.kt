@@ -32,10 +32,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -74,19 +77,7 @@ fun ProfileOverrideScreen(
     navController: NavController,
     serviceStatus: Status = Status.Stopped,
 ) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.profile_override)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-        )
-    }
+
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -186,14 +177,33 @@ fun ProfileOverrideScreen(
         }
     }
 
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.profile_override), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+        ) {
         // Card 1: Auto Redirect
         Card(
             modifier =
@@ -718,3 +728,6 @@ fun ProfileOverrideScreen(
         }
     }
 }
+}
+
+

@@ -39,10 +39,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -85,19 +88,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status = Status.Stopped) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.privilege_settings)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-        )
-    }
+
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -304,13 +295,32 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.privilege_settings), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+        ) {
         val isLsposedActivated = systemHookStatus?.active == true
         val showLogs = isLsposedActivated && !hasPendingChange
         val showExportDebug = showLogs
@@ -847,9 +857,12 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
         }
     }
 }
+}
 
 @Composable
+
 private fun SelfTestDialog(isRunning: Boolean, result: DetectionResult?, onDismiss: () -> Unit) {
+
     val notDetectedText = stringResource(R.string.privilege_settings_hide_test_not_detected)
 
     AlertDialog(
