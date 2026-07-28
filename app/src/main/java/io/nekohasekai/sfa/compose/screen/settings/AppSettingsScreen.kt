@@ -106,10 +106,11 @@ fun AppSettingsScreen(
             title = { 
                 Text(
                     text = stringResource(R.string.title_app_settings), 
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 ) 
             },
+
             navigationIcon = {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(

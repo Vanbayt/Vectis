@@ -91,7 +91,7 @@ fun SettingsScreen(navController: NavController) {
                 title = { 
                     Text(
                         text = stringResource(R.string.title_settings), 
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     ) 
                 },
@@ -100,7 +100,8 @@ fun SettingsScreen(navController: NavController) {
                 )
             )
         }
-    ) { paddingValues ->
+    )
+ { paddingValues ->
 
         Column(
             modifier = Modifier
