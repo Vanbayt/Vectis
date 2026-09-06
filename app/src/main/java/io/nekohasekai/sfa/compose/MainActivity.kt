@@ -255,11 +255,10 @@ class MainActivity :
 
     private fun startService0() {
         lifecycleScope.launch(Dispatchers.IO) {
-            if (Settings.rebuildServiceMode()) {
+            withContext(Dispatchers.Main) {
                 connection.reconnect()
             }
-            // Всегда вызываем prepare(), так как мы принудительно используем VPNService
-            if (prepare()) {
+            if (Settings.serviceMode != ServiceMode.ROOT_TUN && prepare()) {
                 return@launch
             }
             val intent = Intent(Application.application, Settings.serviceClass())

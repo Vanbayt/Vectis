@@ -107,6 +107,7 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
                 realSelectedTag.endsWith("-1") || realSelectedTag.contains("germany-1") -> "🇩🇪 Germany Reality TCP"
                 realSelectedTag.endsWith("-2") || realSelectedTag.contains("germany-2") -> "🇩🇪 Germany Hysteria 2 UDP"
                 realSelectedTag.endsWith("-3") || realSelectedTag.contains("germany-3") -> "🇩🇪 Germany gRPC"
+                realSelectedTag.endsWith("-4") || realSelectedTag.contains("germany-4") -> "🇩🇪 Germany HTTPUpgrade"
                 else -> realSelectedTag.ifEmpty { context.getString(io.nekohasekai.sfa.R.string.protocol_selecting) }
             }
 
@@ -225,6 +226,7 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
                 "proxy-holland-8",
                 "proxy-germany-1",
                 "proxy-germany-3",
+                "proxy-germany-4",
                 "proxy-germany-2"
             )
         }
@@ -253,16 +255,19 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
 
         val isHysteria = tag.contains("hysteria", ignoreCase = true) || tag.contains("hy2", ignoreCase = true) || tag.endsWith("-8") || tag.endsWith("-2") || tag.endsWith("-9")
         val isGrpc = tag.contains("grpc", ignoreCase = true) || tag.endsWith("-5") || tag.endsWith("-3")
+        val isHttpUpgrade = tag.contains("httpupgrade", ignoreCase = true) || tag.endsWith("-4")
 
         val protocolName = when {
             isHysteria -> "Hysteria 2 (UDP)"
             isGrpc -> "VLESS gRPC"
+            isHttpUpgrade -> "VLESS HTTPUpgrade"
             else -> "VLESS Reality (TCP)"
         }
 
         val protocolBadge = when {
             isHysteria -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_mobile)
             isGrpc -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_dpi)
+            isHttpUpgrade -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_dpi)
             else -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_speed)
         }
 

@@ -7,6 +7,7 @@ import android.os.PowerManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,19 +23,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.BatteryChargingFull
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 
@@ -43,6 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.bg.ServiceConnection
+import io.nekohasekai.sfa.compose.base.GlobalEventBus
 import io.nekohasekai.sfa.compose.base.UiEvent
 import io.nekohasekai.sfa.compose.base.rememberApplyServiceChangeNotifier
 import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
@@ -81,6 +88,8 @@ fun ServiceSettingsScreen(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var serviceMode by remember { mutableStateOf(Settings.serviceMode) }
+    var showRootDeniedDialog by remember { mutableStateOf(false) }
     var isBatteryOptimizationIgnored by remember { mutableStateOf(false) }
     var allowBypass by remember { mutableStateOf(Settings.allowBypass) }
     val notifyApplyChange = rememberApplyServiceChangeNotifier(serviceStatus)
@@ -202,6 +211,112 @@ fun ServiceSettingsScreen(
             }
         }
 
+        // Service Mode Section
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = stringResource(R.string.service_mode_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+        )
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
+            shape = RoundedCornerShape(20.dp),
+        ) {
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.service_mode_standard),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (serviceMode == io.nekohasekai.sfa.constant.ServiceMode.VPN) FontWeight.Bold else FontWeight.Normal,
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            stringResource(R.string.service_mode_standard_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    },
+                    trailingContent = {
+                        RadioButton(
+                            selected = serviceMode == io.nekohasekai.sfa.constant.ServiceMode.VPN,
+                            onClick = null,
+                        )
+                    },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            if (serviceMode != io.nekohasekai.sfa.constant.ServiceMode.VPN) {
+                                serviceMode = io.nekohasekai.sfa.constant.ServiceMode.VPN
+                                scope.launch(Dispatchers.IO) {
+                                    Settings.serviceMode = io.nekohasekai.sfa.constant.ServiceMode.VPN
+                                    withContext(Dispatchers.Main) {
+                                        GlobalEventBus.tryEmit(UiEvent.RequestReconnectService)
+                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
+                                    }
+                                }
+                            }
+                        },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.service_mode_root),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (serviceMode == io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN) FontWeight.Bold else FontWeight.Normal,
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            stringResource(R.string.service_mode_root_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    },
+                    trailingContent = {
+                        RadioButton(
+                            selected = serviceMode == io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN,
+                            onClick = null,
+                        )
+                    },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            if (serviceMode != io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN) {
+                                scope.launch {
+                                    val isRoot = io.nekohasekai.sfa.bg.RootClient.checkRootAvailable()
+                                    if (!isRoot) {
+                                        showRootDeniedDialog = true
+                                    } else {
+                                        serviceMode = io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN
+                                        withContext(Dispatchers.IO) {
+                                            Settings.serviceMode = io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN
+                                        }
+                                        GlobalEventBus.tryEmit(UiEvent.RequestReconnectService)
+                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
+                                    }
+                                }
+                            }
+                        },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+        }
+
         // VPN Section
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -292,7 +407,21 @@ fun ServiceSettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+
+    if (showRootDeniedDialog) {
+        AlertDialog(
+            onDismissRequest = { showRootDeniedDialog = false },
+            title = { Text(stringResource(R.string.service_mode_root_missing_title)) },
+            text = { Text(stringResource(R.string.service_mode_root_missing_msg)) },
+            confirmButton = {
+                TextButton(onClick = { showRootDeniedDialog = false }) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            }
+        )
+    }
 }
+
 
 
 private const val ALLOW_BYPASS_DOC_URL =

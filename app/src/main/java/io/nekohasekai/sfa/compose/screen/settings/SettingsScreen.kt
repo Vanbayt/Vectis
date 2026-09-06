@@ -31,9 +31,13 @@ import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
+
 import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.Tune
+
+
+
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
@@ -129,9 +133,15 @@ fun SettingsScreen(navController: NavController) {
                     SettingTile(
                         icon = Icons.Outlined.Apps,
                         title = stringResource(R.string.per_app_proxy),
-                        subtitle = stringResource(R.string.per_app_proxy_subtitle),
+                        subtitle = if (io.nekohasekai.sfa.database.Settings.perAppProxyEnabled) {
+                            stringResource(R.string.per_app_proxy_enabled_summary, io.nekohasekai.sfa.database.Settings.perAppProxyList.size)
+                        } else {
+                            stringResource(R.string.per_app_proxy_subtitle)
+                        },
                         onClick = { navController.navigate("settings/profile_override/manage") }
                     )
+
+
                     SettingTile(
                         icon = Icons.Outlined.FilterAlt,
                         title = stringResource(R.string.profile_override),
@@ -181,15 +191,22 @@ fun SettingsScreen(navController: NavController) {
                     SettingTile(
                         icon = Icons.Outlined.Tune,
                         title = stringResource(R.string.service),
-                        subtitle = stringResource(R.string.service_settings_subtitle),
+                        subtitle = if (io.nekohasekai.sfa.database.Settings.serviceMode == io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN) {
+                            stringResource(R.string.service_mode_root)
+                        } else {
+                            stringResource(R.string.service_mode_standard)
+                        },
                         onClick = { navController.navigate("settings/service") }
                     )
+
                     SettingTile(
                         icon = Icons.Outlined.Settings,
                         title = stringResource(R.string.core),
                         subtitle = stringResource(R.string.core_settings_subtitle),
                         onClick = { navController.navigate("settings/core") }
                     )
+
+
                     SettingTile(
                         icon = Icons.Outlined.AdminPanelSettings,
                         title = stringResource(R.string.privilege_settings),

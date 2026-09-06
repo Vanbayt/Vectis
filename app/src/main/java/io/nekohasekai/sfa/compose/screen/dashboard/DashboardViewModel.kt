@@ -584,9 +584,11 @@ class DashboardViewModel(
 
         val isHysteria = activeTag.contains("hysteria", ignoreCase = true) || activeTag.contains("hy2", ignoreCase = true) || activeTag.endsWith("-8") || activeTag.endsWith("-2") || activeTag.endsWith("-9")
         val isGrpc = activeTag.contains("grpc", ignoreCase = true) || activeTag.endsWith("-5") || activeTag.endsWith("-3")
+        val isHttpUpgrade = activeTag.contains("httpupgrade", ignoreCase = true) || activeTag.endsWith("-4")
         val formattedProtocol = when {
             isHysteria -> "Hysteria 2 (UDP)"
             isGrpc -> "VLESS gRPC"
+            isHttpUpgrade -> "VLESS HTTPUpgrade"
             activeTag == "auto" -> "Умный роутинг"
             else -> "VLESS Reality (TCP)"
         }
