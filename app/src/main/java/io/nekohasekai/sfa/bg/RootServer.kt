@@ -186,7 +186,61 @@ class RootServer : RootService() {
             }
             throw IOException("sftp-server not found, install openssh in Termux")
         }
+
+        override fun openNativeTun(ifName: String, mtu: Int): ParcelFileDescriptor {
+            Log.i("RootServer", "Creating native TUN device: $ifName (MTU: $mtu)")
+            val fd = io.nekohasekai.sfa.utils.NativeLib.createTunDevice(ifName)
+            if (fd < 0) {
+                throw IOException("Failed to create TUN device: $ifName (ioctl error)")
+            }
+
+            val appUid = try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    packageManager.getPackageUid(BuildConfig.APPLICATION_ID, 0)
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageManager.getApplicationInfo(BuildConfig.APPLICATION_ID, 0).uid
+                }
+            } catch (e: Exception) {
+                -1
+            }
+
+            val bypassAppCmd = if (appUid > 0) {
+                "ip rule add pref 9998 uidrange $appUid-$appUid goto 11000"
+            } else {
+                "echo no-app-uid"
+            }
+
+            com.topjohnwu.superuser.Shell.cmd(
+                "ip link set $ifName mtu $mtu up",
+                "ip addr add 172.19.0.1/30 dev $ifName",
+                "ip rule del pref 9997 2>/dev/null",
+                "ip rule del pref 9998 2>/dev/null",
+                "ip rule del pref 9999 2>/dev/null",
+                "ip rule del pref 10000 2>/dev/null",
+                "ip rule add pref 9997 uidrange 0-0 goto 11000",
+                bypassAppCmd,
+                "ip rule add pref 10000 lookup 2022",
+                "ip route flush table 2022 2>/dev/null",
+                "ip route add default dev $ifName table 2022",
+            ).exec()
+
+            return ParcelFileDescriptor.adoptFd(fd)
+        }
+
+        override fun closeNativeTun(ifName: String) {
+            Log.i("RootServer", "Closing native TUN device: $ifName")
+            com.topjohnwu.superuser.Shell.cmd(
+                "ip rule del pref 9997 2>/dev/null",
+                "ip rule del pref 9998 2>/dev/null",
+                "ip rule del pref 9999 2>/dev/null",
+                "ip rule del pref 10000 2>/dev/null",
+                "ip route flush table 2022 2>/dev/null",
+                "ip link delete $ifName 2>/dev/null",
+            ).exec()
+        }
     }
+
 
     private fun buildTermuxEnvironment(
         sshEnv: Array<out String>?,

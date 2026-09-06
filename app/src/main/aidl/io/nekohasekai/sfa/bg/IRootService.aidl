@@ -21,4 +21,9 @@ interface IRootService {
     IRootShellSession openShellSession(String user, String command, in String[] env, String term, int rows, int cols) = 6;
 
     String lookupSFTPServer() = 7;
+
+    ParcelFileDescriptor openNativeTun(String ifName, int mtu) = 8;
+
+    void closeNativeTun(String ifName) = 9;
 }
+

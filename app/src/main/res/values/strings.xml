@@ -756,6 +756,24 @@
     <string name="settings_downloading_update">Downloading update v%1$s...</string>
     <string name="settings_update_available">Update available: %1$s</string>
     <string name="settings_latest_version">You have the latest version of Vectis (v%1$s)</string>
+    <!-- Split Tunneling, Auto-Pause & Root Mode -->
+    <string name="per_app_proxy_enabled_title">Split Tunneling</string>
+    <string name="per_app_proxy_enabled_summary">Enabled (%1$d apps selected)</string>
+    <string name="per_app_proxy_disabled_summary">Disabled (all apps use VPN)</string>
+    <string name="per_app_auto_pause_title">Smart Auto-Pause</string>
+    <string name="per_app_auto_pause_description">Automatically pause VPN when opening excluded apps (banks, government services) and resume on exit</string>
+    <string name="per_app_auto_pause_permission_dialog_title">Accessibility Service Required</string>
+    <string name="per_app_auto_pause_permission_dialog_msg">To enable zero-battery auto-pause, please activate the Vectis service in Accessibility Settings. The service cannot read screen content.</string>
+    <string name="per_app_auto_pause_permission_btn">Open Settings</string>
+    <string name="accessibility_service_description">Vectis event-based service for zero-battery foreground app detection and VPN auto-pause. Has no access to screen content.</string>
+    <string name="vpn_status_paused">VPN paused: %1$s</string>
+    <string name="service_mode_title">Service Mode</string>
+    <string name="service_mode_standard">Standard (VpnService)</string>
+    <string name="service_mode_standard_desc">Works without root on all Android devices (with key icon)</string>
+    <string name="service_mode_root">Root Mode (Native TUN)</string>
+    <string name="service_mode_root_desc">Direct tunnel bypassing VpnService: hidden from banks, no key icon</string>
+    <string name="service_mode_root_missing_title">Root Access Not Found</string>
+    <string name="service_mode_root_missing_msg">Native TUN mode requires Superuser permissions (Magisk, KernelSU, or APatch). Root request was denied or device is not rooted.</string>
 </resources>
 
 

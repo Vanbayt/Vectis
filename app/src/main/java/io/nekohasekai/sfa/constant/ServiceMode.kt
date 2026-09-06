@@ -3,4 +3,5 @@ package io.nekohasekai.sfa.constant
 object ServiceMode {
     const val NORMAL = "normal"
     const val VPN = "vpn"
+    const val ROOT_TUN = "root_tun"
 }

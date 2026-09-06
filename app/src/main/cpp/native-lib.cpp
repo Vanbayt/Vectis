@@ -26,3 +26,35 @@ Java_io_nekohasekai_sfa_utils_NativeLib_getAesKey(JNIEnv* env, jobject /* this *
     
     return result;
 }
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <linux/if.h>
+#include <linux/if_tun.h>
+
+extern "C" JNIEXPORT jint JNICALL
+Java_io_nekohasekai_sfa_utils_NativeLib_createTunDevice(JNIEnv* env, jobject /* this */, jstring ifname) {
+    const char* name = env->GetStringUTFChars(ifname, nullptr);
+    int fd = open("/dev/net/tun", O_RDWR | O_NONBLOCK);
+    if (fd < 0) {
+        fd = open("/dev/tun", O_RDWR | O_NONBLOCK);
+    }
+    if (fd < 0) {
+        env->ReleaseStringUTFChars(ifname, name);
+        return -1;
+    }
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+    ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
+    strncpy(ifr.ifr_name, name, IFNAMSIZ - 1);
+    env->ReleaseStringUTFChars(ifname, name);
+    
+    if (ioctl(fd, TUNSETIFF, (void*)&ifr) < 0) {
+        close(fd);
+        return -1;
+    }
+    return fd;
+}
+

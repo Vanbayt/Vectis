@@ -6,6 +6,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.ParcelFileDescriptor
 import android.os.RemoteException
 import androidx.core.content.ContextCompat
 import com.topjohnwu.superuser.Shell
@@ -172,6 +173,23 @@ object RootClient {
     suspend fun unregisterNeighborTableCallback(callback: INeighborTableCallback) {
         try {
             service?.unregisterNeighborTableCallback(callback)
+        } catch (e: RemoteException) {
+            throw e.rethrowAsRuntime()
+        }
+    }
+
+    suspend fun openNativeTun(ifName: String, mtu: Int): ParcelFileDescriptor {
+        val svc = bindService()
+        try {
+            return svc.openNativeTun(ifName, mtu)
+        } catch (e: RemoteException) {
+            throw e.rethrowAsRuntime()
+        }
+    }
+
+    suspend fun closeNativeTun(ifName: String) {
+        try {
+            service?.closeNativeTun(ifName)
         } catch (e: RemoteException) {
             throw e.rethrowAsRuntime()
         }

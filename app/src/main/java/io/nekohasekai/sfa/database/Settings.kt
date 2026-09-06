@@ -132,37 +132,23 @@ object Settings {
     var selectedOutboundTag by dataStore.string("selected_outbound_tag") { "auto" }
     var trafficLimit by dataStore.long(SettingsKey.TRAFFIC_LIMIT) { 5L * 1024 * 1024 * 1024 } // 5 GB
     var trafficUsed by dataStore.long(SettingsKey.TRAFFIC_USED) { 0L }
+    var autoPauseOnExcludedApps by dataStore.boolean(SettingsKey.AUTO_PAUSE_ON_EXCLUDED_APPS) { false }
 
-    fun serviceClass(): Class<*> = VPNService::class.java
+    fun serviceClass(): Class<*> = when (serviceMode) {
+        ServiceMode.ROOT_TUN -> ProxyService::class.java
+        else -> VPNService::class.java
+    }
 
     suspend fun rebuildServiceMode(): Boolean {
-        var newMode = ServiceMode.NORMAL
-        try {
-            if (needVPNService()) {
-                newMode = ServiceMode.VPN
-            }
-        } catch (_: Exception) {
+        if (serviceMode == ServiceMode.ROOT_TUN) {
+            return false
         }
+        val newMode = ServiceMode.VPN
         if (serviceMode == newMode) {
             return false
         }
         serviceMode = newMode
         return true
-    }
-
-    private suspend fun needVPNService(): Boolean {
-        val selectedProfileId = selectedProfile
-        if (selectedProfileId == -1L) return false
-        val profile = ProfileManager.get(selectedProfile) ?: return false
-        val content = JSONObject(File(profile.typed.path).readText())
-        val inbounds = content.getJSONArray("inbounds")
-        for (index in 0 until inbounds.length()) {
-            val inbound = inbounds.getJSONObject(index)
-            if (inbound.getString("type") == "tun") {
-                return true
-            }
-        }
-        return false
     }
 
     fun clearSession() {

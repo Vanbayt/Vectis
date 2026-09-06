@@ -747,6 +747,24 @@
     <string name="settings_downloading_update">Начинаем загрузку обновления v%1$s...</string>
     <string name="settings_update_available">Доступно обновление: %1$s</string>
     <string name="settings_latest_version">У вас установлена последняя версия Vectis (v%1$s)</string>
+    <!-- Split Tunneling, Auto-Pause & Root Mode -->
+    <string name="per_app_proxy_enabled_title">Раздельное проксирование</string>
+    <string name="per_app_proxy_enabled_summary">Активно (выбрано %1$d прил.)</string>
+    <string name="per_app_proxy_disabled_summary">Отключено (все приложения используют VPN)</string>
+    <string name="per_app_auto_pause_title">Умная пауза (Smart Auto-Pause)</string>
+    <string name="per_app_auto_pause_description">Полностью отключать VPN при входе в исключённые приложения (банки, Госуслуги) и возобновлять при выходе</string>
+    <string name="per_app_auto_pause_permission_dialog_title">Требуются специальные возможности</string>
+    <string name="per_app_auto_pause_permission_dialog_msg">Для мгновенной работы умной паузы без расхода батареи необходимо включить службу Vectis в разделе «Специальные возможности». Служба не запрашивает доступ к содержимому экрана.</string>
+    <string name="per_app_auto_pause_permission_btn">Включить в настройках</string>
+    <string name="accessibility_service_description">Служба Vectis для энергоэффективного определения переключения банковских приложений и умной автопаузы VPN. Не имеет доступа к тексту и содержимому экрана.</string>
+    <string name="vpn_status_paused">VPN на паузе: %1$s</string>
+    <string name="service_mode_title">Режим работы службы</string>
+    <string name="service_mode_standard">Стандартный (VpnService)</string>
+    <string name="service_mode_standard_desc">Работает без root на всех устройствах Android (со значком ключа)</string>
+    <string name="service_mode_root">Root-режим (Native TUN)</string>
+    <string name="service_mode_root_desc">Прямой туннель в обход VpnService: скрыт от банков, без значка ключа</string>
+    <string name="service_mode_root_missing_title">Root-права не найдены</string>
+    <string name="service_mode_root_missing_msg">Для работы в режиме Native TUN требуются права Superuser (Magisk, KernelSU или APatch). Запрос root был отклонён или устройство не рутировано.</string>
 </resources>
 
 
