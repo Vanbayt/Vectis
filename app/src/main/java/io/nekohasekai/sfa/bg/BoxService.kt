@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
@@ -31,14 +32,20 @@ import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.MainActivity
 import io.nekohasekai.sfa.constant.Action
 import io.nekohasekai.sfa.constant.Alert
+import io.nekohasekai.sfa.constant.ServiceMode
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.database.ProfileManager
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.ktx.hasPermission
 import io.nekohasekai.sfa.vendor.Vendor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -49,6 +56,10 @@ import org.koin.core.component.inject
 
 class BoxService(private val service: Service, private val platformInterface: PlatformInterface) : CommandServerHandler, KoinComponent {
     private val repository: io.nekohasekai.sfa.network.VpnRepository by inject()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var isPausedByApp = false
+    private var lastConfigContent: String? = null
+
     companion object {
         private const val PROFILE_UPDATE_INTERVAL = 15L * 60 * 1000 // 15 minutes in milliseconds
         private const val TAG = "BoxService"
@@ -126,6 +137,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
             
             val content = String(configBytes, Charsets.UTF_8)
             configBytes.fill(0) // Zero out the decrypted config in memory
+            lastConfigContent = content
 
             lastProfileName = "Vectis • VPN"
             withContext(Dispatchers.Main) {
@@ -142,12 +154,14 @@ class BoxService(private val service: Service, private val platformInterface: Pl
                         autoRedirect = Settings.autoRedirect
                         if (Vendor.isPerAppProxyAvailable() && Settings.perAppProxyEnabled) {
                             val appList = Settings.getEffectivePerAppProxyList()
-                            if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
-                                includePackage =
-                                    PlatformInterfaceWrapper.StringArray((appList + Application.application.packageName).iterator())
-                            } else {
-                                excludePackage =
-                                    PlatformInterfaceWrapper.StringArray((appList - Application.application.packageName).iterator())
+                            if (appList.isNotEmpty()) {
+                                if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
+                                    includePackage =
+                                        PlatformInterfaceWrapper.StringArray((appList + Application.application.packageName).iterator())
+                                } else {
+                                    excludePackage =
+                                        PlatformInterfaceWrapper.StringArray((appList - Application.application.packageName).iterator())
+                                }
                             }
                         }
                     },
@@ -172,9 +186,18 @@ class BoxService(private val service: Service, private val platformInterface: Pl
             }
 
             val selectedOutbound = Settings.selectedOutboundTag
-            if (selectedOutbound.isNotBlank()) {
-                runCatching {
-                    Libbox.newStandaloneCommandClient().selectOutbound("proxy", selectedOutbound)
+            if (selectedOutbound.isNotBlank() && selectedOutbound != "auto") {
+                withContext(Dispatchers.IO) {
+                    for (attempt in 1..10) {
+                        delay(200)
+                        val res = runCatching {
+                            Libbox.newStandaloneCommandClient().selectOutbound("proxy", selectedOutbound)
+                        }
+                        if (res.isSuccess) {
+                            io.nekohasekai.sfa.network.AppLogCollector.appendLog("VectisHealth", "[BoxService] Restored outbound '$selectedOutbound' on attempt $attempt")
+                            break
+                        }
+                    }
                 }
             }
 
@@ -184,13 +207,116 @@ class BoxService(private val service: Service, private val platformInterface: Pl
             }
 
             notification.start()
+
+            if (Settings.serviceMode != ServiceMode.ROOT_TUN) {
+                AppForegroundWatcher.onPauseListener = { pkg ->
+                    serviceScope.launch {
+                        pauseVpn(pkg)
+                    }
+                }
+                AppForegroundWatcher.onResumeListener = {
+                    serviceScope.launch {
+                        resumeVpn()
+                    }
+                }
+                AppForegroundWatcher.start(service, serviceScope)
+            }
         } catch (e: Exception) {
             stopAndAlert(Alert.StartService, e.message)
             return
         }
     }
 
+    suspend fun pauseVpn(packageName: String) {
+        if (status.value != Status.Started || isPausedByApp) return
+        isPausedByApp = true
+        notification.isPaused = true
+        Log.i(TAG, "Pausing VPN for app: $packageName")
+
+        val pfd = fileDescriptor
+        if (pfd != null) {
+            pfd.close()
+            fileDescriptor = null
+        }
+        closeService()
+
+        val appLabel = runCatching {
+            val pm = service.packageManager
+            val appInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getApplicationInfo(packageName, 0)
+            }
+            pm.getApplicationLabel(appInfo).toString()
+        }.getOrDefault(packageName)
+
+        val pausedMsg = service.getString(R.string.vpn_status_paused, appLabel)
+        withContext(Dispatchers.Main) {
+            notification.show(lastProfileName, pausedMsg)
+        }
+    }
+
+    suspend fun resumeVpn() {
+        if (!isPausedByApp) return
+        isPausedByApp = false
+        notification.isPaused = false
+        Log.i(TAG, "Resuming VPN after leaving excluded app")
+
+        val content = lastConfigContent
+        if (content.isNullOrBlank()) {
+            startService()
+            return
+        }
+
+        try {
+            commandServer.startOrReloadService(
+                content,
+                OverrideOptions().apply {
+                    autoRedirect = Settings.autoRedirect
+                    if (Vendor.isPerAppProxyAvailable() && Settings.perAppProxyEnabled) {
+                        val appList = Settings.getEffectivePerAppProxyList()
+                        if (appList.isNotEmpty()) {
+                            if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
+                                includePackage = PlatformInterfaceWrapper.StringArray((appList + Application.application.packageName).iterator())
+                            } else {
+                                excludePackage = PlatformInterfaceWrapper.StringArray((appList - Application.application.packageName).iterator())
+                            }
+                        }
+                    }
+                },
+            )
+
+            val selectedOutbound = Settings.selectedOutboundTag
+            if (selectedOutbound.isNotBlank() && selectedOutbound != "auto") {
+                withContext(Dispatchers.IO) {
+                    for (attempt in 1..10) {
+                        delay(200)
+                        val res = runCatching {
+                            Libbox.newStandaloneCommandClient().selectOutbound("proxy", selectedOutbound)
+                        }
+                        if (res.isSuccess) {
+                            io.nekohasekai.sfa.network.AppLogCollector.appendLog("VectisHealth", "[BoxService] Restored outbound '$selectedOutbound' on attempt $attempt")
+                            break
+                        }
+                    }
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                notification.show(lastProfileName, R.string.status_started)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to resume VPN directly, starting fresh service", e)
+            startService()
+        }
+    }
+
     override fun serviceStop() {
+        AppForegroundWatcher.stop()
+        isPausedByApp = false
+        notification.isPaused = false
+        lastConfigContent = null
         io.nekohasekai.sfa.network.UdpProber.stopMonitoring(Application.application)
         notification.close()
         status.postValue(Status.Starting)
@@ -201,6 +327,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
         }
         closeService()
     }
+
 
     override fun serviceReload() {
         runBlocking {
@@ -224,6 +351,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
         val content = String(configBytes, Charsets.UTF_8)
         configBytes.fill(0) // Zero out the decrypted config in memory
+        lastConfigContent = content
         lastProfileName = "Vectis • VPN"
         try {
             commandServer.startOrReloadService(
@@ -232,10 +360,12 @@ class BoxService(private val service: Service, private val platformInterface: Pl
                     autoRedirect = Settings.autoRedirect
                     if (Vendor.isPerAppProxyAvailable() && Settings.perAppProxyEnabled) {
                         val appList = Settings.getEffectivePerAppProxyList()
-                        if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
-                            includePackage = PlatformInterfaceWrapper.StringArray((appList + Application.application.packageName).iterator())
-                        } else {
-                            excludePackage = PlatformInterfaceWrapper.StringArray((appList - Application.application.packageName).iterator())
+                        if (appList.isNotEmpty()) {
+                            if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
+                                includePackage = PlatformInterfaceWrapper.StringArray((appList + Application.application.packageName).iterator())
+                            } else {
+                                excludePackage = PlatformInterfaceWrapper.StringArray((appList - Application.application.packageName).iterator())
+                            }
                         }
                     }
                 },
@@ -285,6 +415,9 @@ class BoxService(private val service: Service, private val platformInterface: Pl
     private fun stopService() {
         if (status.value != Status.Started) return
         status.value = Status.Stopping
+        AppForegroundWatcher.stop()
+        isPausedByApp = false
+        lastConfigContent = null
         if (receiverRegistered) {
             service.unregisterReceiver(receiver)
             receiverRegistered = false
@@ -320,6 +453,9 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
     private suspend fun stopAndAlert(type: Alert, message: String? = null) {
         Settings.startedByUser = false
+        AppForegroundWatcher.stop()
+        isPausedByApp = false
+        lastConfigContent = null
         val pfd = fileDescriptor
         if (pfd != null) {
             pfd.close()
@@ -343,6 +479,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
             service.stopSelf()
         }
     }
+
 
     @OptIn(DelicateCoroutinesApi::class)
     @Suppress("SameReturnValue")
@@ -381,6 +518,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
     internal fun onBind(): IBinder = binder
 
     internal fun onDestroy() {
+        AppForegroundWatcher.stop()
+        serviceScope.cancel()
         binder.close()
     }
 

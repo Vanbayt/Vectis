@@ -44,6 +44,9 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
         }
     }
 
+    @Volatile
+    var isPaused: Boolean = false
+
     @OptIn(DelicateCoroutinesApi::class)
     private val commandClient =
         CommandClient(GlobalScope, CommandClient.ConnectionType.Status, this)
@@ -82,6 +85,10 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
     }
 
     fun show(lastProfileName: String, @StringRes contentTextId: Int) {
+        show(lastProfileName, service.getString(contentTextId))
+    }
+
+    fun show(lastProfileName: String, contentText: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Application.notification.createNotificationChannel(
                 NotificationChannel(
@@ -96,14 +103,16 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
         } else {
             0
         }
+        val notif = notificationBuilder
+            .setContentTitle(lastProfileName.takeIf { it.isNotBlank() && it != "Vectis API Config" } ?: "Vectis • VPN")
+            .setContentText(contentText).build()
         ServiceCompat.startForeground(
             service,
             notificationId,
-            notificationBuilder
-                .setContentTitle(lastProfileName.takeIf { it.isNotBlank() && it != "Vectis API Config" } ?: "Vectis • VPN")
-                .setContentText(service.getString(contentTextId)).build(),
+            notif,
             type
         )
+        Application.notificationManager.notify(notificationId, notif)
     }
 
     suspend fun start() {
@@ -127,6 +136,7 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
     }
 
     override fun updateStatus(status: StatusMessage) {
+        if (isPaused) return
         val content =
             "↑ " + Libbox.formatBytes(status.uplink) + "/s   ↓ " + Libbox.formatBytes(status.downlink) + "/s"
         Application.notificationManager.notify(

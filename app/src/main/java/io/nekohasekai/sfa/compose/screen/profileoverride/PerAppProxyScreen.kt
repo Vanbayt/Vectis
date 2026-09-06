@@ -1,7 +1,9 @@
 package io.nekohasekai.sfa.compose.screen.profileoverride
 
+import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -23,6 +25,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Switch
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -65,9 +70,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -124,6 +133,40 @@ fun PerAppProxyScreen(
     val coroutineScope = rememberCoroutineScope()
     val notifyApplyChange = rememberApplyServiceChangeNotifier(serviceStatus)
 
+    var perAppProxyEnabled by remember { mutableStateOf(Settings.perAppProxyEnabled) }
+    var autoPauseEnabled by remember { mutableStateOf(Settings.autoPauseOnExcludedApps) }
+    var pendingEnableAutoPause by remember { mutableStateOf(false) }
+    var showUsageStatsDialog by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val a11yActive = io.nekohasekai.sfa.bg.AppForegroundWatcher.isAccessibilityServiceEnabled(context)
+                if (pendingEnableAutoPause && a11yActive) {
+                    autoPauseEnabled = true
+                    pendingEnableAutoPause = false
+                    coroutineScope.launch {
+                        withContext(Dispatchers.IO) {
+                            Settings.autoPauseOnExcludedApps = true
+                        }
+                    }
+                } else if (!a11yActive && autoPauseEnabled) {
+                    autoPauseEnabled = false
+                    coroutineScope.launch {
+                        withContext(Dispatchers.IO) {
+                            Settings.autoPauseOnExcludedApps = false
+                        }
+                    }
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     var proxyMode by remember { mutableStateOf(Settings.perAppProxyMode) }
     var sortMode by remember { mutableStateOf(SortMode.NAME) }
     var sortReverse by remember { mutableStateOf(false) }
@@ -159,9 +202,11 @@ fun PerAppProxyScreen(
         coroutineScope.launch {
             withContext(Dispatchers.IO) {
                 Settings.perAppProxyList = packageNames
+                Settings.perAppProxyEnabled = true
             }
             selectedUids = newSelected
-            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+            perAppProxyEnabled = true
+            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
         }
         Toast.makeText(
             context,
@@ -203,10 +248,17 @@ fun PerAppProxyScreen(
         coroutineScope.launch {
             withContext(Dispatchers.IO) {
                 Settings.perAppProxyList = buildPackageList(newUids)
+                if (newUids.isNotEmpty()) {
+                    Settings.perAppProxyEnabled = true
+                }
             }
-            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+            if (newUids.isNotEmpty()) {
+                perAppProxyEnabled = true
+            }
+            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
         }
     }
+
 
     fun postSaveSelectedApplications(newUids: Set<Int>) {
         selectedUids = newUids
@@ -367,7 +419,7 @@ fun PerAppProxyScreen(
                                 withContext(Dispatchers.IO) {
                                     Settings.perAppProxyMode = mode
                                 }
-                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
                             }
                         },
                         onSortModeChange = { mode ->
@@ -464,6 +516,135 @@ fun PerAppProxyScreen(
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
+        // Master Toggle & Smart Auto-Pause Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                        Text(
+                            text = stringResource(R.string.per_app_proxy_enabled_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        )
+                        Text(
+                            text = if (perAppProxyEnabled) {
+                                stringResource(R.string.per_app_proxy_enabled_summary, selectedUids.size)
+                            } else {
+                                stringResource(R.string.per_app_proxy_disabled_summary)
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = perAppProxyEnabled,
+                        onCheckedChange = { checked ->
+                            perAppProxyEnabled = checked
+                            coroutineScope.launch {
+                                withContext(Dispatchers.IO) {
+                                    Settings.perAppProxyEnabled = checked
+                                }
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
+                            }
+                        },
+                    )
+                }
+
+                if (proxyMode == Settings.PER_APP_PROXY_EXCLUDE) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val isRootMode = Settings.serviceMode == io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN
+
+                    if (isRootMode) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "Аппаратная изоляция (Root Native TUN)",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "В Root-режиме автопауза не требуется: VPN замаскирован под системный сетевой интерфейс, а трафик исключенных приложений направляется ядром напрямую в обход туннеля.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                                Text(
+                                    text = stringResource(R.string.per_app_auto_pause_title),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                )
+                                Text(
+                                    text = stringResource(R.string.per_app_auto_pause_description),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Switch(
+                                checked = autoPauseEnabled,
+                                onCheckedChange = { checked ->
+                                    if (checked) {
+                                        if (!io.nekohasekai.sfa.bg.AppForegroundWatcher.isAccessibilityServiceEnabled(context)) {
+                                            pendingEnableAutoPause = true
+                                            showUsageStatsDialog = true
+                                        } else {
+                                            autoPauseEnabled = true
+                                            coroutineScope.launch {
+                                                withContext(Dispatchers.IO) {
+                                                    Settings.autoPauseOnExcludedApps = true
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        autoPauseEnabled = false
+                                        pendingEnableAutoPause = false
+                                        coroutineScope.launch {
+                                            withContext(Dispatchers.IO) {
+                                                Settings.autoPauseOnExcludedApps = false
+                                            }
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Expressive M3 Mode & Presets Header Card
         Card(
             modifier = Modifier
@@ -500,13 +681,14 @@ fun PerAppProxyScreen(
                             proxyMode = newMode
                             coroutineScope.launch {
                                 withContext(Dispatchers.IO) { Settings.perAppProxyMode = newMode }
-                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
                             }
                         }
                     ) {
                         Text(stringResource(R.string.per_app_switch_mode), style = MaterialTheme.typography.labelMedium)
                     }
                 }
+
                 Text(
                     text = if (proxyMode == Settings.PER_APP_PROXY_INCLUDE) {
                         stringResource(R.string.per_app_proxy_mode_include_description)
@@ -824,7 +1006,42 @@ fun PerAppProxyScreen(
 
         null -> Unit
     }
+
+    if (showUsageStatsDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showUsageStatsDialog = false
+                pendingEnableAutoPause = false
+            },
+            title = { Text(stringResource(R.string.per_app_auto_pause_permission_dialog_title)) },
+            text = { Text(stringResource(R.string.per_app_auto_pause_permission_dialog_msg)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showUsageStatsDialog = false
+                        runCatching {
+                            val intent = Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.per_app_auto_pause_permission_btn))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showUsageStatsDialog = false
+                    pendingEnableAutoPause = false
+                }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
