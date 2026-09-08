@@ -178,10 +178,15 @@ object RootClient {
         }
     }
 
-    suspend fun openNativeTun(ifName: String, mtu: Int): ParcelFileDescriptor {
+    suspend fun openNativeTun(
+        ifName: String,
+        mtu: Int,
+        includeUids: IntArray = intArrayOf(),
+        excludeUids: IntArray = intArrayOf(),
+    ): ParcelFileDescriptor {
         val svc = bindService()
         try {
-            return svc.openNativeTun(ifName, mtu)
+            return svc.openNativeTun(ifName, mtu, includeUids, excludeUids)
         } catch (e: RemoteException) {
             throw e.rethrowAsRuntime()
         }

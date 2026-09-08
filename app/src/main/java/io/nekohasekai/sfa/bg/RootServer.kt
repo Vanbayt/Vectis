@@ -187,8 +187,14 @@ class RootServer : RootService() {
             throw IOException("sftp-server not found, install openssh in Termux")
         }
 
-        override fun openNativeTun(ifName: String, mtu: Int): ParcelFileDescriptor {
-            Log.i("RootServer", "Creating native TUN device: $ifName (MTU: $mtu)")
+        override fun openNativeTun(
+            ifName: String,
+            mtu: Int,
+            includeUids: IntArray?,
+            excludeUids: IntArray?,
+        ): ParcelFileDescriptor {
+            val safeMtu = if (mtu in 1280..1500) mtu else 1380
+            Log.i("RootServer", "Creating native TUN device: $ifName (MTU: $safeMtu, includeUids: ${includeUids?.size ?: 0}, excludeUids: ${excludeUids?.size ?: 0})")
             val fd = io.nekohasekai.sfa.utils.NativeLib.createTunDevice(ifName)
             if (fd < 0) {
                 throw IOException("Failed to create TUN device: $ifName (ioctl error)")
@@ -205,25 +211,63 @@ class RootServer : RootService() {
                 -1
             }
 
-            val bypassAppCmd = if (appUid > 0) {
-                "ip rule add pref 9998 uidrange $appUid-$appUid goto 11000"
-            } else {
-                "echo no-app-uid"
+            val commands = mutableListOf<String>()
+
+            // 1. Clean previous rules to ensure clean state
+            commands.add("while ip rule del pref 9990 2>/dev/null; do :; done")
+            commands.add("while ip -6 rule del pref 9990 2>/dev/null; do :; done")
+            commands.add("while ip rule del pref 10000 2>/dev/null; do :; done")
+            commands.add("while ip -6 rule del pref 10000 2>/dev/null; do :; done")
+            commands.add("ip rule del pref 9997 2>/dev/null")
+            commands.add("ip rule del pref 9998 2>/dev/null")
+            commands.add("ip -6 rule del pref 9997 2>/dev/null")
+            commands.add("ip -6 rule del pref 9998 2>/dev/null")
+            commands.add("ip route flush table 2022 2>/dev/null")
+            commands.add("ip -6 route flush table 2022 2>/dev/null")
+
+            // 2. Interface IP and MTU setup (IPv4 + IPv6)
+            commands.add("ip link set $ifName mtu $safeMtu up")
+            commands.add("ip addr add 172.19.0.1/30 dev $ifName")
+            commands.add("ip -6 addr add fdfe:dcba:9876::1/126 dev $ifName 2>/dev/null")
+
+            // 3. Routing tables default route to $ifName
+            commands.add("ip route add default dev $ifName table 2022")
+            commands.add("ip -6 route add default dev $ifName table 2022")
+
+            // 4. Anti-loop rules (Root UID 0 & Vectis App UID)
+            commands.add("ip rule add pref 9997 uidrange 0-0 goto 11000")
+            commands.add("ip -6 rule add pref 9997 uidrange 0-0 goto 11000")
+            if (appUid > 0) {
+                commands.add("ip rule add pref 9998 uidrange $appUid-$appUid goto 11000")
+                commands.add("ip -6 rule add pref 9998 uidrange $appUid-$appUid goto 11000")
             }
 
-            com.topjohnwu.superuser.Shell.cmd(
-                "ip link set $ifName mtu $mtu up",
-                "ip addr add 172.19.0.1/30 dev $ifName",
-                "ip rule del pref 9997 2>/dev/null",
-                "ip rule del pref 9998 2>/dev/null",
-                "ip rule del pref 9999 2>/dev/null",
-                "ip rule del pref 10000 2>/dev/null",
-                "ip rule add pref 9997 uidrange 0-0 goto 11000",
-                bypassAppCmd,
-                "ip rule add pref 10000 lookup 2022",
-                "ip route flush table 2022 2>/dev/null",
-                "ip route add default dev $ifName table 2022",
-            ).exec()
+            // 5. Split Tunneling rules
+            // Mode A: Exclude UIDs (bypass selected apps -> goto 11000 before table 2022)
+            if (excludeUids != null && excludeUids.isNotEmpty()) {
+                for (uid in excludeUids) {
+                    if (uid > 0) {
+                        commands.add("ip rule add pref 9990 uidrange $uid-$uid goto 11000")
+                        commands.add("ip -6 rule add pref 9990 uidrange $uid-$uid goto 11000")
+                    }
+                }
+            }
+
+            // Mode B: Include UIDs (only route selected apps to table 2022)
+            if (includeUids != null && includeUids.isNotEmpty()) {
+                for (uid in includeUids) {
+                    if (uid > 0) {
+                        commands.add("ip rule add pref 10000 uidrange $uid-$uid lookup 2022")
+                        commands.add("ip -6 rule add pref 10000 uidrange $uid-$uid lookup 2022")
+                    }
+                }
+            } else {
+                // Route all remaining traffic to table 2022
+                commands.add("ip rule add pref 10000 lookup 2022")
+                commands.add("ip -6 rule add pref 10000 lookup 2022")
+            }
+
+            com.topjohnwu.superuser.Shell.cmd(*commands.toTypedArray()).exec()
 
             return ParcelFileDescriptor.adoptFd(fd)
         }
@@ -231,11 +275,16 @@ class RootServer : RootService() {
         override fun closeNativeTun(ifName: String) {
             Log.i("RootServer", "Closing native TUN device: $ifName")
             com.topjohnwu.superuser.Shell.cmd(
+                "while ip rule del pref 9990 2>/dev/null; do :; done",
+                "while ip -6 rule del pref 9990 2>/dev/null; do :; done",
+                "while ip rule del pref 10000 2>/dev/null; do :; done",
+                "while ip -6 rule del pref 10000 2>/dev/null; do :; done",
                 "ip rule del pref 9997 2>/dev/null",
                 "ip rule del pref 9998 2>/dev/null",
-                "ip rule del pref 9999 2>/dev/null",
-                "ip rule del pref 10000 2>/dev/null",
+                "ip -6 rule del pref 9997 2>/dev/null",
+                "ip -6 rule del pref 9998 2>/dev/null",
                 "ip route flush table 2022 2>/dev/null",
+                "ip -6 route flush table 2022 2>/dev/null",
                 "ip link delete $ifName 2>/dev/null",
             ).exec()
         }

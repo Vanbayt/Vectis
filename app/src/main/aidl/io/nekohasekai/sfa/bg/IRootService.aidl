@@ -22,7 +22,7 @@ interface IRootService {
 
     String lookupSFTPServer() = 7;
 
-    ParcelFileDescriptor openNativeTun(String ifName, int mtu) = 8;
+    ParcelFileDescriptor openNativeTun(String ifName, int mtu, in int[] includeUids, in int[] excludeUids) = 8;
 
     void closeNativeTun(String ifName) = 9;
 }
