@@ -133,6 +133,7 @@ object Settings {
     var trafficLimit by dataStore.long(SettingsKey.TRAFFIC_LIMIT) { 5L * 1024 * 1024 * 1024 } // 5 GB
     var trafficUsed by dataStore.long(SettingsKey.TRAFFIC_USED) { 0L }
     var autoPauseOnExcludedApps by dataStore.boolean(SettingsKey.AUTO_PAUSE_ON_EXCLUDED_APPS) { false }
+    var dynamicApiBaseUrl by dataStore.string("dynamic_api_base_url") { BuildConfig.API_BASE_URL }
 
     fun serviceClass(): Class<*> = when (serviceMode) {
         ServiceMode.ROOT_TUN -> ProxyService::class.java

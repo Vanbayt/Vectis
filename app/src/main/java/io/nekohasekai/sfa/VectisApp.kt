@@ -12,5 +12,6 @@ class VectisApp : Application() {
             androidContext(this@VectisApp)
             modules(appModule)
         }
+        io.nekohasekai.sfa.network.EndpointManager.init(this)
     }
 }

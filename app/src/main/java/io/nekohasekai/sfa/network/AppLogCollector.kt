@@ -126,7 +126,7 @@ object AppLogCollector {
                 return@withContext Result.failure(Exception("Пользователь не авторизован"))
             }
 
-            val baseUrl = BuildConfig.API_BASE_URL.removeSuffix("/")
+            val baseUrl = EndpointManager.getBaseUrl().removeSuffix("/")
             val url = URL("$baseUrl/api/v1/user/logs")
             val conn = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"

@@ -42,6 +42,7 @@ val appModule = module {
         }
 
         val client = OkHttpClient.Builder()
+            .addInterceptor(io.nekohasekai.sfa.network.EndpointManager.createInterceptor())
             .addInterceptor(deviceIdInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
