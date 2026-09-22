@@ -19,11 +19,14 @@ object ConfigInjector {
             val json = JSONObject(jsonString)
             sanitizeDeprecatedFields(json)
             injectLogConfig(json)
+            injectInbounds(json)
             injectOutbounds(json, udpState)
             injectDns(json)
             injectRouteRules(json)
             json.toString(2)
 
+        } catch (e: IllegalStateException) {
+            throw e
         } catch (e: Exception) {
             android.util.Log.e("ConfigInjector", "Failed to inject anti-DPI settings: ${e.message}", e)
             jsonString
@@ -69,6 +72,20 @@ object ConfigInjector {
                     }
                 }
                 route.put("rules", cleanedRules)
+            }
+        }
+    }
+
+    private fun injectInbounds(json: JSONObject) {
+        val inbounds = json.optJSONArray("inbounds") ?: return
+        for (i in 0 until inbounds.length()) {
+            val inbound = inbounds.optJSONObject(i) ?: continue
+            if (inbound.optString("type") == "tun") {
+                // Force userspace gVisor network stack on Android.
+                // Prevents TCP loopback NAT routing drops on Android kernel.
+                inbound.put("stack", "gvisor")
+                inbound.put("auto_route", true)
+                inbound.put("strict_route", false)
             }
         }
     }
@@ -180,6 +197,8 @@ object ConfigInjector {
             newOutbounds.put(urlTestOutbound)
             newOutbounds.put(selectorOutbound)
             json.put("outbounds", newOutbounds)
+        } else {
+            throw IllegalStateException("Сервер временно не вернул доступные узлы. Пожалуйста, обновите профиль.")
         }
     }
 

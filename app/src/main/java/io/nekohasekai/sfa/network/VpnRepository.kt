@@ -58,6 +58,9 @@ class VpnRepository(private val vpnApi: VpnApi) {
                             if (!inbound.has("dns_address")) {
                                 inbound.put("dns_address", "8.8.8.8")
                             }
+
+                            // Принудительно устанавливаем gVisor стек на Android
+                            inbound.put("stack", "gvisor")
                         }
                     }
                 }
