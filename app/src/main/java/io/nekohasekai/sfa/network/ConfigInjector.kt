@@ -5,6 +5,19 @@ import org.json.JSONObject
 
 object ConfigInjector {
 
+    private val BLOCKED_DOMAINS = listOf(
+        "instagram.com", "cdninstagram.com",
+        "facebook.com", "fbcdn.net", "meta.com",
+        "twitter.com", "x.com", "t.co", "twimg.com",
+        "discord.com", "discordapp.com", "discord.gg", "discordapp.net",
+        "openai.com", "chatgpt.com", "oaistatic.com", "oaiusercontent.com",
+        "claude.ai", "anthropic.com",
+        "rutracker.org", "rutracker.net", "flibusta.is", "nnmclub.to", "kinozal.tv",
+        "notion.so", "canva.com", "torproject.org", "protonmail.com", "proton.me",
+        "meduza.io", "bbc.com", "dw.com", "svoboda.org",
+        "youtube.com", "googlevideo.com", "ytimg.com", "youtu.be"
+    )
+
     /**
      * Injects anti-DPI / anti-TSPU settings, urltest failover outbound, DoH DNS,
      * and IPv6 blackhole defense rules into a raw sing-box JSON configuration.
@@ -38,9 +51,13 @@ object ConfigInjector {
      * to ensure 100% compatibility with sing-box 1.12.0+ (where geosite/geoip DBs are removed).
      */
     private fun sanitizeDeprecatedFields(json: JSONObject) {
-        // 1. Sanitize DNS rules
+        val isAdBlockEnabled = io.nekohasekai.sfa.database.Settings.adblockEnabled
+        val isRoutingAll = io.nekohasekai.sfa.database.Settings.routingMode == io.nekohasekai.sfa.database.Settings.ROUTING_MODE_ALL
+
+        // 1. Sanitize DNS rules and deprecated fakeip
         val dns = json.optJSONObject("dns")
         if (dns != null) {
+            dns.remove("fakeip")
             val rules = dns.optJSONArray("rules")
             if (rules != null) {
                 val cleanedRules = JSONArray()
@@ -48,6 +65,13 @@ object ConfigInjector {
                     val rule = rules.optJSONObject(i) ?: continue
                     rule.remove("geosite")
                     rule.remove("geoip")
+                    val ruleSet = rule.optJSONArray("rule_set")
+                    val isAdRule = ruleSet != null && (0 until ruleSet.length()).any { ruleSet.optString(it).contains("ads") }
+                    if (!isAdBlockEnabled && isAdRule) continue
+
+                    val isRuRule = ruleSet != null && (0 until ruleSet.length()).any { ruleSet.optString(it).contains("-ru") }
+                    if (isRoutingAll && isRuRule) continue
+
                     // Keep rule if it still has valid conditions or actions
                     if (rule.length() > 0 && (rule.has("server") || rule.has("action") || rule.has("outbound") || rule.has("domain") || rule.has("domain_suffix") || rule.has("domain_keyword") || rule.has("rule_set"))) {
                         cleanedRules.put(rule)
@@ -67,6 +91,13 @@ object ConfigInjector {
                     val rule = rules.optJSONObject(i) ?: continue
                     rule.remove("geosite")
                     rule.remove("geoip")
+                    val ruleSet = rule.optJSONArray("rule_set")
+                    val isAdRule = ruleSet != null && (0 until ruleSet.length()).any { ruleSet.optString(it).contains("ads") }
+                    if (!isAdBlockEnabled && isAdRule) continue
+
+                    val isRuRule = ruleSet != null && (0 until ruleSet.length()).any { ruleSet.optString(it).contains("-ru") }
+                    if (isRoutingAll && isRuRule) continue
+
                     if (rule.length() > 0 && (rule.has("action") || rule.has("outbound") || rule.has("domain") || rule.has("domain_suffix") || rule.has("ip_cidr") || rule.has("ip_is_private") || rule.has("protocol") || rule.has("rule_set") || rule.has("ip_version"))) {
                         cleanedRules.put(rule)
                     }
@@ -117,12 +148,11 @@ object ConfigInjector {
                 continue
             }
 
-            // 1. TLS record fragmentation & uTLS Chrome fingerprinting (ONLY for TCP-based TLS, NOT Hysteria 2 / QUIC!)
-            if (type != "hysteria" && type != "hysteria2" && type != "tuic") {
+            // 1. TLS uTLS Chrome fingerprinting (ONLY for TCP-based TLS, NOT Hysteria 2 / QUIC / NaiveProxy!)
+            if (type != "hysteria" && type != "hysteria2" && type != "tuic" && type != "naive") {
                 if (outbound.has("tls") || type == "vless" || type == "vmess" || type == "trojan") {
                     val tls = outbound.optJSONObject("tls") ?: JSONObject().also { outbound.put("tls", it) }
                     tls.put("enabled", true)
-                    tls.put("record_fragment", true)
 
                     val utls = tls.optJSONObject("utls") ?: JSONObject().also { tls.put("utls", it) }
                     utls.put("enabled", true)
@@ -167,10 +197,10 @@ object ConfigInjector {
                 put("type", "urltest")
                 put("tag", "auto")
                 put("outbounds", JSONArray(sortedTags))
-                put("url", "https://cp.cloudflare.com/generate_204")
-                put("interval", "15s")
-                put("tolerance", 100)
-                put("idle_timeout", "30s")
+                put("url", "http://cp.cloudflare.com/generate_204")
+                put("interval", "10m")
+                put("tolerance", 300)
+                put("idle_timeout", "30m")
             }
 
             val selectorTags = mutableListOf("auto").apply { addAll(sortedTags) }
@@ -227,6 +257,17 @@ object ConfigInjector {
             }
             servers.put(dohServer)
         }
+
+        val rules = dns.optJSONArray("rules") ?: JSONArray().also { dns.put("rules", it) }
+        val routingMode = io.nekohasekai.sfa.database.Settings.routingMode
+        if (routingMode == io.nekohasekai.sfa.database.Settings.ROUTING_MODE_BLOCKED) {
+            val targetDns = if (hasDoh) "remote-dns" else "doh-dns"
+            val blockedDnsRule = JSONObject().apply {
+                put("domain_suffix", JSONArray(BLOCKED_DOMAINS))
+                put("server", targetDns)
+            }
+            rules.put(blockedDnsRule)
+        }
     }
 
     private fun injectRouteRules(json: JSONObject) {
@@ -277,6 +318,19 @@ object ConfigInjector {
                 put("outbound", "direct")
             }
             currentRules.put(icmpRule)
+        }
+
+        // Apply routing mode
+        val routingMode = io.nekohasekai.sfa.database.Settings.routingMode
+        if (routingMode == io.nekohasekai.sfa.database.Settings.ROUTING_MODE_BLOCKED) {
+            route.put("final", "direct")
+            val blockedRule = JSONObject().apply {
+                put("domain_suffix", JSONArray(BLOCKED_DOMAINS))
+                put("outbound", "proxy")
+            }
+            currentRules.put(blockedRule)
+        } else {
+            route.put("final", "proxy")
         }
     }
 

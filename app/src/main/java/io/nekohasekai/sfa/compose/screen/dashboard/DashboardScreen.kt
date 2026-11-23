@@ -1,19 +1,31 @@
 package io.nekohasekai.sfa.compose.screen.dashboard
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.border
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -24,43 +36,29 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-import io.nekohasekai.sfa.constant.Status
-import androidx.compose.ui.res.stringResource
 import io.nekohasekai.sfa.R
+import io.nekohasekai.sfa.constant.Status
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.clickable
 
 @Composable
 fun Modifier.bounceClick(
@@ -105,11 +103,18 @@ fun DashboardScreen(
     onNavigateToTraffic: () -> Unit = {},
     onNavigateToProtocolSelection: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
+    notificationsViewModel: NotificationsViewModel = koinViewModel(),
 ) {
     val isConnected = serviceStatus == Status.Started || serviceStatus == Status.Starting
     val isConnecting = serviceStatus == Status.Starting
     val snackbarHostState = remember { SnackbarHostState() }
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    val notifState by notificationsViewModel.uiState.collectAsState()
+    val hasUnreadNotifications = remember(notifState.notifications) {
+        notifState.notifications.any { !it.is_read }
+    }
 
     var showUpgradeDialog by remember { mutableStateOf(false) }
 
@@ -130,34 +135,9 @@ fun DashboardScreen(
     }
 
     // Подписываемся на ошибки из ViewModel
-    // Подписываемся на ошибки из ViewModel
     LaunchedEffect(viewModel) {
         viewModel.errorEvents.collect { errorMsg ->
             snackbarHostState.showSnackbar(errorMsg)
-        }
-    }
-
-    var uptimeString by remember { mutableStateOf("00:00") }
-    LaunchedEffect(isConnected, state.serviceStartTime) {
-        if (isConnected && state.serviceStartTime != null) {
-            while (isActive) {
-                val nowMs = System.currentTimeMillis()
-                val startMs = if (state.serviceStartTime!! > 1000000000000L) state.serviceStartTime!! else state.serviceStartTime!! * 1000
-                val diff = (nowMs - startMs) / 1000
-                if (diff >= 0) {
-                    val hours = diff / 3600
-                    val mins = (diff % 3600) / 60
-                    val secs = diff % 60
-                    uptimeString = if (hours > 0) {
-                        String.format("%02d:%02d:%02d", hours, mins, secs)
-                    } else {
-                        String.format("%02d:%02d", mins, secs)
-                    }
-                }
-                delay(1000)
-            }
-        } else {
-            uptimeString = "00:00"
         }
     }
 
@@ -168,7 +148,6 @@ fun DashboardScreen(
         delay(100)
         visible = true
     }
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -197,7 +176,18 @@ fun DashboardScreen(
                         Icon(Icons.Rounded.AccountCircle, contentDescription = "Profile", modifier = Modifier.size(28.dp))
                     }
                     IconButton(onClick = onNavigateToNotifications) {
-                        Icon(Icons.Rounded.Notifications, contentDescription = "Notifications", modifier = Modifier.size(28.dp))
+                        BadgedBox(
+                            badge = {
+                                if (hasUnreadNotifications) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(8.dp)
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Rounded.Notifications, contentDescription = "Notifications", modifier = Modifier.size(28.dp))
+                        }
                     }
                 }
             }
@@ -220,7 +210,7 @@ fun DashboardScreen(
                         animationSpec = tween(durationMillis = 400, delayMillis = 0, easing = LinearOutSlowInEasing)
                     ) + fadeIn(animationSpec = tween(400, delayMillis = 0))
                 ) {
-                    Box(modifier = Modifier.padding(horizontal = 8.dp).bounceClick { }) {
+                    Box(modifier = Modifier.padding(horizontal = 8.dp)) {
                         DataUsageCard(
                             trafficUsed = state.trafficUsed,
                             trafficLimit = state.trafficLimit,
@@ -239,50 +229,53 @@ fun DashboardScreen(
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             InfoTile(
-                                modifier = Modifier.weight(1f).bounceClick { },
+                                modifier = Modifier.weight(1f),
                                 title = stringResource(R.string.dashboard_download),
                                 value = state.downlink,
                                 icon = Icons.Rounded.ArrowDownward,
-                                shape = RoundedCornerShape(topStart = 32.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 4.dp)
+                                shape = RoundedCornerShape(20.dp)
                             )
                             InfoTile(
-                                modifier = Modifier.weight(1f).bounceClick { },
+                                modifier = Modifier.weight(1f),
                                 title = stringResource(R.string.dashboard_upload),
                                 value = state.uplink,
                                 icon = Icons.Rounded.ArrowUpward,
-                                shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 32.dp, bottomStart = 4.dp)
+                                shape = RoundedCornerShape(20.dp)
                             )
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             InfoTile(
-                                modifier = Modifier.weight(1f).bounceClick { },
+                                modifier = Modifier.weight(1f),
                                 title = stringResource(R.string.dashboard_location),
                                 value = state.location,
                                 icon = Icons.Rounded.Place,
-                                shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 4.dp, topEnd = 4.dp, bottomStart = 32.dp)
+                                shape = RoundedCornerShape(20.dp)
                             )
                             InfoTile(
-                                modifier = Modifier.weight(1f).bounceClick {
-                                    if (io.nekohasekai.sfa.utils.SubscriptionAccess.canSelectProtocol(state.userProfile?.subscription_tier)) {
-                                        onNavigateToProtocolSelection()
-                                    } else {
-                                        showUpgradeDialog = true
-                                    }
-                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .clickable {
+                                        if (io.nekohasekai.sfa.utils.SubscriptionAccess.canSelectProtocol(state.userProfile?.subscription_tier)) {
+                                            onNavigateToProtocolSelection()
+                                        } else {
+                                            showUpgradeDialog = true
+                                        }
+                                    },
                                 title = stringResource(R.string.dashboard_protocol),
                                 value = state.protocol,
                                 icon = Icons.Rounded.Lock,
-                                shape = RoundedCornerShape(topStart = 4.dp, bottomEnd = 32.dp, topEnd = 4.dp, bottomStart = 4.dp)
+                                shape = RoundedCornerShape(20.dp)
                             )
                         }
                     }
@@ -300,12 +293,14 @@ fun DashboardScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 8.dp)
-                            .bounceClick { },
-                        shape = RoundedCornerShape(topStart = 32.dp, bottomEnd = 32.dp, topEnd = 8.dp, bottomStart = 8.dp),
+                            .clip(RoundedCornerShape(24.dp))
+                            .clickable(onClick = onNavigateToProfile),
+                        shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -316,12 +311,10 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                val loadingStr = stringResource(R.string.dashboard_loading)
                                 val unlimitedTimeStr = stringResource(R.string.profile_sub_unlimited_time)
                                 val expiredStr = stringResource(R.string.profile_sub_expired)
-                                val tierName = state.userProfile?.subscription_tier?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } ?: loadingStr
                                 Text(
-                                    text = stringResource(R.string.profile_label_tier, tierName),
+                                    text = stringResource(R.string.profile_sub_info_title),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                 )
@@ -331,17 +324,23 @@ fun DashboardScreen(
                                         unlimitedTimeStr
                                     } else {
                                         try {
-                                            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
-                                            sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US).apply {
+                                                timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                            }
                                             val date = sdf.parse(endStr)
                                             if (date != null) {
                                                 val diff = date.time - System.currentTimeMillis()
                                                 val days = diff / (1000 * 60 * 60 * 24)
-                                                if (days < 0) expiredStr else endStr
+                                                val outSdf = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault())
+                                                if (days < 0) {
+                                                    expiredStr
+                                                } else {
+                                                    context.getString(R.string.profile_sub_active_until, outSdf.format(date)) + " (${days.toInt()} дн.)"
+                                                }
                                             } else {
                                                 endStr
                                             }
-                                        } catch (e: Exception) {
+                                        } catch (_: Exception) {
                                             endStr
                                         }
                                     }
@@ -395,21 +394,25 @@ fun DashboardScreen(
             ) {
                 Icon(Icons.Rounded.Timer, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.dashboard_uptime, uptimeString), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                DashboardUptimeText(
+                    startTime = state.serviceStartTime,
+                    isConnected = isConnected
+                )
                 
                 Text("  •  ", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 
                 Icon(Icons.Rounded.SignalCellularAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.width(4.dp))
-                AnimatedContent(
+                Crossfade(
                     targetState = state.ping,
-                    transitionSpec = {
-                        slideInVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)) { height -> height } + fadeIn() togetherWith
-                                slideOutVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)) { height -> -height } + fadeOut()
-                    },
-                    label = "ping"
+                    animationSpec = tween(durationMillis = 200),
+                    label = "pingAnimation"
                 ) { targetPing ->
-                    Text(stringResource(R.string.dashboard_ping, targetPing), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = stringResource(R.string.dashboard_ping, targetPing),
+                        style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -419,6 +422,51 @@ fun DashboardScreen(
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
+}
+
+@Composable
+fun DashboardUptimeText(
+    startTime: Long?,
+    isConnected: Boolean,
+    modifier: Modifier = Modifier,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.labelLarge,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant
+) {
+    if (!isConnected || startTime == null) {
+        Text(
+            text = stringResource(R.string.dashboard_uptime, "00:00"),
+            style = style.copy(fontFeatureSettings = "tnum"),
+            color = color,
+            modifier = modifier
+        )
+        return
+    }
+
+    var currentTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(startTime) {
+        while (isActive) {
+            delay(1000)
+            currentTime = System.currentTimeMillis()
+        }
+    }
+
+    val startMs = if (startTime > 1000000000000L) startTime else startTime * 1000
+    val elapsedSeconds = ((currentTime - startMs) / 1000).coerceAtLeast(0)
+    val hours = elapsedSeconds / 3600
+    val minutes = (elapsedSeconds % 3600) / 60
+    val seconds = elapsedSeconds % 60
+    val formattedTime = if (hours > 0) {
+        String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+    }
+
+    Text(
+        text = stringResource(R.string.dashboard_uptime, formattedTime),
+        style = style.copy(fontFeatureSettings = "tnum"),
+        color = color,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -432,139 +480,160 @@ fun SwipeToConnectSlider(
     val offsetX = remember { Animatable(0f) }
     var lastHapticPosition by remember { mutableFloatStateOf(0f) }
     val haptic = LocalHapticFeedback.current
-    
-    val width = 340.dp
-    val height = 88.dp
-    val thumbSize = 72.dp
-    val padding = 8.dp
-    
-    val maxSwipePx = with(LocalDensity.current) { (width - thumbSize - (padding * 2)).toPx() }
 
-    LaunchedEffect(isConnected, isConnecting) {
-        if (isConnected) {
-            offsetX.animateTo(maxSwipePx)
-        } else if (!isConnecting) {
-            offsetX.animateTo(0f)
-        }
-    }
-
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
-        label = "sliderBackground"
-    )
-
-    // M3 Expressive Shape Morphing
-    val containerShapePercent by animateIntAsState(
-        targetValue = if (isConnected) 50 else 25,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "containerShape"
-    )
-    val thumbShapePercent by animateIntAsState(
-        targetValue = if (offsetX.value > 5f && offsetX.value < maxSwipePx - 5f) 25 else 50,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-        label = "thumbShape"
-    )
-
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
-            .size(width = width, height = height)
-            .clip(CircleShape)
-            .background(backgroundColor)
-            .bounceClick { if (isConnected && !isConnecting) onDisconnect() },
+            .fillMaxWidth()
+            .height(80.dp),
         contentAlignment = Alignment.CenterStart
     ) {
+        val totalWidthPx = constraints.maxWidth.toFloat()
+        val density = LocalDensity.current
+        val thumbSizeDp = 64.dp
+        val paddingDp = 8.dp
+        val thumbSizePx = with(density) { thumbSizeDp.toPx() }
+        val paddingPx = with(density) { paddingDp.toPx() }
+        val maxSwipePx = (totalWidthPx - thumbSizePx - (paddingPx * 2)).coerceAtLeast(0f)
 
-        // Centered Text
-        val textAlpha = 1f - (offsetX.value / maxSwipePx * 1.5f).coerceIn(0f, 1f)
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (isConnecting) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = if (isConnected) stringResource(R.string.dashboard_swipe_to_disconnect) else stringResource(R.string.dashboard_swipe_to_connect),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.alpha(textAlpha * 0.7f)
-                )
+        LaunchedEffect(isConnected, isConnecting, maxSwipePx) {
+            if (isConnected) {
+                offsetX.animateTo(maxSwipePx, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
+            } else if (!isConnecting) {
+                offsetX.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow))
             }
         }
 
+        val backgroundColor by animateColorAsState(
+            targetValue = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
+            label = "sliderBackground"
+        )
 
-        // Thumb
+        // M3 Expressive morphing: 24dp (rounded container) -> 40dp (pill)
+        val containerRadiusDp by animateDpAsState(
+            targetValue = if (isConnected) 40.dp else 24.dp,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+            label = "containerShape"
+        )
+        val isDragging = offsetX.value > 5f && offsetX.value < maxSwipePx - 5f
+        val thumbRadiusDp by animateDpAsState(
+            targetValue = if (isDragging) 20.dp else 32.dp,
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+            label = "thumbShape"
+        )
+
+        val dragChannel = remember { kotlinx.coroutines.channels.Channel<Float>(kotlinx.coroutines.channels.Channel.CONFLATED) }
+        LaunchedEffect(dragChannel, isConnected, maxSwipePx) {
+            for (dragAmount in dragChannel) {
+                if (maxSwipePx <= 0f) continue
+                val resistance = if (isConnected) {
+                    (offsetX.value / maxSwipePx * 0.5f) + 0.5f
+                } else {
+                    1f - (offsetX.value / maxSwipePx * 0.5f)
+                }
+                offsetX.snapTo((offsetX.value + dragAmount * resistance).coerceIn(0f, maxSwipePx))
+
+                if (abs(offsetX.value - lastHapticPosition) > 40f) {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    lastHapticPosition = offsetX.value
+                }
+            }
+        }
+
         Box(
             modifier = Modifier
-                .offset { IntOffset(offsetX.value.roundToInt(), 0) }
-                .padding(start = padding)
-                .size(thumbSize)
-                .clip(RoundedCornerShape(percent = thumbShapePercent))
-                .background(if (isConnected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surface)
-                .pointerInput(isConnecting, isConnected) {
-                    if (isConnecting) return@pointerInput
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            lastHapticPosition = 0f
-                            coroutineScope.launch {
-                                if (isConnected) {
-                                    // Swipe back to disconnect logic
-                                    if (offsetX.value < maxSwipePx * 0.8f) {
-                                        offsetX.animateTo(0f, spring(dampingRatio = 0.5f, stiffness = 200f))
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        onDisconnect()
-                                    } else {
-                                        offsetX.animateTo(maxSwipePx, spring())
-                                    }
-                                } else {
-                                    // Swipe forward to connect logic
-                                    if (offsetX.value > maxSwipePx * 0.7f) {
-                                        offsetX.animateTo(maxSwipePx, spring())
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        onConnect()
-                                    } else {
-                                        offsetX.animateTo(0f, spring(dampingRatio = 0.5f, stiffness = 200f))
-                                        onDisconnect()
-                                    }
-                                }
-                            }
-                        },
-                        onDragCancel = {
-                            lastHapticPosition = 0f
-                            coroutineScope.launch {
-                                offsetX.animateTo(if (isConnected) maxSwipePx else 0f, spring(dampingRatio = 0.5f, stiffness = 200f))
-                            }
-                        },
-                        onHorizontalDrag = { change, dragAmount ->
-                            change.consume()
-                            coroutineScope.launch {
-                                // Add resistance
-                                val resistance = if (isConnected) {
-                                    (offsetX.value / maxSwipePx * 0.6f) + 0.4f
-                                } else {
-                                    1f - (offsetX.value / maxSwipePx * 0.6f)
-                                }
-                                offsetX.snapTo((offsetX.value + dragAmount * resistance).coerceIn(0f, maxSwipePx))
-                                
-                                if (abs(offsetX.value - lastHapticPosition) > 40f) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    lastHapticPosition = offsetX.value
-                                }
-                            }
-                        }
-                    )
-                },
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .clip(RoundedCornerShape(containerRadiusDp))
+                .background(backgroundColor),
+            contentAlignment = Alignment.CenterStart
         ) {
-            Icon(
-                imageVector = if (isConnected) Icons.Rounded.PowerSettingsNew else Icons.Rounded.Lock,
-                contentDescription = "Swipe thumb",
-                tint = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(32.dp)
-            )
+            // Helper text that smoothly fades out as thumb moves
+            val textProgress = if (maxSwipePx > 0f) (offsetX.value / maxSwipePx) else 0f
+            val textAlpha = (1f - textProgress * 1.8f).coerceIn(0f, 1f)
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = paddingDp + thumbSizeDp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isConnecting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.5.dp
+                    )
+                } else {
+                    Text(
+                        text = if (isConnected) stringResource(R.string.dashboard_swipe_to_disconnect) else stringResource(R.string.dashboard_swipe_to_connect),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isConnected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.alpha(textAlpha * 0.8f)
+                    )
+                }
+            }
+
+            // Draggable thumb
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                    .padding(start = paddingDp)
+                    .size(thumbSizeDp)
+                    .clip(RoundedCornerShape(thumbRadiusDp))
+                    .background(if (isConnected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surface)
+                    .pointerInput(isConnecting, isConnected, maxSwipePx) {
+                        if (isConnecting || maxSwipePx <= 0f) return@pointerInput
+                        detectHorizontalDragGestures(
+                            onDragEnd = {
+                                lastHapticPosition = 0f
+                                coroutineScope.launch {
+                                    if (isConnected) {
+                                        if (offsetX.value < maxSwipePx * 0.7f) {
+                                            offsetX.animateTo(0f, spring(dampingRatio = 0.6f, stiffness = 250f))
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onDisconnect()
+                                        } else {
+                                            offsetX.animateTo(maxSwipePx, spring())
+                                        }
+                                    } else {
+                                        if (offsetX.value > maxSwipePx * 0.7f) {
+                                            offsetX.animateTo(maxSwipePx, spring())
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            onConnect()
+                                        } else {
+                                            offsetX.animateTo(0f, spring(dampingRatio = 0.6f, stiffness = 250f))
+                                        }
+                                    }
+                                }
+                            },
+                            onDragCancel = {
+                                lastHapticPosition = 0f
+                                coroutineScope.launch {
+                                    offsetX.animateTo(if (isConnected) maxSwipePx else 0f, spring(dampingRatio = 0.6f, stiffness = 250f))
+                                }
+                            },
+                            onHorizontalDrag = { change, dragAmount ->
+                                change.consume()
+                                dragChannel.trySend(dragAmount)
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Crossfade(
+                    targetState = isConnected,
+                    animationSpec = tween(200),
+                    label = "thumbIcon"
+                ) { connected ->
+                    Icon(
+                        imageVector = if (connected) Icons.Rounded.PowerSettingsNew else Icons.Rounded.Lock,
+                        contentDescription = "Swipe thumb",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -578,16 +647,18 @@ fun InfoTile(
     shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp)
 ) {
     Card(
-        modifier = modifier.height(90.dp).animateContentSize(),
+        modifier = modifier.height(92.dp),
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp), // Increased padding for M3 standard look
+                .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.Start
         ) {
@@ -604,21 +675,22 @@ fun InfoTile(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
-                AnimatedContent(
+                Crossfade(
                     targetState = value,
-                    transitionSpec = {
-                        slideInVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)) { height -> height } + fadeIn() togetherWith
-                                slideOutVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium)) { height -> -height } + fadeOut()
-                    },
+                    animationSpec = tween(durationMillis = 200),
                     label = "valueAnimation"
                 ) { targetValue ->
                     Text(
                         text = targetValue,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
             }
@@ -627,57 +699,131 @@ fun InfoTile(
 }
 
 @Composable
-fun DataUsageCard(trafficUsed: Long = 0L, trafficLimit: Long = 5L * 1024 * 1024 * 1024, onClick: () -> Unit = {}) {
+fun DataUsageCard(
+    trafficUsed: Long = 0L,
+    trafficLimit: Long = 5L * 1024 * 1024 * 1024,
+    onClick: () -> Unit = {}
+) {
     val usedGb = trafficUsed.toFloat() / (1024 * 1024 * 1024)
     val limitGb = trafficLimit.toFloat() / (1024 * 1024 * 1024)
-    val progress = if (limitGb > 0) (usedGb / limitGb).coerceIn(0f, 1f) else 0f
+    val targetProgress = if (limitGb > 0) (usedGb / limitGb).coerceIn(0f, 1f) else 0f
     
+    val animatedProgress by animateFloatAsState(
+        targetValue = targetProgress,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
+        label = "dataUsageProgress"
+    )
+
     val context = LocalContext.current
-    val formatBytes: (Long) -> String = { bytes ->
-        when {
-            bytes >= 1024 * 1024 * 1024 -> context.getString(R.string.unit_gb, String.format("%.2f", bytes.toFloat() / (1024 * 1024 * 1024)))
-            bytes >= 1024 * 1024 -> context.getString(R.string.unit_mb, String.format("%.2f", bytes.toFloat() / (1024 * 1024)))
-            bytes >= 1024 -> context.getString(R.string.unit_kb, String.format("%.2f", bytes.toFloat() / 1024))
-            else -> context.getString(R.string.unit_b, bytes.toString())
+    val formatBytes: (Long) -> String = remember(context) {
+        { bytes ->
+            when {
+                bytes >= 1024 * 1024 * 1024 -> context.getString(R.string.unit_gb, String.format(Locale.getDefault(), "%.2f", bytes.toFloat() / (1024 * 1024 * 1024)))
+                bytes >= 1024 * 1024 -> context.getString(R.string.unit_mb, String.format(Locale.getDefault(), "%.2f", bytes.toFloat() / (1024 * 1024)))
+                bytes >= 1024 -> context.getString(R.string.unit_kb, String.format(Locale.getDefault(), "%.2f", bytes.toFloat() / 1024))
+                else -> context.getString(R.string.unit_b, bytes.toString())
+            }
         }
     }
-    
-    val usedStr = formatBytes(trafficUsed)
-    val limitStr = if (trafficLimit <= 0L) "∞" else formatBytes(trafficLimit)
+
+    val usedStr = remember(trafficUsed) { formatBytes(trafficUsed) }
+    val limitStr = remember(trafficLimit) { if (trafficLimit <= 0L) "∞" else formatBytes(trafficLimit) }
     val remainingBytes = maxOf(0L, trafficLimit - trafficUsed)
-    val remainingStr = if (trafficLimit <= 0L) "∞" else formatBytes(remainingBytes)
-    
+    val remainingStr = remember(remainingBytes, trafficLimit) { if (trafficLimit <= 0L) "∞" else formatBytes(remainingBytes) }
+
+    val isNearLimit = trafficLimit > 0L && targetProgress >= 0.9f
+    val progressColor by animateColorAsState(
+        targetValue = if (isNearLimit) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+        label = "progressColor"
+    )
+
     Card(
-        modifier = Modifier.fillMaxWidth().height(160.dp).clickable { onClick() }.animateContentSize(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(32.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp).fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column {
-                    Text(stringResource(R.string.traffic_limit_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.dashboard_all_time), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                    Text(
+                        text = stringResource(R.string.traffic_limit_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.dashboard_all_time),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
                 }
-                Icon(Icons.Rounded.Info, contentDescription = null, modifier = Modifier.size(24.dp))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.traffic_remaining), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                Text(remainingStr, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(4.dp)),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+                Icon(
+                    imageVector = Icons.Rounded.Info,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
-                Text("$usedStr / $limitStr", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(R.string.traffic_remaining),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+                Text(
+                    text = remainingStr,
+                    style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LinearProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(5.dp)),
+                    color = progressColor,
+                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.18f)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "$usedStr / $limitStr",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                    )
+                    if (isNearLimit) {
+                        Text(
+                            text = "< 10%",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         }
     }

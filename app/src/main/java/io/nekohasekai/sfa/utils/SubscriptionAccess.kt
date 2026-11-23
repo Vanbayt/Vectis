@@ -10,7 +10,10 @@ object SubscriptionAccess {
      * Currently restricted to "maximum" tier users, but designed for easy expansion in the future.
      */
     private val ALLOWED_MANUAL_SELECTION_TIERS = setOf(
-        "maximum"
+        "maximum",
+        "premium",
+        "pro",
+        "ultra"
     )
 
     /**

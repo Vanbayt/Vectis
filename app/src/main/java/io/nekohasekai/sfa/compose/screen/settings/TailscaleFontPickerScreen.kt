@@ -7,11 +7,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,25 +20,30 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.terminal.ImportedFont
 import io.nekohasekai.sfa.terminal.ImportedFontStore
@@ -81,115 +86,141 @@ fun TailscaleFontPickerScreen(navController: NavController) {
         }
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.tailscale_terminal_font)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
-                }
-            },
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface),
-    ) {
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            item {
-                Text(
-                    text = stringResource(R.string.tailscale_terminal_font_system),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
-                )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.tailscale_terminal_font), fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+        bottomBar = {
+            Button(
+                onClick = { importLauncher.launch("font/*") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                Text(stringResource(R.string.tailscale_terminal_import_font))
             }
-            item {
-                val isDefault = selectedFamily.isBlank() && selectedCustomPath.isBlank()
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.tailscale_terminal_font_default)) },
-                    leadingContent = {
-                        RadioButton(selected = isDefault, onClick = null)
-                    },
-                    modifier = Modifier.clickable {
-                        selectedFamily = ""
-                        selectedCustomPath = ""
-                        Settings.tailscaleSSHFontFamily = ""
-                        Settings.tailscaleSSHCustomFontPath = ""
-                    },
-                )
-            }
-            items(systemFonts) { family ->
-                val isSelected = selectedFamily == family && selectedCustomPath.isBlank()
-                ListItem(
-                    headlineContent = { Text(family) },
-                    leadingContent = {
-                        RadioButton(selected = isSelected, onClick = null)
-                    },
-                    modifier = Modifier.clickable {
-                        selectedFamily = family
-                        selectedCustomPath = ""
-                        Settings.tailscaleSSHFontFamily = family
-                        Settings.tailscaleSSHCustomFontPath = ""
-                    },
-                )
-            }
-
-            if (importedFonts.isNotEmpty()) {
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface),
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.tailscale_terminal_font_imported),
-                        style = MaterialTheme.typography.titleSmall,
+                        text = stringResource(R.string.tailscale_terminal_font_system),
+                        style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp),
                     )
                 }
-                items(importedFonts) { font ->
-                    val isSelected = selectedCustomPath == font.path
+                item {
+                    val isDefault = selectedFamily.isBlank() && selectedCustomPath.isBlank()
                     ListItem(
-                        headlineContent = { Text(font.name) },
+                        headlineContent = { Text(stringResource(R.string.tailscale_terminal_font_default), style = MaterialTheme.typography.bodyLarge) },
                         leadingContent = {
-                            RadioButton(selected = isSelected, onClick = null)
-                        },
-                        trailingContent = {
-                            IconButton(onClick = {
-                                ImportedFontStore.deleteFont(context, font.name)
-                                importedFonts = ImportedFontStore.listImportedFonts(context)
-                                if (isSelected) {
-                                    selectedFamily = ""
-                                    selectedCustomPath = ""
-                                    Settings.tailscaleSSHFontFamily = ""
-                                    Settings.tailscaleSSHCustomFontPath = ""
-                                }
-                            }) {
-                                Icon(
-                                    Icons.Outlined.Delete,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            }
+                            RadioButton(selected = isDefault, onClick = null)
                         },
                         modifier = Modifier.clickable {
                             selectedFamily = ""
-                            selectedCustomPath = font.path
+                            selectedCustomPath = ""
                             Settings.tailscaleSSHFontFamily = ""
-                            Settings.tailscaleSSHCustomFontPath = font.path
+                            Settings.tailscaleSSHCustomFontPath = ""
                         },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                     )
                 }
-            }
-        }
+                items(systemFonts) { family ->
+                    val isSelected = selectedFamily == family && selectedCustomPath.isBlank()
+                    ListItem(
+                        headlineContent = { Text(family, style = MaterialTheme.typography.bodyLarge) },
+                        leadingContent = {
+                            RadioButton(selected = isSelected, onClick = null)
+                        },
+                        modifier = Modifier.clickable {
+                            selectedFamily = family
+                            selectedCustomPath = ""
+                            Settings.tailscaleSSHFontFamily = family
+                            Settings.tailscaleSSHCustomFontPath = ""
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    )
+                }
 
-        Button(
-            onClick = { importLauncher.launch("font/*") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-        ) {
-            Text(stringResource(R.string.tailscale_terminal_import_font))
+                if (importedFonts.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.tailscale_terminal_font_imported),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp),
+                        )
+                    }
+                    items(importedFonts) { font ->
+                        val isSelected = selectedCustomPath == font.path
+                        ListItem(
+                            headlineContent = { Text(font.name, style = MaterialTheme.typography.bodyLarge) },
+                            leadingContent = {
+                                RadioButton(selected = isSelected, onClick = null)
+                            },
+                            trailingContent = {
+                                IconButton(onClick = {
+                                    ImportedFontStore.deleteFont(context, font.name)
+                                    importedFonts = ImportedFontStore.listImportedFonts(context)
+                                    if (isSelected) {
+                                        selectedFamily = ""
+                                        selectedCustomPath = ""
+                                        Settings.tailscaleSSHFontFamily = ""
+                                        Settings.tailscaleSSHCustomFontPath = ""
+                                    }
+                                }) {
+                                    Icon(
+                                        Icons.Outlined.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                            },
+                            modifier = Modifier.clickable {
+                                selectedFamily = ""
+                                selectedCustomPath = font.path
+                                Settings.tailscaleSSHFontFamily = ""
+                                Settings.tailscaleSSHCustomFontPath = font.path
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                        )
+                    }
+                }
+            }
         }
     }
 }

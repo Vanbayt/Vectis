@@ -17,6 +17,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -54,6 +56,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
@@ -765,6 +770,12 @@ class MainActivity :
                         startService()
                     }
 
+                    is UiEvent.RequestRestartService -> {
+                        scope.launch {
+                            restartServiceForApplyChange()
+                        }
+                    }
+
                     is UiEvent.RequestReconnectService -> {
                         connection.reconnect()
                     }
@@ -837,6 +848,8 @@ class MainActivity :
             }
         }
 
+        val haptic = LocalHapticFeedback.current
+
         CompositionLocalProvider(LocalTopBarController provides topBarController) {
             if (useNavigationRail) {
                 Row(modifier = Modifier.fillMaxSize()) {
@@ -899,8 +912,14 @@ class MainActivity :
                             val hasUpdate by UpdateState.hasUpdate
                             NavigationBar(
                                 modifier = Modifier
-                                    .padding(start = 24.dp, end = 24.dp, bottom = 32.dp, top = 8.dp)
-                                    .clip(RoundedCornerShape(32.dp)),
+                                    .navigationBarsPadding()
+                                    .padding(start = 24.dp, end = 24.dp, bottom = 12.dp, top = 4.dp)
+                                    .clip(RoundedCornerShape(32.dp))
+                                    .border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
+                                        shape = RoundedCornerShape(32.dp)
+                                    ),
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                                 windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
                             ) {
@@ -922,7 +941,13 @@ class MainActivity :
                                         currentDestination?.hierarchy?.any {
                                             it.route == screen.route
                                         } == true,
+                                        colors = NavigationBarItemDefaults.colors(
+                                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                            selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                        ),
                                         onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                             navController.navigate(screen.route) {
                                                 // Pop up to the start destination of the graph to
                                                 // avoid building up a large stack of destinations
@@ -1051,7 +1076,8 @@ class MainActivity :
                     selectedConnectionId = null
                 },
                 sheetState = connectionsSheetState,
-                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
                 Column(

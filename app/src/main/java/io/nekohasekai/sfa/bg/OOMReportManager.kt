@@ -145,7 +145,7 @@ object OOMReportManager {
         if (!includeConfig) {
             File(strippedDir, CONFIG_FILE_NAME).delete()
         }
-        Libbox.createZipArchive(strippedDir.path, zipFile.path)
+        Libbox.createZipArchive(strippedDir.path, zipFile.path, false)
         zipFile
     }
 

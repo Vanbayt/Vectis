@@ -73,7 +73,7 @@ android {
         versionCode = getVersionProps("VERSION_CODE").toInt()
         versionName = getVersionProps("VERSION_NAME")
         base.archivesName.set("Vectis-${versionName}")
-        buildConfigField("String", "API_BASE_URL", "\"http://195.78.49.4:18000/\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://gateway.vectiscloud.site/\"")
         
         externalNativeBuild {
             cmake {
@@ -93,12 +93,14 @@ android {
 
     buildTypes {
         debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
             if (getProps("KEYSTORE_PASS").isNotEmpty()) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             if (getProps("KEYSTORE_PASS").isNotEmpty()) {
                 signingConfig = signingConfigs.getByName("release")
@@ -116,13 +118,13 @@ android {
     flavorDimensions += "vendor"
     productFlavors {
         create("play") {
-            minSdk = 23
+            minSdk = 24
         }
         create("other") {
-            minSdk = 23
+            minSdk = 24
         }
         create("otherLegacy") {
-            minSdk = 23
+            minSdk = 21
         }
     }
 

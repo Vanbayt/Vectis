@@ -135,6 +135,14 @@ object Settings {
     var autoPauseOnExcludedApps by dataStore.boolean(SettingsKey.AUTO_PAUSE_ON_EXCLUDED_APPS) { false }
     var dynamicApiBaseUrl by dataStore.string("dynamic_api_base_url") { BuildConfig.API_BASE_URL }
 
+    const val ROUTING_MODE_SMART = "smart"
+    const val ROUTING_MODE_ALL = "all"
+    const val ROUTING_MODE_BLOCKED = "blocked"
+
+    var routingMode by dataStore.string(SettingsKey.ROUTING_MODE) { ROUTING_MODE_SMART }
+    var adblockEnabled by dataStore.boolean(SettingsKey.ADBLOCK_ENABLED) { true }
+    var autoConnectOnBoot by dataStore.boolean(SettingsKey.AUTO_CONNECT_ON_BOOT) { true }
+
     fun serviceClass(): Class<*> = when (serviceMode) {
         ServiceMode.ROOT_TUN -> ProxyService::class.java
         else -> VPNService::class.java

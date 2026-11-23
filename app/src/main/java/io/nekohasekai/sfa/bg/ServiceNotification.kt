@@ -90,13 +90,17 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
 
     fun show(lastProfileName: String, contentText: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Application.notification.createNotificationChannel(
-                NotificationChannel(
-                    notificationChannel,
-                    "Service Notifications",
-                    NotificationManager.IMPORTANCE_LOW,
-                ),
-            )
+            val channel = NotificationChannel(
+                notificationChannel,
+                "Vectis Service",
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = "VPN Connection Status"
+                setShowBadge(false)
+                enableLights(false)
+                enableVibration(false)
+            }
+            Application.notification.createNotificationChannel(channel)
         }
         val type = if (Build.VERSION.SDK_INT >= 34) {
             android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
@@ -142,7 +146,7 @@ class ServiceNotification(private val status: MutableLiveData<Status>, private v
         Application.notificationManager.notify(
             notificationId,
             notificationBuilder
-                .setContentTitle("Vectis • VPN")
+                .setContentTitle(service.getString(R.string.status_started) + " • Vectis")
                 .setContentText(content)
                 .build(),
         )

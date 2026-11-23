@@ -15,6 +15,8 @@ sealed class UiEvent {
 
     object RequestStartService : UiEvent()
 
+    object RequestRestartService : UiEvent()
+
     object RequestReconnectService : UiEvent()
 
     object Logout : UiEvent()

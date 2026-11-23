@@ -2,9 +2,12 @@ package io.nekohasekai.sfa.bg
 
 import android.app.KeyguardManager
 import android.content.Context
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import androidx.annotation.RequiresApi
+import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.constant.Status
 
 @RequiresApi(24)
@@ -15,12 +18,21 @@ class TileService :
 
     override fun onServiceStatusChanged(status: Status) {
         qsTile?.apply {
-            state =
-                when (status) {
-                    Status.Started -> Tile.STATE_ACTIVE
-                    Status.Stopped -> Tile.STATE_INACTIVE
-                    else -> Tile.STATE_UNAVAILABLE
+            state = when (status) {
+                Status.Started -> Tile.STATE_ACTIVE
+                Status.Stopped -> Tile.STATE_INACTIVE
+                else -> Tile.STATE_UNAVAILABLE
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                subtitle = when (status) {
+                    Status.Started -> getString(R.string.status_started)
+                    Status.Stopped -> getString(R.string.status_default)
+                    Status.Starting -> getString(R.string.status_starting)
+                    Status.Stopping -> getString(R.string.status_stopping)
                 }
+            }
+            label = getString(R.string.app_name)
+            icon = Icon.createWithResource(this@TileService, R.drawable.ic_menu)
             updateTile()
         }
     }

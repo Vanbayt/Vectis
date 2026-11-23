@@ -100,15 +100,20 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
             io.nekohasekai.sfa.network.AppLogCollector.appendLog("VectisHealth", "[AutoSelector] Sing-Box proxy selected: '${proxyGroup.selected}' | Auto group active node: '${autoGroup?.selected}' | Active UI selection: '$selected'")
 
             val context = io.nekohasekai.sfa.Application.application
-            val activeOutboundName = when {
-                realSelectedTag.endsWith("-7") || realSelectedTag.contains("holland-7") -> "🇳🇱 Netherlands Reality TCP"
-                realSelectedTag.endsWith("-5") || realSelectedTag.contains("holland-5") -> "🇳🇱 Netherlands gRPC"
-                realSelectedTag.endsWith("-8") || realSelectedTag.contains("holland-8") -> "🇳🇱 Netherlands Hysteria 2 UDP"
-                realSelectedTag.endsWith("-1") || realSelectedTag.contains("germany-1") -> "🇩🇪 Germany Reality TCP"
-                realSelectedTag.endsWith("-2") || realSelectedTag.contains("germany-2") -> "🇩🇪 Germany Hysteria 2 UDP"
-                realSelectedTag.endsWith("-3") || realSelectedTag.contains("germany-3") -> "🇩🇪 Germany gRPC"
-                realSelectedTag.endsWith("-4") || realSelectedTag.contains("germany-4") -> "🇩🇪 Germany HTTPUpgrade"
-                else -> realSelectedTag.ifEmpty { context.getString(io.nekohasekai.sfa.R.string.protocol_selecting) }
+            val formattedLoc = io.nekohasekai.sfa.utils.LocationLocalizer.formatLocation(realSelectedTag)
+            val proto = when {
+                realSelectedTag.contains("hysteria", ignoreCase = true) || realSelectedTag.contains("hy2", ignoreCase = true) || realSelectedTag.endsWith("-8") || realSelectedTag.endsWith("-2") -> "Hysteria 2 UDP"
+                realSelectedTag.contains("anytls", ignoreCase = true) -> "AnyTLS (TCP)"
+                realSelectedTag.contains("naive", ignoreCase = true) -> "NaiveProxy"
+                realSelectedTag.contains("tuic", ignoreCase = true) -> "TUIC v5"
+                realSelectedTag.contains("grpc", ignoreCase = true) || realSelectedTag.endsWith("-5") || realSelectedTag.endsWith("-3") -> "VLESS gRPC"
+                realSelectedTag.contains("httpupgrade", ignoreCase = true) || realSelectedTag.endsWith("-4") -> "VLESS HTTPUpgrade"
+                else -> "VLESS Reality TCP"
+            }
+            val activeOutboundName = if (realSelectedTag.isBlank()) {
+                context.getString(io.nekohasekai.sfa.R.string.protocol_selecting)
+            } else {
+                "$formattedLoc $proto"
             }
 
             val rawItems = proxyGroup.items.toList()
@@ -121,7 +126,7 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
                     title = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_title),
                     subtitle = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_subtitle, activeOutboundName),
                     description = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_desc),
-                    countryFlag = "⚡",
+                    countryFlag = "",
                     protocolBadge = context.getString(io.nekohasekai.sfa.R.string.protocol_badge_smart_routing),
                     badgeColorType = "primary",
                     isAuto = true
@@ -168,7 +173,7 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
                 title = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_title),
                 subtitle = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_subtitle_fallback),
                 description = context.getString(io.nekohasekai.sfa.R.string.protocol_auto_desc),
-                countryFlag = "⚡",
+                countryFlag = "",
                 protocolBadge = context.getString(io.nekohasekai.sfa.R.string.protocol_badge_smart_routing),
                 badgeColorType = "primary",
                 isAuto = true
@@ -188,20 +193,41 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
                     val jsonObj = JSONObject(jsonStr)
                     val obs = jsonObj.optJSONArray("outbounds")
                     if (obs != null) {
+                        val selectorTags = mutableListOf<String>()
+                        val outboundMap = mutableMapOf<String, JSONObject>()
                         for (i in 0 until obs.length()) {
                             val ob = obs.optJSONObject(i) ?: continue
-                            val type = ob.optString("type")
                             val tag = ob.optString("tag")
-                            val host = ob.optString("server")
-                            val port = ob.optInt("server_port", 443)
+                            val type = ob.optString("type")
+                            outboundMap[tag] = ob
+                            if (tag == "proxy" && type == "selector") {
+                                val outboundsArr = ob.optJSONArray("outbounds")
+                                if (outboundsArr != null) {
+                                    for (j in 0 until outboundsArr.length()) {
+                                        val sTag = outboundsArr.optString(j)
+                                        if (sTag.isNotBlank() && sTag != "auto" && sTag != "proxy") {
+                                            selectorTags.add(sTag)
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
-                            if (type == "vless" || type == "hysteria2" || type == "hysteria") {
-                                parsedOutboundTags.add(tag)
-                                if (host.isNotEmpty() && port > 0) {
-                                    val isUdp = (type == "hysteria2" || type == "hysteria" || type == "tuic")
-                                    endpointsToProbe.add(
-                                        io.nekohasekai.sfa.network.PreConnectPingManager.ServerEndpoint(tag, host, port, isUdp)
-                                    )
+                        val targetTags = if (selectorTags.isNotEmpty()) selectorTags else outboundMap.keys.toList()
+                        for (tag in targetTags) {
+                            val ob = outboundMap[tag] ?: continue
+                            val type = ob.optString("type")
+                            if (type == "vless" || type == "hysteria2" || type == "hysteria" || type == "tuic" || type == "anytls" || type == "naive" || type == "shadowsocks") {
+                                if (!tag.startsWith("shadowtls-sub-") && !tag.contains("-ss2022-") && !tag.contains("-reality-12928")) {
+                                    parsedOutboundTags.add(tag)
+                                    val host = ob.optString("server")
+                                    val port = ob.optInt("server_port", 443)
+                                    if (host.isNotEmpty() && port > 0) {
+                                        val isUdp = (type == "hysteria2" || type == "hysteria" || type == "tuic")
+                                        endpointsToProbe.add(
+                                            io.nekohasekai.sfa.network.PreConnectPingManager.ServerEndpoint(tag, host, port, isUdp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -221,13 +247,11 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
             parsedOutboundTags
         } else {
             listOf(
-                "proxy-holland-7",
-                "proxy-holland-5",
-                "proxy-holland-8",
-                "proxy-germany-1",
-                "proxy-germany-3",
-                "proxy-germany-4",
-                "proxy-germany-2"
+                "proxy-sandbox-hy2-8443",
+                "proxy-sandbox-reality-8447",
+                "proxy-sandbox-naive-443",
+                "proxy-sandbox-tuic-9443",
+                "proxy-sandbox-shadowtls-8444"
             )
         }
 
@@ -256,9 +280,17 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
         val isHysteria = tag.contains("hysteria", ignoreCase = true) || tag.contains("hy2", ignoreCase = true) || tag.endsWith("-8") || tag.endsWith("-2") || tag.endsWith("-9")
         val isGrpc = tag.contains("grpc", ignoreCase = true) || tag.endsWith("-5") || tag.endsWith("-3")
         val isHttpUpgrade = tag.contains("httpupgrade", ignoreCase = true) || tag.endsWith("-4")
+        val isAnyTls = tag.contains("anytls", ignoreCase = true)
+        val isNaive = tag.contains("naive", ignoreCase = true)
+        val isTuic = tag.contains("tuic", ignoreCase = true)
+        val isShadowTls = tag.contains("shadowtls", ignoreCase = true) || tag.contains("ss2022", ignoreCase = true)
 
         val protocolName = when {
             isHysteria -> "Hysteria 2 (UDP)"
+            isAnyTls -> "AnyTLS (TCP)"
+            isNaive -> "NaiveProxy (Chromium)"
+            isTuic -> "TUIC v5 (BBR)"
+            isShadowTls -> "ShadowTLS v3"
             isGrpc -> "VLESS gRPC"
             isHttpUpgrade -> "VLESS HTTPUpgrade"
             else -> "VLESS Reality (TCP)"
@@ -266,6 +298,10 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
 
         val protocolBadge = when {
             isHysteria -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_mobile)
+            isAnyTls -> "0-RTT Pool"
+            isNaive -> "Анти-ТСПУ"
+            isTuic -> "BBR Speed"
+            isShadowTls -> "Скрытный TLS"
             isGrpc -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_dpi)
             isHttpUpgrade -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_dpi)
             else -> context.getString(io.nekohasekai.sfa.R.string.protocol_badge_speed)
@@ -273,27 +309,33 @@ class ProtocolSelectionViewModel : ViewModel(), CommandClient.Handler {
 
         val badgeColorType = when {
             isHysteria -> "warning"
+            isAnyTls -> "primary"
+            isNaive -> "success"
+            isTuic -> "warning"
             isGrpc -> "success"
             else -> "primary"
         }
 
         val description = when {
             isHysteria -> context.getString(io.nekohasekai.sfa.R.string.protocol_desc_hysteria)
+            isAnyTls -> "AnyTLS: маскировка с пре-разогретыми сессиями и рандомизированным паддингом"
+            isNaive -> "NaiveProxy: туннель HTTP/2 CONNECT через Chromium Cronet стек"
+            isTuic -> "TUIC v5: высокоскоростной протокол поверх QUIC с контроллером перегрузки BBR"
+            isShadowTls -> "ShadowTLS v3: двойное сокрытие Shadowsocks-2022 под TLS"
             isGrpc -> context.getString(io.nekohasekai.sfa.R.string.protocol_desc_grpc)
             else -> context.getString(io.nekohasekai.sfa.R.string.protocol_desc_vless)
         }
 
         val formattedLoc = io.nekohasekai.sfa.utils.LocationLocalizer.formatLocation(tag)
-        val title = "$formattedLoc — $protocolName"
-        val subtitle = context.getString(io.nekohasekai.sfa.R.string.protocol_item_subtitle, protocolName)
-
+        val title = protocolName
+        val subtitle = "$formattedLoc • $protocolName"
 
         return ProtocolItemUi(
             tag = tag,
             title = title,
             subtitle = subtitle,
             description = description,
-            countryFlag = countryFlag,
+            countryFlag = "",
             protocolBadge = protocolBadge,
             badgeColorType = badgeColorType,
             isAuto = false,

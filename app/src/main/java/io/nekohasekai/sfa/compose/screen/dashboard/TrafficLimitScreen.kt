@@ -1,378 +1,644 @@
 package io.nekohasekai.sfa.compose.screen.dashboard
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings as AndroidSettings
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AddShoppingCart
+import androidx.compose.material.icons.rounded.AllInclusive
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.DataUsage
-import androidx.compose.material3.*
+import androidx.compose.material.icons.rounded.HourglassEmpty
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
-
-import android.app.AppOpsManager
-import android.app.usage.NetworkStats
-import android.app.usage.NetworkStatsManager
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.os.Build
-import android.provider.Settings
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import io.nekohasekai.sfa.compose.screen.dashboard.DashboardViewModel
-import io.nekohasekai.sfa.compose.shared.PackageCache
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.koin.androidx.compose.koinViewModel
-
-import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavController
 import io.nekohasekai.sfa.R
+import org.koin.androidx.compose.koinViewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
-data class AppTrafficData(
-    val packageCache: PackageCache?,
-    val uid: Int,
-    val rxBytes: Long,
-    val txBytes: Long,
-    val totalBytes: Long
-)
-
-@Composable
-fun formatBytes(bytes: Long): String {
+fun formatBytes(bytes: Long, context: Context): String {
     return when {
-        bytes >= 1024 * 1024 * 1024 -> stringResource(R.string.unit_gb, String.format("%.2f", bytes.toFloat() / (1024 * 1024 * 1024)))
-        bytes >= 1024 * 1024 -> stringResource(R.string.unit_mb, String.format("%.2f", bytes.toFloat() / (1024 * 1024)))
-        bytes >= 1024 -> stringResource(R.string.unit_kb, String.format("%.2f", bytes.toFloat() / 1024))
-        else -> stringResource(R.string.unit_b, bytes.toString())
+        bytes >= 1024 * 1024 * 1024 -> context.getString(R.string.unit_gb, String.format(Locale.getDefault(), "%.2f", bytes.toFloat() / (1024 * 1024 * 1024)))
+        bytes >= 1024 * 1024 -> context.getString(R.string.unit_mb, String.format(Locale.getDefault(), "%.2f", bytes.toFloat() / (1024 * 1024)))
+        bytes >= 1024 -> context.getString(R.string.unit_kb, String.format(Locale.getDefault(), "%.2f", bytes.toFloat() / 1024))
+        else -> context.getString(R.string.unit_b, bytes.toString())
     }
-}
-
-fun checkUsageAccess(context: Context): Boolean {
-    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-    val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName)
-    } else {
-        appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), context.packageName)
-    }
-    return mode == AppOpsManager.MODE_ALLOWED
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TrafficLimitScreen(navController: NavController, viewModel: DashboardViewModel = koinViewModel()) {
-    LaunchedEffect(Unit) {
-        viewModel.refreshUserProfile()
-    }
+fun TrafficLimitScreen(
+    navController: NavController,
+    viewModel: TrafficLimitViewModel = koinViewModel()
+) {
     val state by viewModel.uiState.collectAsState()
-
-    val isUnlimited = state.trafficLimit <= 0L
-    val usedGb = state.trafficUsed.toFloat() / (1024 * 1024 * 1024)
-    val limitGb = state.trafficLimit.toFloat() / (1024 * 1024 * 1024)
-    val remainingGb = maxOf(0f, limitGb - usedGb)
-    val progress = if (isUnlimited) 0f else if (limitGb > 0) (usedGb / limitGb).coerceIn(0f, 1f) else 0f
-    val remainingStr = if (isUnlimited) "∞" else stringResource(R.string.unit_gb, String.format("%.1f", remainingGb))
-    val limitStr = if (isUnlimited) "∞" else stringResource(R.string.unit_gb, String.format("%.1f", limitGb))
-
-    val calendarReset = java.util.Calendar.getInstance()
-    val currentDay = calendarReset.get(java.util.Calendar.DAY_OF_MONTH)
-    val daysInMonth = calendarReset.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
-    val daysUntilReset = daysInMonth - currentDay + 1
-    val resetStr = stringResource(R.string.traffic_reset_in, daysUntilReset)
-
     val context = LocalContext.current
-    var hasUsageAccess by remember { mutableStateOf(checkUsageAccess(context)) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                hasUsageAccess = checkUsageAccess(context)
+                if (viewModel.checkUsageAccess(context)) {
+                    viewModel.loadAppTraffic(context)
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    var appTrafficList by remember { mutableStateOf<List<AppTrafficData>>(emptyList()) }
-    var isLoadingTraffic by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (viewModel.checkUsageAccess(context)) {
+            viewModel.loadAppTraffic(context)
+        }
+    }
 
-    LaunchedEffect(hasUsageAccess) {
-        if (hasUsageAccess) {
-            isLoadingTraffic = true
-            appTrafficList = withContext(Dispatchers.IO) {
-                val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
-                val pm = context.packageManager
+    val isUnlimited = state.trafficLimit <= 0L
+    val usedGb = state.trafficUsed.toFloat() / (1024 * 1024 * 1024)
+    val limitGb = state.trafficLimit.toFloat() / (1024 * 1024 * 1024)
+    val remainingGb = maxOf(0f, limitGb - usedGb)
+    val progress = if (isUnlimited) 0f else if (limitGb > 0) (usedGb / limitGb).coerceIn(0f, 1f) else 0f
+    val remainingStr = if (isUnlimited) "∞" else stringResource(R.string.unit_gb, String.format(Locale.getDefault(), "%.1f", remainingGb))
+    val limitStr = if (isUnlimited) "∞" else stringResource(R.string.unit_gb, String.format(Locale.getDefault(), "%.1f", limitGb))
 
-                val buckets = mutableMapOf<Int, AppTrafficData>()
-                val networkTypes = listOf(
-                    ConnectivityManager.TYPE_WIFI,
-                    ConnectivityManager.TYPE_MOBILE,
-                    ConnectivityManager.TYPE_VPN
-                )
-                
-                val calendar = java.util.Calendar.getInstance()
-                calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
-                calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                calendar.set(java.util.Calendar.MINUTE, 0)
-                calendar.set(java.util.Calendar.SECOND, 0)
-                calendar.set(java.util.Calendar.MILLISECOND, 0)
-                val startTime = calendar.timeInMillis
-                
-                for (networkType in networkTypes) {
-                    try {
-                        val stats = networkStatsManager.querySummary(
-                            networkType,
-                            null,
-                            startTime,
-                            System.currentTimeMillis()
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 850, easing = FastOutSlowInEasing),
+        label = "progressAnim"
+    )
+
+    val progressColor = when {
+        progress >= 0.9f -> MaterialTheme.colorScheme.error
+        progress >= 0.75f -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.primary
+    }
+
+    val resetStr = remember(state.quotaResetDate) {
+        val qDateStr = state.quotaResetDate
+        if (qDateStr != null) {
+            try {
+                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
+                    timeZone = TimeZone.getTimeZone("UTC")
+                }
+                val date = sdf.parse(qDateStr)
+                if (date != null) {
+                    val diff = date.time - System.currentTimeMillis()
+                    val days = (diff / (1000 * 60 * 60 * 24)).coerceAtLeast(0)
+                    val outSdf = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+                    "${outSdf.format(date)} ($days дн.)"
+                } else {
+                    val calendarReset = Calendar.getInstance()
+                    val currentDay = calendarReset.get(Calendar.DAY_OF_MONTH)
+                    val daysInMonth = calendarReset.getActualMaximum(Calendar.DAY_OF_MONTH)
+                    val daysUntilReset = daysInMonth - currentDay + 1
+                    context.getString(R.string.traffic_reset_in, daysUntilReset)
+                }
+            } catch (_: Exception) {
+                val calendarReset = Calendar.getInstance()
+                val currentDay = calendarReset.get(Calendar.DAY_OF_MONTH)
+                val daysInMonth = calendarReset.getActualMaximum(Calendar.DAY_OF_MONTH)
+                val daysUntilReset = daysInMonth - currentDay + 1
+                context.getString(R.string.traffic_reset_in, daysUntilReset)
+            }
+        } else {
+            val calendarReset = Calendar.getInstance()
+            val currentDay = calendarReset.get(Calendar.DAY_OF_MONTH)
+            val daysInMonth = calendarReset.getActualMaximum(Calendar.DAY_OF_MONTH)
+            val daysUntilReset = daysInMonth - currentDay + 1
+            context.getString(R.string.traffic_reset_in, daysUntilReset)
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(R.string.traffic_limit_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back)
                         )
-                        val bucket = NetworkStats.Bucket()
-                        while (stats.hasNextBucket()) {
-                            stats.getNextBucket(bucket)
-                            val uid = bucket.uid
-                            if (uid > 10000) { // skip system/root
-                                val existing = buckets[uid]
-                                buckets[uid] = if (existing != null) {
-                                    existing.copy(
-                                        rxBytes = existing.rxBytes + bucket.rxBytes,
-                                        txBytes = existing.txBytes + bucket.txBytes,
-                                        totalBytes = existing.totalBytes + bucket.rxBytes + bucket.txBytes
-                                    )
-                                } else {
-                                    val packages = pm.getPackagesForUid(uid)
-                                    var packageCache: PackageCache? = null
-                                    if (!packages.isNullOrEmpty()) {
-                                        try {
-                                            val packageInfo = pm.getPackageInfo(packages[0], 0)
-                                            val appInfo = packageInfo.applicationInfo
-                                            if (appInfo != null) {
-                                                packageCache = PackageCache(packageInfo, appInfo, pm)
-                                            }
-                                        } catch (e: Exception) {}
-                                    }
-                                    AppTrafficData(packageCache, uid, bucket.rxBytes, bucket.txBytes, bucket.rxBytes + bucket.txBytes)
-                                }
-                            }
-                        }
-                        stats.close()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
-                }
-                buckets.values.filter { it.totalBytes > 0 }.sortedByDescending { it.totalBytes }.take(20)
-            }
-            isLoadingTraffic = false
-        }
-    }
-
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.traffic_limit_title), fontWeight = FontWeight.Bold) },
-            navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                titleContentColor = MaterialTheme.colorScheme.onSurface,
-            )
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(32.dp)
-    ) {
-        // Big circular progress
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(240.dp)) {
-            CircularProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                strokeWidth = 24.dp,
-            )
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = remainingStr,
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onSurface
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
                 )
-                Text(
-                    text = stringResource(R.string.traffic_remaining),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        // Details card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(32.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.surface
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.DataUsage, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.traffic_used), style = MaterialTheme.typography.titleMedium)
-                    }
-                    Text(stringResource(R.string.unit_gb, String.format("%.1f", usedGb)), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(R.string.traffic_total_available), style = MaterialTheme.typography.titleMedium)
-                    Text(limitStr, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(R.string.traffic_limit_reset), style = MaterialTheme.typography.titleMedium)
-                    Text(resetStr, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        // Buy more button
-        if (!isUnlimited && (progress >= 0.9f || remainingGb <= 0.5f)) {
-            OutlinedButton(
-                onClick = { /* TODO: Open billing */ },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(32.dp)
+            // Material 3 Expressive circular progress hero element
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(240.dp)
+                    .padding(12.dp)
             ) {
-                Icon(Icons.Rounded.AddShoppingCart, contentDescription = null)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(stringResource(R.string.traffic_buy_more), style = MaterialTheme.typography.titleMedium)
+                CircularProgressIndicator(
+                    progress = { if (isUnlimited) 0.05f else animatedProgress },
+                    modifier = Modifier.fillMaxSize(),
+                    color = if (isUnlimited) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else progressColor,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    strokeWidth = 20.dp,
+                    strokeCap = StrokeCap.Round
+                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = when {
+                            isUnlimited -> MaterialTheme.colorScheme.secondaryContainer
+                            progress >= 0.9f -> MaterialTheme.colorScheme.errorContainer
+                            else -> MaterialTheme.colorScheme.primaryContainer
+                        }
+                    ) {
+                        Text(
+                            text = if (isUnlimited) stringResource(R.string.profile_traffic_limit_unlimited) else "${(progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.Bold,
+                            color = when {
+                                isUnlimited -> MaterialTheme.colorScheme.onSecondaryContainer
+                                progress >= 0.9f -> MaterialTheme.colorScheme.onErrorContainer
+                                else -> MaterialTheme.colorScheme.onPrimaryContainer
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
+                    }
+                    Text(
+                        text = remainingStr,
+                        style = MaterialTheme.typography.displaySmall.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = stringResource(R.string.traffic_remaining),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-        }
 
-        if (!hasUsageAccess) {
+            // Overview Details Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        stringResource(R.string.traffic_permission_required_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.traffic_permission_required_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onErrorContainer, contentColor = MaterialTheme.colorScheme.errorContainer)
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Row 1: Used
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(stringResource(R.string.traffic_grant_permission))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.DataUsage,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = stringResource(R.string.traffic_used),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Text(
+                            text = stringResource(R.string.unit_gb, String.format(Locale.getDefault(), "%.1f", usedGb)),
+                            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 50.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                    )
+
+                    // Row 2: Total limit
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.AllInclusive,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = stringResource(R.string.traffic_total_available),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Text(
+                            text = limitStr,
+                            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 50.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                    )
+
+                    // Row 3: Quota Reset
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Schedule,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = stringResource(R.string.traffic_limit_reset),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Text(
+                            text = resetStr,
+                            style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
-        } else {
-            if (isLoadingTraffic) {
-                CircularProgressIndicator()
-            } else {
+
+            // Buy more button if approaching limit
+            if (!isUnlimited && (progress >= 0.85f || remainingGb <= 0.5f)) {
+                OutlinedButton(
+                    onClick = { /* Open billing / bot */ },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.AddShoppingCart,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = stringResource(R.string.traffic_buy_more),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+
+            // Usage stats / App breakdown
+            if (!state.hasUsageAccess) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(32.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text(stringResource(R.string.traffic_apps_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        if (appTrafficList.isEmpty()) {
-                            Text(
-                                stringResource(R.string.traffic_apps_empty),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Security,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
                             )
-                        } else {
-                            appTrafficList.forEachIndexed { index, appTraffic ->
+                        }
+                        Text(
+                            text = stringResource(R.string.traffic_permission_required_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(R.string.traffic_permission_required_desc),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(
+                            onClick = {
+                                context.startActivity(Intent(AndroidSettings.ACTION_USAGE_ACCESS_SETTINGS))
+                            },
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(stringResource(R.string.traffic_grant_permission))
+                        }
+                    }
+                }
+            } else {
+                if (state.isLoadingApps) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeCap = StrokeCap.Round
+                        )
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.traffic_apps_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            if (state.appTrafficList.isEmpty()) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 16.dp),
+                                    horizontalArrangement = Arrangement.Center,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    if (appTraffic.packageCache?.applicationIcon != null) {
-                                        Image(
-                                            bitmap = appTraffic.packageCache.applicationIcon,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp))
-                                        )
-                                    } else {
-                                        Box(modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)))
-                                    }
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = appTraffic.packageCache?.applicationLabel ?: appTraffic.uid.toString(),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            maxLines = 1
-                                        )
-                                        Text(
-                                            text = formatBytes(appTraffic.totalBytes),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
+                                    Icon(
+                                        imageVector = Icons.Rounded.HourglassEmpty,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.traffic_apps_empty),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
-                                if (index < appTrafficList.size - 1) {
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            } else {
+                                val maxAppBytes = remember(state.appTrafficList) {
+                                    state.appTrafficList.maxOfOrNull { it.totalBytes }?.coerceAtLeast(1L) ?: 1L
+                                }
+
+                                state.appTrafficList.forEachIndexed { index, appTraffic ->
+                                    val appRelativeProgress = (appTraffic.totalBytes.toFloat() / maxAppBytes).coerceIn(0f, 1f)
+
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (appTraffic.packageCache?.applicationIcon != null) {
+                                                Image(
+                                                    bitmap = appTraffic.packageCache.applicationIcon,
+                                                    contentDescription = null,
+                                                    modifier = Modifier
+                                                        .size(42.dp)
+                                                        .clip(RoundedCornerShape(12.dp))
+                                                )
+                                            } else {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(42.dp)
+                                                        .clip(RoundedCornerShape(12.dp))
+                                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.DataUsage,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.width(14.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = appTraffic.packageCache?.applicationLabel ?: appTraffic.uid.toString(),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            imageVector = Icons.Rounded.ArrowUpward,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(12.dp),
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                        Spacer(modifier = Modifier.width(2.dp))
+                                                        Text(
+                                                            text = formatBytes(appTraffic.txBytes, context),
+                                                            style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(
+                                                            imageVector = Icons.Rounded.ArrowDownward,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(12.dp),
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                        Spacer(modifier = Modifier.width(2.dp))
+                                                        Text(
+                                                            text = formatBytes(appTraffic.rxBytes, context),
+                                                            style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Text(
+                                                text = formatBytes(appTraffic.totalBytes, context),
+                                                style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+
+                                        // Relative usage progress bar
+                                        LinearProgressIndicator(
+                                            progress = { appRelativeProgress },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(start = 56.dp)
+                                                .height(4.dp)
+                                                .clip(RoundedCornerShape(2.dp)),
+                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
+                                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                        )
+                                    }
+
+                                    if (index < state.appTrafficList.size - 1) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(start = 56.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

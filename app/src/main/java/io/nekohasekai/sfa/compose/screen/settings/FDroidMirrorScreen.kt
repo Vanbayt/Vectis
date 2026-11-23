@@ -21,12 +21,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -36,6 +39,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 
@@ -51,12 +55,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.database.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -206,27 +210,25 @@ fun FDroidMirrorScreen(navController: NavController) {
                 text = country,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp),
             )
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
             ) {
                 Column {
                     mirrors.forEachIndexed { index, mirror ->
-                        val shape = when {
-                            mirrors.size == 1 -> RoundedCornerShape(12.dp)
-                            index == 0 -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                            index == mirrors.lastIndex -> RoundedCornerShape(
-                                bottomStart = 12.dp,
-                                bottomEnd = 12.dp,
+                        if (index > 0) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                             )
-                            else -> RoundedCornerShape(0.dp)
                         }
                         ListItem(
                             headlineContent = {
@@ -238,7 +240,7 @@ fun FDroidMirrorScreen(navController: NavController) {
                             leadingContent = {
                                 RadioButton(
                                     selected = selectedMirrorUrl == mirror.url,
-                                    onClick = { selectMirror(mirror.url) },
+                                    onClick = null,
                                 )
                             },
                             trailingContent = {
@@ -249,7 +251,6 @@ fun FDroidMirrorScreen(navController: NavController) {
                                 )
                             },
                             modifier = Modifier
-                                .clip(shape)
                                 .clickable { selectMirror(mirror.url) },
                             colors = ListItemDefaults.colors(
                                 containerColor = Color.Transparent,
@@ -266,28 +267,25 @@ fun FDroidMirrorScreen(navController: NavController) {
             text = stringResource(R.string.fdroid_mirror_custom),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+            modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp),
         )
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
             Column {
                 parsedCustomMirrors.forEachIndexed { index, mirror ->
-                    val isLast = index == parsedCustomMirrors.lastIndex && !showAddForm
-                    val shape = when {
-                        index == 0 && isLast -> RoundedCornerShape(12.dp)
-                        index == 0 -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                        isLast -> RoundedCornerShape(
-                            bottomStart = 12.dp,
-                            bottomEnd = 12.dp,
+                    if (index > 0) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                         )
-                        else -> RoundedCornerShape(0.dp)
                     }
                     ListItem(
                         headlineContent = {
@@ -308,7 +306,7 @@ fun FDroidMirrorScreen(navController: NavController) {
                         leadingContent = {
                             RadioButton(
                                 selected = selectedMirrorUrl == mirror.url,
-                                onClick = { selectMirror(mirror.url) },
+                                onClick = null,
                             )
                         },
                         trailingContent = {
@@ -337,7 +335,6 @@ fun FDroidMirrorScreen(navController: NavController) {
                             }
                         },
                         modifier = Modifier
-                            .clip(shape)
                             .clickable { selectMirror(mirror.url) },
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,
@@ -346,6 +343,12 @@ fun FDroidMirrorScreen(navController: NavController) {
                 }
 
                 if (showAddForm) {
+                    if (parsedCustomMirrors.isNotEmpty()) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        )
+                    }
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -373,9 +376,17 @@ fun FDroidMirrorScreen(navController: NavController) {
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
+                            TextButton(onClick = {
+                                showAddForm = false
+                                newMirrorName = ""
+                                newMirrorUrl = ""
+                                urlError = null
+                            }) {
+                                Text(stringResource(R.string.cancel))
+                            }
                             Button(onClick = {
                                 val url = newMirrorUrl.trim().trimEnd('/')
                                 if (!URLUtil.isHttpsUrl(url)) {
@@ -398,6 +409,12 @@ fun FDroidMirrorScreen(navController: NavController) {
                         }
                     }
                 } else {
+                    if (parsedCustomMirrors.isNotEmpty()) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        )
+                    }
                     ListItem(
                         headlineContent = {
                             Text(
@@ -414,13 +431,6 @@ fun FDroidMirrorScreen(navController: NavController) {
                             )
                         },
                         modifier = Modifier
-                            .clip(
-                                if (parsedCustomMirrors.isEmpty()) {
-                                    RoundedCornerShape(12.dp)
-                                } else {
-                                    RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-                                },
-                            )
                             .clickable { showAddForm = true },
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,

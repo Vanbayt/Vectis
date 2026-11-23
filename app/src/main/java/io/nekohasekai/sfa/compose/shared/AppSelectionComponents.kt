@@ -7,12 +7,11 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
-
+import androidx.collection.LruCache
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,13 +44,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class SortMode {
     NAME,
@@ -60,23 +62,19 @@ enum class SortMode {
     UPDATE_TIME,
 }
 
-class PackageCache(
-    private val packageInfo: PackageInfo,
-    private val appInfo: ApplicationInfo,
-    private val packageManager: PackageManager,
-) {
-    val packageName: String get() = packageInfo.packageName
+object AppIconCache {
+    private val memoryCache = LruCache<String, ImageBitmap>(300)
 
-    val uid: Int get() = packageInfo.applicationInfo!!.uid
+    fun get(packageName: String): ImageBitmap? = memoryCache.get(packageName)
 
-    val installTime: Long get() = packageInfo.firstInstallTime
-    val updateTime: Long get() = packageInfo.lastUpdateTime
-    val isSystem: Boolean get() = appInfo.flags and ApplicationInfo.FLAG_SYSTEM == 1
-    val isOffline: Boolean
-        get() = packageInfo.requestedPermissions?.contains(Manifest.permission.INTERNET) != true
-    val isDisabled: Boolean get() = appInfo.flags and ApplicationInfo.FLAG_INSTALLED == 0
+    fun put(packageName: String, bitmap: ImageBitmap) {
+        memoryCache.put(packageName, bitmap)
+    }
 
-    val applicationIcon by lazy {
+    fun loadIcon(appInfo: ApplicationInfo, packageManager: PackageManager): ImageBitmap {
+        val cached = get(appInfo.packageName)
+        if (cached != null) return cached
+
         val drawable = appInfo.loadIcon(packageManager)
         val bitmap =
             if (drawable is BitmapDrawable) {
@@ -93,14 +91,73 @@ class PackageCache(
                 drawable.draw(canvas)
                 imageBitmap
             }
-        bitmap.asImageBitmap()
+        val image = bitmap.asImageBitmap()
+        put(appInfo.packageName, image)
+        return image
     }
+}
 
-    val applicationLabel by lazy {
-        appInfo.loadLabel(packageManager).toString()
-    }
+class PackageCache(
+    private val packageInfo: PackageInfo,
+    private val appInfo: ApplicationInfo,
+    private val packageManager: PackageManager,
+    initialLabel: String? = null,
+) {
+    val packageName: String get() = packageInfo.packageName
+
+    val uid: Int get() = packageInfo.applicationInfo?.uid ?: 0
+
+    val installTime: Long get() = packageInfo.firstInstallTime
+    val updateTime: Long get() = packageInfo.lastUpdateTime
+    val isSystem: Boolean get() = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
+    val isOffline: Boolean
+        get() = packageInfo.requestedPermissions?.contains(Manifest.permission.INTERNET) != true
+    val isDisabled: Boolean get() = appInfo.flags and ApplicationInfo.FLAG_INSTALLED == 0
+
+    fun loadIcon(): ImageBitmap = AppIconCache.loadIcon(appInfo, packageManager)
+
+    val cachedIcon: ImageBitmap? get() = AppIconCache.get(packageName)
+
+    val applicationIcon: ImageBitmap get() = loadIcon()
+
+    val applicationLabel: String = initialLabel ?: appInfo.loadLabel(packageManager).toString()
 
     val info: PackageInfo get() = packageInfo
+}
+
+@Composable
+fun AppIconImage(
+    packageCache: PackageCache,
+    modifier: Modifier = Modifier,
+) {
+    var icon by remember(packageCache.packageName) {
+        mutableStateOf(packageCache.cachedIcon)
+    }
+
+    LaunchedEffect(packageCache.packageName) {
+        if (icon == null) {
+            val loaded = withContext(Dispatchers.IO) {
+                packageCache.loadIcon()
+            }
+            icon = loaded
+        }
+    }
+
+    val currentIcon = icon
+    if (currentIcon != null) {
+        Image(
+            bitmap = currentIcon,
+            contentDescription = stringResource(R.string.content_description_app_icon),
+            modifier = modifier,
+        )
+    } else {
+        Box(
+            modifier = modifier.background(
+                MaterialTheme.colorScheme.surfaceContainerHighest,
+                RoundedCornerShape(12.dp),
+            ),
+        )
+    }
 }
 
 fun buildDisplayPackages(
@@ -164,30 +221,33 @@ fun AppSelectionCard(
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
     var showCopyMenu by remember { mutableStateOf(false) }
-    val cardShape = RoundedCornerShape(22.dp)
-    val cardModifier =
-        if (enableCopyActions) {
-            Modifier
+    val cardShape = RoundedCornerShape(20.dp)
+
+    Box {
+        Card(
+            modifier = Modifier
                 .fillMaxWidth()
                 .clip(cardShape)
                 .combinedClickable(
                     onClick = { onToggle(!selected) },
-                    onLongClick = { showContextMenu = true },
-                )
-        } else {
-            Modifier
-                .fillMaxWidth()
-                .clip(cardShape)
-                .clickable { onToggle(!selected) }
-        }
-
-    Box {
-        Card(
-            modifier = cardModifier,
+                    onLongClick = if (enableCopyActions) {
+                        { showContextMenu = true }
+                    } else {
+                        null
+                    },
+                ),
             shape = cardShape,
-            border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)) else null,
+            border = if (selected) {
+                BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            } else {
+                null
+            },
             colors = CardDefaults.cardColors(
-                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.surfaceContainerLow,
+                containerColor = if (selected) {
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                },
             ),
         ) {
             Row(
@@ -195,10 +255,11 @@ fun AppSelectionCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Image(
-                    bitmap = packageCache.applicationIcon,
-                    contentDescription = stringResource(R.string.content_description_app_icon),
-                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)),
+                AppIconImage(
+                    packageCache = packageCache,
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(12.dp)),
                 )
                 Column(
                     modifier = Modifier.weight(1f),
@@ -206,7 +267,7 @@ fun AppSelectionCard(
                     Text(
                         text = packageCache.applicationLabel,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -221,14 +282,12 @@ fun AppSelectionCard(
                 }
                 Switch(
                     checked = selected,
-                    onCheckedChange = { onToggle(it) },
+                    onCheckedChange = null,
                 )
             }
         }
 
-
-
-        if (enableCopyActions) {
+        if (enableCopyActions && showContextMenu) {
             DropdownMenu(
                 expanded = showContextMenu,
                 onDismissRequest = {

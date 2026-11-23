@@ -33,6 +33,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -68,7 +69,6 @@ import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.base.SelectableMessageDialog
 import io.nekohasekai.sfa.compose.base.UiEvent
 import io.nekohasekai.sfa.compose.base.rememberApplyServiceChangeNotifier
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.utils.DetectionResult
@@ -324,18 +324,6 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
         val isLsposedActivated = systemHookStatus?.active == true
         val showLogs = isLsposedActivated && !hasPendingChange
         val showExportDebug = showLogs
-        val statusShape =
-            if (showLogs || hasPendingChange) {
-                RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-            } else {
-                RoundedCornerShape(12.dp)
-            }
-        val logItemShape =
-            if (showExportDebug) {
-                RoundedCornerShape(0.dp)
-            } else {
-                RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-            }
         val statusLabel =
             when {
                 hasPendingDowngrade -> stringResource(R.string.lsposed_module_pending_downgrade)
@@ -362,15 +350,16 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
             text = stringResource(R.string.privilege_module_title),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 32.dp, top = 16.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp),
         )
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
             Column(
@@ -398,12 +387,15 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                             tint = statusIconTint,
                         )
                     },
-                    modifier = Modifier.clip(statusShape),
                     colors = ListItemDefaults.colors(
                         containerColor = Color.Transparent,
                     ),
                 )
                 if (showLogs) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
                     ListItem(
                         headlineContent = {
                             Text(
@@ -425,18 +417,19 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         },
-                        modifier =
-                        Modifier
-                            .clip(logItemShape)
-                            .clickable {
-                                navController.navigate("settings/privilege/logs")
-                            },
+                        modifier = Modifier.clickable {
+                            navController.navigate("settings/privilege/logs")
+                        },
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,
                         ),
                     )
                 }
                 if (showExportDebug) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
                     ListItem(
                         headlineContent = {
                             Text(
@@ -451,49 +444,50 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                         },
-                        modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                            .clickable {
-                                val exportBase = File(context.cacheDir, "debug")
-                                if (!exportBase.exists()) {
-                                    exportBase.mkdirs()
+                        modifier = Modifier.clickable {
+                            val exportBase = File(context.cacheDir, "debug")
+                            if (!exportBase.exists()) {
+                                exportBase.mkdirs()
+                            }
+                            val timestamp =
+                                SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                            val outZip = File(exportBase, "sing-box-lsposed-debug-$timestamp.zip")
+                            exportCancelled = false
+                            exportError = null
+                            showExportProgressDialog = true
+                            scope.launch {
+                                val result = withContext(Dispatchers.IO) {
+                                    PrivilegeSettingsClient.exportDebugInfo(outZip.absolutePath)
                                 }
-                                val timestamp =
-                                    SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                                val outZip = File(exportBase, "sing-box-lsposed-debug-$timestamp.zip")
-                                exportCancelled = false
-                                exportError = null
-                                showExportProgressDialog = true
-                                scope.launch {
-                                    val result = withContext(Dispatchers.IO) {
-                                        PrivilegeSettingsClient.exportDebugInfo(outZip.absolutePath)
-                                    }
-                                    if (exportCancelled) {
-                                        outZip.delete()
-                                        return@launch
-                                    }
-                                    showExportProgressDialog = false
-                                    val failure = result.error
-                                    if (failure == null) {
-                                        exportedFile = outZip
-                                        showExportSuccessDialog = true
-                                    } else {
-                                        messageDialogTitle = context.getString(R.string.error_title)
-                                        messageDialogMessage = context.getString(
-                                            R.string.privilege_settings_export_debug_failed,
-                                            failure,
-                                        )
-                                        showMessageDialog = true
-                                    }
+                                if (exportCancelled) {
+                                    outZip.delete()
+                                    return@launch
                                 }
-                            },
+                                showExportProgressDialog = false
+                                val failure = result.error
+                                if (failure == null) {
+                                    exportedFile = outZip
+                                    showExportSuccessDialog = true
+                                } else {
+                                    messageDialogTitle = context.getString(R.string.error_title)
+                                    messageDialogMessage = context.getString(
+                                        R.string.privilege_settings_export_debug_failed,
+                                        failure,
+                                    )
+                                    showMessageDialog = true
+                                }
+                            }
+                        },
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,
                         ),
                     )
                 }
                 if (hasPendingChange) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
                     ListItem(
                         headlineContent = {
                             Text(
@@ -508,45 +502,42 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                         },
-                        modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                            .clickable {
-                                scope.launch {
-                                    val failure = withContext(Dispatchers.IO) {
-                                        runCatching {
-                                            val process = Runtime.getRuntime().exec(
-                                                arrayOf(
-                                                    "su",
-                                                    "-c",
-                                                    "/system/bin/svc power reboot || /system/bin/reboot",
-                                                ),
-                                            )
-                                            val error = process.errorStream.bufferedReader().use { it.readText().trim() }
-                                            process.inputStream.close()
-                                            process.outputStream.close()
-                                            process.errorStream.close()
-                                            val code = process.waitFor()
-                                            if (code == 0) {
-                                                null
-                                            } else {
-                                                error.ifBlank { "exit=$code" }
-                                            }
-                                        }.getOrElse { it.message ?: "unknown" }
-                                    }
-                                    if (failure != null) {
-                                        val message =
-                                            if (failure == "unknown" || failure.startsWith("exit=")) {
-                                                context.getString(R.string.root_access_required)
-                                            } else {
-                                                context.getString(R.string.privilege_module_restart_failed, failure)
-                                            }
-                                        messageDialogTitle = context.getString(R.string.error_title)
-                                        messageDialogMessage = message
-                                        showMessageDialog = true
-                                    }
+                        modifier = Modifier.clickable {
+                            scope.launch {
+                                val failure = withContext(Dispatchers.IO) {
+                                    runCatching {
+                                        val process = Runtime.getRuntime().exec(
+                                            arrayOf(
+                                                "su",
+                                                "-c",
+                                                "/system/bin/svc power reboot || /system/bin/reboot",
+                                            ),
+                                        )
+                                        val error = process.errorStream.bufferedReader().use { it.readText().trim() }
+                                        process.inputStream.close()
+                                        process.outputStream.close()
+                                        process.errorStream.close()
+                                        val code = process.waitFor()
+                                        if (code == 0) {
+                                            null
+                                        } else {
+                                            error.ifBlank { "exit=$code" }
+                                        }
+                                    }.getOrElse { it.message ?: "unknown" }
                                 }
-                            },
+                                if (failure != null) {
+                                    val message =
+                                        if (failure == "unknown" || failure.startsWith("exit=")) {
+                                            context.getString(R.string.root_access_required)
+                                        } else {
+                                            context.getString(R.string.privilege_module_restart_failed, failure)
+                                        }
+                                    messageDialogTitle = context.getString(R.string.error_title)
+                                    messageDialogMessage = message
+                                    showMessageDialog = true
+                                }
+                            }
+                        },
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,
                         ),
@@ -559,18 +550,44 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
             text = stringResource(R.string.privilege_settings_hide_title),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
         )
 
         val privilegeControlsEnabled = isLsposedActivated && !hasPendingChange
         val hasManageItem = privilegeSettingsEnabled
 
+        val togglePrivilege: () -> Unit = {
+            val checked = !privilegeSettingsEnabled
+            privilegeSettingsEnabled = checked
+            if (checked && !interfaceRenameEnabled) {
+                interfaceRenameEnabled = true
+            }
+            scope.launch {
+                val failure =
+                    withContext(Dispatchers.IO) {
+                        Settings.privilegeSettingsEnabled = checked
+                        if (checked) {
+                            Settings.privilegeSettingsInterfaceRenameEnabled = true
+                        }
+                        PrivilegeSettingsClient.sync()
+                    }
+                if (failure != null) {
+                    messageDialogTitle = context.getString(R.string.error_title)
+                    messageDialogMessage = failure.message ?: failure.toString()
+                    showMessageDialog = true
+                } else {
+                    notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                }
+            }
+        }
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
             Column(
@@ -601,41 +618,13 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                     trailingContent = {
                         Switch(
                             checked = privilegeSettingsEnabled,
-                            onCheckedChange = { checked ->
-                                privilegeSettingsEnabled = checked
-                                if (checked && !interfaceRenameEnabled) {
-                                    interfaceRenameEnabled = true
-                                }
-                                scope.launch {
-                                    val failure =
-                                        withContext(Dispatchers.IO) {
-                                            Settings.privilegeSettingsEnabled = checked
-                                            if (checked) {
-                                                Settings.privilegeSettingsInterfaceRenameEnabled = true
-                                            }
-                                            PrivilegeSettingsClient.sync()
-                                        }
-                                    if (failure != null) {
-                                        messageDialogTitle = context.getString(R.string.error_title)
-                                        messageDialogMessage = failure.message ?: failure.toString()
-                                        showMessageDialog = true
-                                    } else {
-                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
-                                    }
-                                }
-                            },
+                            onCheckedChange = null,
                             enabled = privilegeControlsEnabled,
                         )
                     },
                     modifier = Modifier
                         .alpha(if (privilegeControlsEnabled) 1f else disabledAlpha)
-                        .clip(
-                            if (hasManageItem) {
-                                RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                            } else {
-                                RoundedCornerShape(12.dp)
-                            },
-                        ),
+                        .clickable(enabled = privilegeControlsEnabled, onClick = togglePrivilege),
                     colors = ListItemDefaults.colors(
                         containerColor = Color.Transparent,
                     ),
@@ -643,6 +632,10 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
 
                 val manageEnabled = privilegeControlsEnabled && privilegeSettingsEnabled
                 if (hasManageItem) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
                     ListItem(
                         headlineContent = {
                             Text(
@@ -666,7 +659,6 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                         },
                         modifier = Modifier
                             .alpha(if (manageEnabled) 1f else disabledAlpha)
-                            .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
                             .clickable(enabled = manageEnabled) {
                                 navController.navigate("settings/privilege/manage")
                             },
@@ -682,21 +674,41 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
             text = stringResource(R.string.privilege_settings_interface_rename_title),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
         )
+
+        val renameControlsEnabled = isLsposedActivated && !hasPendingChange
+        val toggleRename: () -> Unit = {
+            val checked = !interfaceRenameEnabled
+            interfaceRenameEnabled = checked
+            scope.launch {
+                val failure =
+                    withContext(Dispatchers.IO) {
+                        Settings.privilegeSettingsInterfaceRenameEnabled = checked
+                        PrivilegeSettingsClient.sync()
+                    }
+                if (failure != null) {
+                    messageDialogTitle = context.getString(R.string.error_title)
+                    messageDialogMessage = failure.message ?: failure.toString()
+                    showMessageDialog = true
+                } else {
+                    notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                }
+            }
+        }
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                val renameControlsEnabled = isLsposedActivated && !hasPendingChange
                 val disabledAlpha = 0.38f
                 ListItem(
                     headlineContent = {
@@ -715,35 +727,13 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                     trailingContent = {
                         Switch(
                             checked = interfaceRenameEnabled,
-                            onCheckedChange = { checked ->
-                                interfaceRenameEnabled = checked
-                                scope.launch {
-                                    val failure =
-                                        withContext(Dispatchers.IO) {
-                                            Settings.privilegeSettingsInterfaceRenameEnabled = checked
-                                            PrivilegeSettingsClient.sync()
-                                        }
-                                    if (failure != null) {
-                                        messageDialogTitle = context.getString(R.string.error_title)
-                                        messageDialogMessage = failure.message ?: failure.toString()
-                                        showMessageDialog = true
-                                    } else {
-                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
-                                    }
-                                }
-                            },
+                            onCheckedChange = null,
                             enabled = renameControlsEnabled,
                         )
                     },
                     modifier = Modifier
                         .alpha(if (renameControlsEnabled) 1f else disabledAlpha)
-                        .clip(
-                            if (interfaceRenameEnabled) {
-                                RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                            } else {
-                                RoundedCornerShape(12.dp)
-                            },
-                        ),
+                        .clickable(enabled = renameControlsEnabled, onClick = toggleRename),
                     colors = ListItemDefaults.colors(
                         containerColor = Color.Transparent,
                     ),
@@ -751,6 +741,10 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
 
                 if (interfaceRenameEnabled) {
                     val prefixEnabled = renameControlsEnabled
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
                     ListItem(
                         headlineContent = {
                             Text(
@@ -781,7 +775,6 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                         },
                         modifier = Modifier
                             .alpha(if (prefixEnabled) 1f else disabledAlpha)
-                            .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
                             .clickable(enabled = prefixEnabled) {
                                 interfacePrefixInput = interfacePrefix
                                 showInterfacePrefixDialog = true
@@ -798,15 +791,16 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
             text = stringResource(R.string.privilege_settings_vpn_detection_title),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
         )
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
             Column(
@@ -836,7 +830,6 @@ fun PrivilegeSettingsScreen(navController: NavController, serviceStatus: Status 
                     },
                     modifier = Modifier
                         .alpha(if (testEnabled) 1f else 0.38f)
-                        .clip(RoundedCornerShape(12.dp))
                         .clickable(enabled = testEnabled) {
                             showTestDialog = true
                             isTestRunning = true

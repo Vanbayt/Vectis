@@ -19,8 +19,29 @@ import java.net.SocketTimeoutException
 
 object UdpProber {
     private const val TAG = "UdpProber"
-    private const val PROBE_PACKETS_COUNT = 20
-    private const val PACKET_TIMEOUT_MS = 500
+    private const val PACKET_TIMEOUT_MS = 600
+
+    // DNS A query for example.com
+    private val DNS_PROBE_QUERY = byteArrayOf(
+        0xaa.toByte(), 0xbb.toByte(),
+        0x01, 0x00,
+        0x00, 0x01,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x07, 'e'.code.toByte(), 'x'.code.toByte(), 'a'.code.toByte(), 'm'.code.toByte(), 'p'.code.toByte(), 'l'.code.toByte(), 'e'.code.toByte(),
+        0x03, 'c'.code.toByte(), 'o'.code.toByte(), 'm'.code.toByte(),
+        0x00,
+        0x00, 0x01,
+        0x00, 0x01
+    )
+
+    // STUN Binding Request (RFC 5389)
+    private val STUN_PROBE_REQUEST = byteArrayOf(
+        0x00, 0x01, 0x00, 0x00,
+        0x21, 0x12, 0xa4.toByte(), 0x42,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c
+    )
 
     enum class UdpState {
         UNKNOWN,
@@ -86,64 +107,52 @@ object UdpProber {
     }
 
     /**
-     * Sends a batch of 20 UDP probe packets to test packet loss and latency.
+     * Probes UDP connectivity using DNS and STUN query probes.
      */
-    fun probeNetwork(host: String, port: Int = 443, onComplete: ((UdpState) -> Unit)? = null) {
+    fun probeNetwork(host: String? = null, port: Int = 53, onComplete: ((UdpState) -> Unit)? = null) {
         CoroutineScope(Dispatchers.IO).launch {
-            val result = executeProbe(host, port)
+            val result = executeProbe()
             _state.value = result
-            Log.i(TAG, "UDP Probe result for $host:$port -> $result")
+            Log.i(TAG, "UDP Probe result -> $result")
+            AppLogCollector.appendLog(TAG, "[UdpProber] Evaluated state -> $result")
             withContext(Dispatchers.Main) {
                 onComplete?.invoke(result)
             }
         }
     }
 
-    private suspend fun executeProbe(host: String, port: Int): UdpState = withContext(Dispatchers.IO) {
-        var receivedCount = 0
-        var totalLatency = 0L
+    private suspend fun executeProbe(): UdpState = withContext(Dispatchers.IO) {
+        // Multi-target probe: 1.1.1.1:53 (Cloudflare DNS), 77.88.8.8:53 (Yandex DNS in RU), stun.cloudflare.com:3478 (STUN)
+        val targets = listOf(
+            Triple("1.1.1.1", 53, DNS_PROBE_QUERY),
+            Triple("77.88.8.8", 53, DNS_PROBE_QUERY),
+            Triple("stun.cloudflare.com", 3478, STUN_PROBE_REQUEST)
+        )
 
-        try {
-            val address = InetAddress.getByName(host)
-            val socket = DatagramSocket().apply {
-                soTimeout = PACKET_TIMEOUT_MS
-            }
+        for ((targetHost, targetPort, payload) in targets) {
+            try {
+                val address = InetAddress.getByName(targetHost)
+                val socket = DatagramSocket().apply {
+                    soTimeout = PACKET_TIMEOUT_MS
+                }
+                socket.use { ds ->
+                    val sendPacket = DatagramPacket(payload, payload.size, address, targetPort)
+                    ds.send(sendPacket)
 
-            socket.use { ds ->
-                for (seq in 1..PROBE_PACKETS_COUNT) {
-                    val sendData = "VectisProbe:$seq:${System.currentTimeMillis()}".toByteArray(Charsets.UTF_8)
-                    val sendPacket = DatagramPacket(sendData, sendData.size, address, port)
-
-                    val startTime = System.currentTimeMillis()
-                    try {
-                        ds.send(sendPacket)
-
-                        val receiveData = ByteArray(512)
-                        val receivePacket = DatagramPacket(receiveData, receiveData.size)
-                        ds.receive(receivePacket)
-
-                        val rtt = System.currentTimeMillis() - startTime
-                        receivedCount++
-                        totalLatency += rtt
-                    } catch (e: SocketTimeoutException) {
-                        // Packet dropped or timed out
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Probe packet $seq error: ${e.message}")
+                    val receiveBuffer = ByteArray(512)
+                    val receivePacket = DatagramPacket(receiveBuffer, receiveBuffer.size)
+                    ds.receive(receivePacket)
+                    if (receivePacket.length > 0) {
+                        Log.d(TAG, "UDP probe target $targetHost:$targetPort answered (${receivePacket.length} bytes)")
+                        return@withContext UdpState.UDP_HEALTHY
                     }
                 }
+            } catch (e: Exception) {
+                Log.d(TAG, "UDP probe target $targetHost:$targetPort failed: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "UDP Probe execution failed: ${e.message}", e)
-            return@withContext UdpState.UDP_SHAPED
         }
 
-        val lossRate = (PROBE_PACKETS_COUNT - receivedCount).toDouble() / PROBE_PACKETS_COUNT.toDouble()
-        Log.d(TAG, "UDP Probe stats: Received $receivedCount/$PROBE_PACKETS_COUNT, Loss: ${lossRate * 100}%")
-
-        if (receivedCount > 0 && lossRate <= 0.15) {
-            UdpState.UDP_HEALTHY
-        } else {
-            UdpState.UDP_SHAPED
-        }
+        Log.w(TAG, "All UDP probe targets failed. Network is UDP_SHAPED.")
+        return@withContext UdpState.UDP_SHAPED
     }
 }

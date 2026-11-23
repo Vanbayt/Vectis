@@ -180,6 +180,11 @@
 
     <!-- Log -->
     <string name="log_level">Log Level</string>
+    <string name="log_level_all">All</string>
+    <string name="log_level_info">Info</string>
+    <string name="log_level_warn">Warnings</string>
+    <string name="log_level_error">Errors</string>
+    <string name="log_level_debug">Debug</string>
     <string name="filter_label">Filter: %s</string>
     <string name="clear_filter">Clear</string>
     <string name="clear_logs">Clear Logs</string>
@@ -698,6 +703,7 @@
     <string name="profile_passwords_mismatch">New passwords do not match</string>
     <string name="profile_password_too_short">Password must be at least 6 characters</string>
     <string name="profile_change_button">Change</string>
+    <string name="profile_password_changed_success">Password changed successfully</string>
 
     <!-- Traffic Limit -->
     <string name="traffic_limit_title">Traffic Limit</string>
@@ -722,14 +728,14 @@
     <string name="protocol_selection_subtitle">Choose a protocol for your tasks. Maximum plan owners can lock a specific node or trust automation (Auto).</string>
     <string name="protocol_check_ping">Check ping</string>
     <string name="protocol_testing">testing...</string>
-    <string name="protocol_auto_title">⚡ Automatic Selection (Auto)</string>
+    <string name="protocol_auto_title">Automatic Selection (Auto)</string>
     <string name="protocol_auto_subtitle">Current selection: %1$s</string>
     <string name="protocol_auto_subtitle_fallback">Auto-config and failover recovery</string>
     <string name="protocol_auto_desc">Automatically tests all nodes and connects to the fastest and most stable server.</string>
     <string name="protocol_badge_smart_routing">Smart Routing</string>
-    <string name="protocol_badge_mobile">⚡ Mobile Networks</string>
-    <string name="protocol_badge_dpi">🛡️ DPI Bypass</string>
-    <string name="protocol_badge_speed">🚀 Max Speed</string>
+    <string name="protocol_badge_mobile">Mobile Networks</string>
+    <string name="protocol_badge_dpi">DPI Bypass</string>
+    <string name="protocol_badge_speed">Max Speed</string>
     <string name="protocol_desc_hysteria">UDP (QUIC) based protocol. Maintains full speed despite packet loss on 3G/4G and weak Wi-Fi.</string>
     <string name="protocol_desc_grpc">Multiplexing via gRPC. Built to bypass heavy DPI filtering and deep packet inspection.</string>
     <string name="protocol_desc_vless">Classic encrypted TCP tunnel disguised as HTTPS. Maximum speed for web browsing and video.</string>
@@ -738,16 +744,16 @@
 
     <!-- Per App Proxy -->
     <string name="per_app_preset_applied">Applied preset: selected %1$d apps</string>
-    <string name="per_app_mode_include">⚡ MODE: INCLUDE</string>
-    <string name="per_app_mode_exclude">🛡️ MODE: EXCLUDE</string>
+    <string name="per_app_mode_include">MODE: INCLUDE</string>
+    <string name="per_app_mode_exclude">MODE: EXCLUDE</string>
     <string name="per_app_switch_mode">Switch Mode</string>
     <string name="per_app_presets_rf">Russian App Presets:</string>
-    <string name="per_app_preset_all_rf">🇷🇺 All RU Apps</string>
-    <string name="per_app_preset_yandex_vk">🟢 Yandex &amp; VK</string>
-    <string name="per_app_preset_banks">🏦 Banks</string>
-    <string name="per_app_preset_marketplaces">🛒 Marketplaces</string>
-    <string name="per_app_preset_gosuslugi">🏛️ Gosuslugi</string>
-    <string name="per_app_preset_media_rf">🎬 Media RU</string>
+    <string name="per_app_preset_all_rf">All RU Apps</string>
+    <string name="per_app_preset_yandex_vk">Yandex &amp; VK</string>
+    <string name="per_app_preset_banks">Banks</string>
+    <string name="per_app_preset_marketplaces">Marketplaces</string>
+    <string name="per_app_preset_gosuslugi">Gosuslugi</string>
+    <string name="per_app_preset_media_rf">Media RU</string>
 
     <!-- Settings & Updates -->
     <string name="settings_account">Account</string>
@@ -774,6 +780,89 @@
     <string name="service_mode_root_desc">Direct tunnel bypassing VpnService: hidden from banks, no key icon</string>
     <string name="service_mode_root_missing_title">Root Access Not Found</string>
     <string name="service_mode_root_missing_msg">Native TUN mode requires Superuser permissions (Magisk, KernelSU, or APatch). Root request was denied or device is not rooted.</string>
+
+    <!-- Profile & Notifications M3 -->
+    <string name="profile_logout_confirm_title">Log out</string>
+    <string name="profile_logout_confirm_msg">Are you sure you want to log out? Active VPN connection will be stopped and session data removed from this device.</string>
+    <string name="profile_status_active">Active</string>
+    <string name="profile_status_inactive">Suspended</string>
+    <string name="profile_user_id">ID: #%1$d</string>
+    <string name="profile_traffic_unlimited">Unlimited traffic</string>
+    <string name="profile_traffic_title">Traffic</string>
+    <string name="profile_days_left">%1$d days left</string>
+    <string name="profile_password_repeat_hint">Passwords match</string>
+
+    <string name="profile_device_title">Current Device</string>
+    <string name="profile_device_this">This device</string>
+    <string name="profile_session_active">Session active</string>
+    <string name="profile_revoke_others">Revoke other sessions</string>
+    <string name="profile_revoke_others_title">Revoke sessions</string>
+    <string name="profile_revoke_others_msg">Revoke all active sessions on other devices? You will remain signed in on this device.</string>
+    <string name="profile_revoke_others_success">Other sessions revoked successfully</string>
+    <string name="profile_quota_reset">Quota resets on %1$s</string>
+    <string name="profile_vpn_key_title">VPN Key &amp; Configuration</string>
+    <string name="profile_vpn_key_desc">Unique key for manual setup on PC, router, or other clients</string>
+    <string name="profile_vpn_key_copied">VPN key copied to clipboard</string>
+    <string name="profile_regenerate_key">Regenerate key</string>
+    <string name="profile_regenerate_key_title">Regenerate VPN Key</string>
+    <string name="profile_regenerate_key_msg">Generating a new key will invalidate your current VPN configuration on all servers. You will need to refresh the server list to connect again.</string>
+    <string name="profile_regenerate_key_success">New key generated successfully</string>
+    <string name="profile_plan_perks_title">Plan Features</string>
+    <string name="profile_upgrade_plan">Upgrade plan</string>
+    <string name="profile_extend_plan">Extend subscription</string>
+    <string name="profile_perk_protocols">Protocols: Hysteria 2, VLESS, gRPC</string>
+    <string name="profile_perk_speed">Max speed up to 1 Gbps</string>
+    <string name="profile_perk_dpi">DPI &amp; censorship bypass</string>
+
+    <string name="notifications_filter_all">All</string>
+    <string name="notifications_filter_unread">Unread</string>
+    <string name="notifications_filter_subscription">Subscription</string>
+    <string name="notifications_filter_system">System</string>
+    <string name="notifications_clear_all_title">Clear list</string>
+    <string name="notifications_clear_all_msg">Remove all notifications from the list?</string>
+    <string name="notifications_mark_all_read">Mark all as read</string>
+    <string name="notifications_action_delete">Delete</string>
+    <string name="notifications_time_just_now">Just now</string>
+    <string name="notifications_filter_empty">No notifications in this category</string>
+    <string name="profile_sub_info_title">Subscription &amp; Traffic</string>
+    <string name="profile_support_title">Support</string>
+    <string name="profile_support_subtitle">Official Telegram support bot</string>
+    <string name="profile_in_development">IN DEVELOPMENT</string>
+    <string name="profile_in_development_msg">Support section is currently under development</string>
+    <string name="profile_device_model">Model</string>
+    <string name="profile_os_version">OS Version</string>
+    <string name="profile_app_version">Client Version</string>
+    <string name="quick_settings_tile_title">Quick Settings Tile</string>
+    <string name="quick_settings_tile_desc">Add quick VPN toggle to Android notification shade</string>
+    <string name="quick_settings_tile_added">Tile added successfully</string>
+    <string name="quick_settings_tile_manual">Swipe down twice from the top of your screen, tap the pencil icon, and drag Vectis into active tiles.</string>
+
+    <!-- New Simple Settings -->
+    <string name="settings_section_account">PROFILE &amp; SUBSCRIPTION</string>
+    <string name="settings_section_routing">ROUTING MODE</string>
+    <string name="settings_section_security_automation">SECURITY &amp; AUTOMATION</string>
+    <string name="settings_section_advanced">ADVANCED</string>
+    <string name="routing_mode_title">VPN Routing Mode</string>
+    <string name="routing_mode_smart">Smart Mode (Recommended)</string>
+    <string name="routing_mode_smart_desc">Russian sites and banks connect directly without delays. Blocked resources route through VPN</string>
+    <string name="routing_mode_all">All Traffic through VPN</string>
+    <string name="routing_mode_all_desc">Maximum protection. All traffic goes through tunnel (best for travel and public Wi-Fi)</string>
+    <string name="routing_mode_blocked">Only Blocked Resources</string>
+    <string name="routing_mode_blocked_desc">VPN only activates for blocked sites. Saves mobile data</string>
+    <string name="adblock_title">Ad &amp; Tracker Blocker</string>
+    <string name="adblock_desc">Blocks banners, popups and tracking scripts</string>
+    <string name="auto_connect_on_boot">Connect on device startup</string>
+    <string name="auto_connect_on_boot_desc">Automatically start VPN when device powers on</string>
+    <string name="kill_switch_title">Leak Protection (Kill Switch)</string>
+    <string name="kill_switch_desc">Block internet traffic if VPN connection drops unexpectedly</string>
+    <string name="kill_switch_dialog_title">Kill Switch Setup</string>
+    <string name="kill_switch_dialog_msg">On Android, leak protection is managed by the system.\n\nTap \'Open Settings\', find Vectis and enable \'Block connections without VPN\'.</string>
+    <string name="kill_switch_dialog_btn">Open VPN Settings</string>
+    <string name="advanced_settings_title">Advanced Settings</string>
+    <string name="advanced_settings_subtitle">Service mode (Root), Xposed hiding, core &amp; diagnostics</string>
+    <string name="my_account_title">My Account</string>
+    <string name="account_tier_prefix">Plan: </string>
+    <string name="account_traffic_prefix">Data: </string>
 </resources>
 
 

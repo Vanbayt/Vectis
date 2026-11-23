@@ -37,18 +37,28 @@ object EndpointManager {
 
     fun init(context: Context) {
         val saved = Settings.dynamicApiBaseUrl
-        cachedBaseUrl = if (saved.isNotBlank() && saved.toHttpUrlOrNull() != null) {
-            saved
+        if (saved.contains("195.78.49.4") || saved.contains("lab.vectiscloud.site") || !saved.startsWith("https://")) {
+            Settings.dynamicApiBaseUrl = ""
+        }
+        val validSaved = Settings.dynamicApiBaseUrl
+        cachedBaseUrl = if (!BuildConfig.DEBUG && validSaved.isNotBlank() && validSaved.toHttpUrlOrNull() != null) {
+            validSaved
         } else {
             BuildConfig.API_BASE_URL
         }
         Log.i(TAG, "Initialized with Base URL: $cachedBaseUrl")
-        fetchRemoteEndpointAsync()
+        if (!BuildConfig.DEBUG) {
+            fetchRemoteEndpointAsync()
+        }
     }
 
     fun getBaseUrl(): String {
         if (cachedBaseUrl.isBlank()) {
-            cachedBaseUrl = Settings.dynamicApiBaseUrl.ifBlank { BuildConfig.API_BASE_URL }
+            cachedBaseUrl = if (BuildConfig.DEBUG) {
+                BuildConfig.API_BASE_URL
+            } else {
+                Settings.dynamicApiBaseUrl.ifBlank { BuildConfig.API_BASE_URL }
+            }
         }
         return cachedBaseUrl
     }
@@ -57,6 +67,10 @@ object EndpointManager {
 
     fun updateBaseUrl(newUrl: String) {
         val formatted = if (newUrl.endsWith("/")) newUrl else "$newUrl/"
+        if (formatted.contains("195.78.49.4") || formatted.contains("lab.vectiscloud.site") || !formatted.startsWith("https://")) {
+            Log.w(TAG, "Ignoring insecure or deprecated base url: $formatted")
+            return
+        }
         if (formatted.toHttpUrlOrNull() != null && formatted != cachedBaseUrl) {
             Log.i(TAG, "Updating API Base URL from $cachedBaseUrl to $formatted")
             cachedBaseUrl = formatted
@@ -65,6 +79,7 @@ object EndpointManager {
     }
 
     fun fetchRemoteEndpointAsync() {
+        if (BuildConfig.DEBUG) return
         CoroutineScope(Dispatchers.IO).launch {
             fetchRemoteEndpointSync()
         }

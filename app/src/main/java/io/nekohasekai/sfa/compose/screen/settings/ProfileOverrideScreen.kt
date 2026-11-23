@@ -63,7 +63,6 @@ import io.nekohasekai.sfa.bg.RootClient
 import io.nekohasekai.sfa.compose.base.UiEvent
 import io.nekohasekai.sfa.compose.base.rememberApplyServiceChangeNotifier
 import io.nekohasekai.sfa.compose.screen.profileoverride.PerAppProxyScanner
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.vendor.PackageQueryManager
@@ -210,9 +209,10 @@ fun ProfileOverrideScreen(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(24.dp),
             colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
             ListItem(
@@ -220,12 +220,13 @@ fun ProfileOverrideScreen(
                     Text(
                         stringResource(R.string.auto_redirect),
                         style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     )
                 },
                 supportingContent = {
                     Text(
                         stringResource(R.string.auto_redirect_description),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),
                     )
@@ -240,37 +241,40 @@ fun ProfileOverrideScreen(
                 trailingContent = {
                     Switch(
                         checked = autoRedirect,
-                        onCheckedChange = { checked ->
-                            if (checked && !autoRedirect) {
-                                scope.launch {
-                                    val hasRoot = RootClient.checkRootAvailable()
-                                    if (hasRoot) {
-                                        autoRedirect = true
-                                        withContext(Dispatchers.IO) {
-                                            Settings.autoRedirect = true
-                                        }
-                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            context.getString(R.string.root_access_required),
-                                            Toast.LENGTH_LONG,
-                                        ).show()
-                                    }
-                                }
-                            } else if (!checked) {
-                                autoRedirect = false
-                                scope.launch(Dispatchers.IO) {
-                                    Settings.autoRedirect = false
-                                    withContext(Dispatchers.Main) {
-                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
-                                    }
-                                }
-                            }
-                        },
+                        onCheckedChange = null,
                     )
                 },
-                modifier = Modifier.clip(RoundedCornerShape(12.dp)),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable {
+                        val willEnable = !autoRedirect
+                        if (willEnable) {
+                            scope.launch {
+                                val hasRoot = RootClient.checkRootAvailable()
+                                if (hasRoot) {
+                                    autoRedirect = true
+                                    withContext(Dispatchers.IO) {
+                                        Settings.autoRedirect = true
+                                    }
+                                    notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.root_access_required),
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                }
+                            }
+                        } else {
+                            autoRedirect = false
+                            scope.launch(Dispatchers.IO) {
+                                Settings.autoRedirect = false
+                                withContext(Dispatchers.Main) {
+                                    notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                }
+                            }
+                        }
+                    },
                 colors =
                 ListItemDefaults.colors(
                     containerColor = Color.Transparent,
@@ -289,7 +293,8 @@ fun ProfileOverrideScreen(
             text = stringResource(R.string.per_app_proxy),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 32.dp, top = 16.dp, bottom = 8.dp),
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp),
         )
 
         Card(
@@ -297,12 +302,13 @@ fun ProfileOverrideScreen(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(24.dp),
             colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
-            Column {
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
                 // Mode selector (only when privileged query is needed)
                 if (showModeSelector) {
                     val modeEnabled = !perAppProxyEnabled
@@ -312,6 +318,7 @@ fun ProfileOverrideScreen(
                             Text(
                                 stringResource(R.string.per_app_proxy_package_query_mode),
                                 style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                                 color = if (modeEnabled) {
                                     Color.Unspecified
                                 } else {
@@ -322,7 +329,7 @@ fun ProfileOverrideScreen(
                         supportingContent = {
                             Text(
                                 if (useRootMode) "ROOT" else "Shizuku",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = if (modeEnabled) {
                                     MaterialTheme.colorScheme.onSurfaceVariant
                                 } else {
@@ -353,11 +360,16 @@ fun ProfileOverrideScreen(
                             )
                         },
                         modifier = Modifier
-                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .clickable(enabled = modeEnabled) { showModeDialog = true },
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent,
                         ),
+                    )
+
+                    androidx.compose.material3.HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                        modifier = Modifier.padding(horizontal = 16.dp),
                     )
                 }
 
@@ -367,6 +379,7 @@ fun ProfileOverrideScreen(
                         Text(
                             stringResource(R.string.enabled),
                             style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                         )
                     },
                     leadingContent = {
@@ -379,41 +392,36 @@ fun ProfileOverrideScreen(
                     trailingContent = {
                         Switch(
                             checked = perAppProxyEnabled,
-                            onCheckedChange = { checked ->
-                                if (checked && showModeSelector) {
-                                    if (useRootMode) {
-                                        showRootDialog = true
-                                    } else {
-                                        showShizukuDialog = true
-                                    }
-                                } else {
-                                    perAppProxyEnabled = checked
-                                    scope.launch(Dispatchers.IO) {
-                                        Settings.perAppProxyEnabled = checked
-                                        if (!checked || !managedModeEnabled) {
-                                            withContext(Dispatchers.Main) {
-                                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
-                                            }
-                                        }
-                                    }
-                                    if (checked && managedModeEnabled) {
-                                        scanAndSaveManagedList(shouldNotify = true)
-                                    }
-                                }
-                            },
+                            onCheckedChange = null,
                             enabled = !isScanning,
                         )
                     },
                     modifier =
-                    Modifier.clip(
-                        if (showModeSelector) {
-                            RoundedCornerShape(0.dp)
-                        } else if (perAppProxyEnabled && canUsePerAppProxy) {
-                            RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                        } else {
-                            RoundedCornerShape(12.dp)
+                    Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable(enabled = !isScanning) {
+                            val newChecked = !perAppProxyEnabled
+                            if (newChecked && showModeSelector) {
+                                if (useRootMode) {
+                                    showRootDialog = true
+                                } else {
+                                    showShizukuDialog = true
+                                }
+                            } else {
+                                perAppProxyEnabled = newChecked
+                                scope.launch(Dispatchers.IO) {
+                                    Settings.perAppProxyEnabled = newChecked
+                                    if (!newChecked || !managedModeEnabled) {
+                                        withContext(Dispatchers.Main) {
+                                            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                        }
+                                    }
+                                }
+                                if (newChecked && managedModeEnabled) {
+                                    scanAndSaveManagedList(shouldNotify = true)
+                                }
+                            }
                         },
-                    ),
                     colors =
                     ListItemDefaults.colors(
                         containerColor = Color.Transparent,

@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Memory
@@ -24,16 +26,19 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,7 +62,6 @@ import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.bg.OOMReportManager
 import io.nekohasekai.sfa.compose.base.UiEvent
 import io.nekohasekai.sfa.compose.base.rememberApplyServiceChangeNotifier
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.database.Settings
 import kotlinx.coroutines.Dispatchers
@@ -97,83 +101,114 @@ fun OOMReportListScreen(
         isLoading = false
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.oom_report)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                }
-            },
-            actions = {
-                IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = null)
-                }
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.oom_report_fetch)) },
-                        leadingIcon = {
-                            Icon(Icons.Outlined.Memory, contentDescription = null)
-                        },
-                        onClick = {
-                            menuExpanded = false
-                            if (serviceStatus != Status.Started) {
-                                errorMessage =
-                                    Application.application.getString(R.string.service_not_started)
-                            } else {
-                                scope.launch {
-                                    val failure =
-                                        withContext(Dispatchers.IO) {
-                                            runCatching {
-                                                Libbox.newStandaloneCommandClient().triggerOOMReport()
-                                            }.exceptionOrNull()
-                                        }
-                                    if (failure != null) {
-                                        errorMessage = failure.message ?: failure.toString()
-                                    } else {
-                                        delay(1000)
-                                        withContext(Dispatchers.IO) {
-                                            OOMReportManager.refresh()
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                    )
-                    if (reports.isNotEmpty()) {
+    val toggleOomKiller: () -> Unit = {
+        val checked = !oomKillerEnabled
+        oomKillerEnabled = checked
+        scope.launch(Dispatchers.IO) {
+            Settings.oomKillerEnabled = checked
+            Application.application.reloadSetupOptions()
+            withContext(Dispatchers.Main) {
+                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
+            }
+        }
+    }
+
+    val toggleKillConnections: () -> Unit = {
+        val checked = !oomKillerKillConnections
+        oomKillerKillConnections = checked
+        scope.launch(Dispatchers.IO) {
+            Settings.oomKillerDisabled = !checked
+            Application.application.reloadSetupOptions()
+            withContext(Dispatchers.Main) {
+                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.oom_report), fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = null)
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false },
+                    ) {
                         DropdownMenuItem(
-                            text = {
-                                Text(
-                                    stringResource(R.string.report_delete_all),
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            },
+                            text = { Text(stringResource(R.string.oom_report_fetch)) },
                             leadingIcon = {
-                                Icon(
-                                    Icons.Outlined.DeleteSweep,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
+                                Icon(Icons.Outlined.Memory, contentDescription = null)
                             },
                             onClick = {
                                 menuExpanded = false
-                                scope.launch { OOMReportManager.deleteAll() }
+                                if (serviceStatus != Status.Started) {
+                                    errorMessage =
+                                        Application.application.getString(R.string.service_not_started)
+                                } else {
+                                    scope.launch {
+                                        val failure =
+                                            withContext(Dispatchers.IO) {
+                                                runCatching {
+                                                    Libbox.newStandaloneCommandClient().triggerOOMReport()
+                                                }.exceptionOrNull()
+                                            }
+                                        if (failure != null) {
+                                            errorMessage = failure.message ?: failure.toString()
+                                        } else {
+                                            delay(1000)
+                                            withContext(Dispatchers.IO) {
+                                                OOMReportManager.refresh()
+                                            }
+                                        }
+                                    }
+                                }
                             },
                         )
+                        if (reports.isNotEmpty()) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        stringResource(R.string.report_delete_all),
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Outlined.DeleteSweep,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    scope.launch { OOMReportManager.deleteAll() }
+                                },
+                            )
+                        }
                     }
-                }
-            },
-        )
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
         if (isLoading) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(paddingValues)
                     .background(MaterialTheme.colorScheme.surface),
                 contentAlignment = Alignment.Center,
             ) {
@@ -183,6 +218,7 @@ fun OOMReportListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(paddingValues)
                     .background(MaterialTheme.colorScheme.surface)
                     .verticalScroll(rememberScrollState())
                     .padding(vertical = 8.dp),
@@ -192,15 +228,16 @@ fun OOMReportListScreen(
                     stringResource(R.string.report_section_reports),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp),
                 )
                 if (reports.isEmpty()) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
+                        shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         ),
                     ) {
                         ListItem(
@@ -218,26 +255,24 @@ fun OOMReportListScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
+                        shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         ),
                     ) {
                         Column {
                             reports.forEachIndexed { index, report ->
-                                val shape = when {
-                                    reports.size == 1 -> RoundedCornerShape(12.dp)
-                                    index == 0 -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                                    index == reports.lastIndex -> RoundedCornerShape(
-                                        bottomStart = 12.dp,
-                                        bottomEnd = 12.dp,
+                                if (index > 0) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(horizontal = 16.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                     )
-                                    else -> RoundedCornerShape(0.dp)
                                 }
                                 ListItem(
                                     headlineContent = {
                                         Text(
                                             formatDate(report.date),
-                                            style = MaterialTheme.typography.bodyLarge,
+                                            style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
                                             fontWeight = if (report.isRead) FontWeight.Normal else FontWeight.SemiBold,
                                         )
                                     },
@@ -250,11 +285,17 @@ fun OOMReportListScreen(
                                     } else {
                                         null
                                     },
-                                    modifier = Modifier
-                                        .clip(shape)
-                                        .clickable {
-                                            navController.navigate("tools/oom_report/${report.id}")
-                                        },
+                                    trailingContent = {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+                                        navController.navigate("tools/oom_report/${report.id}")
+                                    },
                                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                                 )
                             }
@@ -265,7 +306,7 @@ fun OOMReportListScreen(
                     stringResource(R.string.oom_report_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 8.dp),
                 )
 
                 // Settings section
@@ -273,14 +314,15 @@ fun OOMReportListScreen(
                     stringResource(R.string.title_settings),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 32.dp, end = 32.dp, top = 16.dp, bottom = 8.dp),
+                    modifier = Modifier.padding(start = 24.dp, top = 20.dp, bottom = 8.dp),
                 )
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                     ),
                 ) {
                     Column {
@@ -292,27 +334,27 @@ fun OOMReportListScreen(
                                 )
                             },
                             supportingContent = {
-                                Text(stringResource(R.string.oom_report_enable_memory_limit_description))
+                                Text(
+                                    stringResource(R.string.oom_report_enable_memory_limit_description),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             },
                             trailingContent = {
                                 Switch(
                                     checked = oomKillerEnabled,
-                                    onCheckedChange = { checked ->
-                                        oomKillerEnabled = checked
-                                        scope.launch(Dispatchers.IO) {
-                                            Settings.oomKillerEnabled = checked
-                                            Application.application.reloadSetupOptions()
-                                            withContext(Dispatchers.Main) {
-                                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
-                                            }
-                                        }
-                                    },
+                                    onCheckedChange = null,
                                 )
                             },
+                            modifier = Modifier.clickable(onClick = toggleOomKiller),
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
                         AnimatedVisibility(visible = oomKillerEnabled) {
                             Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                )
                                 ListItem(
                                     headlineContent = {
                                         Text(
@@ -321,10 +363,26 @@ fun OOMReportListScreen(
                                         )
                                     },
                                     supportingContent = {
-                                        Text(Libbox.formatMemoryBytes(oomMemoryLimitMB.toLong() * 1024L * 1024L))
+                                        Text(
+                                            Libbox.formatMemoryBytes(oomMemoryLimitMB.toLong() * 1024L * 1024L),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    trailingContent = {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     },
                                     modifier = Modifier.clickable { showMemoryLimitDialog = true },
                                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                 )
                                 ListItem(
                                     headlineContent = {
@@ -334,23 +392,19 @@ fun OOMReportListScreen(
                                         )
                                     },
                                     supportingContent = {
-                                        Text(stringResource(R.string.oom_report_kill_connections_description))
+                                        Text(
+                                            stringResource(R.string.oom_report_kill_connections_description),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     },
                                     trailingContent = {
                                         Switch(
                                             checked = oomKillerKillConnections,
-                                            onCheckedChange = { checked ->
-                                                oomKillerKillConnections = checked
-                                                scope.launch(Dispatchers.IO) {
-                                                    Settings.oomKillerDisabled = !checked
-                                                    Application.application.reloadSetupOptions()
-                                                    withContext(Dispatchers.Main) {
-                                                        notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
-                                                    }
-                                                }
-                                            },
+                                            onCheckedChange = null,
                                         )
                                     },
+                                    modifier = Modifier.clickable(onClick = toggleKillConnections),
                                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                                 )
                             }
@@ -391,7 +445,7 @@ fun OOMReportListScreen(
                                 )
                             },
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .clickable {
                                     oomMemoryLimitMB = value
                                     showMemoryLimitDialog = false
@@ -408,7 +462,11 @@ fun OOMReportListScreen(
                     }
                 }
             },
-            confirmButton = {},
+            confirmButton = {
+                TextButton(onClick = { showMemoryLimitDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
         )
     }
 }

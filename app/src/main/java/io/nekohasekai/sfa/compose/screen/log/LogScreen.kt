@@ -16,49 +16,57 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.Arrangement
-
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RadioButtonChecked
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckBox
+import androidx.compose.material.icons.rounded.CheckBoxOutlineBlank
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.RadioButtonChecked
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.Save
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -79,6 +87,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -100,7 +109,6 @@ import io.nekohasekai.sfa.Application
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compat.WindowSizeClassCompat
 import io.nekohasekai.sfa.compat.isWidthAtLeastBreakpointCompat
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import java.io.File
 import java.text.SimpleDateFormat
@@ -132,75 +140,6 @@ fun LogScreen(
     val resolvedTitle = title ?: stringResource(R.string.title_log)
     val emptyStateMessage = emptyMessage ?: stringResource(R.string.privilege_settings_hook_logs_empty)
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(resolvedTitle) },
-            navigationIcon = {
-                if (onBack != null) {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.content_description_back),
-                        )
-                    }
-                }
-            },
-            actions = {
-                if (!uiState.isSelectionMode) {
-                    if (showPause) {
-                        IconButton(onClick = { resolvedViewModel.togglePause() }) {
-                            Icon(
-                                imageVector =
-                                if (uiState.isPaused) {
-                                    Icons.Default.PlayArrow
-                                } else {
-                                    Icons.Default.Pause
-                                },
-                                contentDescription =
-                                if (uiState.isPaused) {
-                                    stringResource(R.string.content_description_resume_logs)
-                                } else {
-                                    stringResource(R.string.content_description_pause_logs)
-                                },
-                            )
-                        }
-                    }
-
-                    IconButton(onClick = { resolvedViewModel.toggleSearch() }) {
-                        Icon(
-                            imageVector =
-                            if (uiState.isSearchActive) {
-                                Icons.Default.ExpandLess
-                            } else {
-                                Icons.Default.Search
-                            },
-                            contentDescription =
-                            if (uiState.isSearchActive) {
-                                stringResource(R.string.content_description_collapse_search)
-                            } else {
-                                stringResource(R.string.content_description_search_logs)
-                            },
-                            tint =
-                            if (uiState.isSearchActive) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            },
-                        )
-                    }
-
-                    IconButton(onClick = { resolvedViewModel.toggleOptionsMenu() }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = stringResource(R.string.more_options),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
-            },
-        )
-    }
-
     // Handle back press in selection mode
     androidx.activity.compose.BackHandler(enabled = uiState.isSelectionMode) {
         resolvedViewModel.clearSelection()
@@ -213,6 +152,16 @@ fun LogScreen(
             val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
             lastVisibleItem != null && lastVisibleItem.index == layoutInfo.totalItemsCount - 1
         }
+    }
+
+    var lastSeenLogCount by remember { mutableIntStateOf(uiState.logs.size) }
+    LaunchedEffect(isAtBottom, uiState.logs.size) {
+        if (isAtBottom) {
+            lastSeenLogCount = uiState.logs.size
+        }
+    }
+    val unreadNewLogsCount = remember(isAtBottom, uiState.logs.size, lastSeenLogCount) {
+        if (isAtBottom) 0 else (uiState.logs.size - lastSeenLogCount).coerceAtLeast(0)
     }
 
     // Re-enable auto-scroll when user reaches bottom
@@ -276,23 +225,32 @@ fun LogScreen(
         topBar = {
             TopAppBar(
                 title = { Text(resolvedTitle, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(R.string.content_description_back),
+                            )
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = { resolvedViewModel.toggleSearch() }) {
-                        Icon(imageVector = Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                        Icon(imageVector = Icons.Rounded.Search, contentDescription = stringResource(R.string.search))
                     }
                     IconButton(onClick = { resolvedViewModel.togglePause() }) {
                         Icon(
-                            imageVector = if (uiState.isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                            imageVector = if (uiState.isPaused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause,
                             contentDescription = stringResource(R.string.content_description_pause_logs)
                         )
                     }
                     IconButton(onClick = { resolvedViewModel.requestClearLogs() }) {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(R.string.clear_logs))
+                        Icon(imageVector = Icons.Rounded.Delete, contentDescription = stringResource(R.string.clear_logs))
                     }
                     IconButton(onClick = { resolvedViewModel.toggleOptionsMenu() }) {
-                        Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
+                        Icon(imageVector = Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.more_options))
                     }
-
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
@@ -331,7 +289,7 @@ fun LogScreen(
                         ) {
                             IconButton(onClick = { resolvedViewModel.clearSelection() }) {
                                 Icon(
-                                    imageVector = Icons.Default.Close,
+                                    imageVector = Icons.Rounded.Close,
                                     contentDescription = stringResource(R.string.content_description_exit_selection_mode),
                                 )
                             }
@@ -364,49 +322,123 @@ fun LogScreen(
                                 enabled = uiState.selectedLogIndices.isNotEmpty(),
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ContentCopy,
+                                    imageVector = Icons.Rounded.ContentCopy,
                                     contentDescription = stringResource(R.string.content_description_copy_selected),
                                 )
                             }
                         }
                     }
                 }
-            }
-
-            // Show active filter indicator
-            if (uiState.filterLogLevel != LogLevel.Default && !uiState.isSelectionMode) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            } else {
+                // Quick FilterChips row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text =
-                            stringResource(
-                                R.string.filter_label,
-                                uiState.filterLogLevel.label,
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        TextButton(
-                            onClick = { resolvedViewModel.setLogLevel(LogLevel.Default) },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                            modifier = Modifier.height(24.dp),
-                        ) {
-                            Text(
-                                text = stringResource(R.string.clear_filter),
-                                style = MaterialTheme.typography.bodySmall,
+                    // All
+                    FilterChip(
+                        selected = uiState.filterLogLevel == LogLevel.Default,
+                        onClick = { resolvedViewModel.setLogLevel(LogLevel.Default) },
+                        label = { Text(stringResource(R.string.log_level_all)) },
+                        leadingIcon = if (uiState.filterLogLevel == LogLevel.Default) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp),
+                    )
+
+                    // Info
+                    FilterChip(
+                        selected = uiState.filterLogLevel == LogLevel.INFO,
+                        onClick = {
+                            resolvedViewModel.setLogLevel(
+                                if (uiState.filterLogLevel == LogLevel.INFO) LogLevel.Default else LogLevel.INFO
                             )
-                        }
-                    }
+                        },
+                        label = { Text(stringResource(R.string.log_level_info)) },
+                        leadingIcon = if (uiState.filterLogLevel == LogLevel.INFO) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp),
+                    )
+
+                    // Warn
+                    FilterChip(
+                        selected = uiState.filterLogLevel == LogLevel.WARNING,
+                        onClick = {
+                            resolvedViewModel.setLogLevel(
+                                if (uiState.filterLogLevel == LogLevel.WARNING) LogLevel.Default else LogLevel.WARNING
+                            )
+                        },
+                        label = { Text(stringResource(R.string.log_level_warn)) },
+                        leadingIcon = if (uiState.filterLogLevel == LogLevel.WARNING) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp),
+                    )
+
+                    // Error
+                    FilterChip(
+                        selected = uiState.filterLogLevel == LogLevel.ERROR,
+                        onClick = {
+                            resolvedViewModel.setLogLevel(
+                                if (uiState.filterLogLevel == LogLevel.ERROR) LogLevel.Default else LogLevel.ERROR
+                            )
+                        },
+                        label = { Text(stringResource(R.string.log_level_error)) },
+                        leadingIcon = if (uiState.filterLogLevel == LogLevel.ERROR) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp),
+                    )
+
+                    // Debug
+                    FilterChip(
+                        selected = uiState.filterLogLevel == LogLevel.DEBUG,
+                        onClick = {
+                            resolvedViewModel.setLogLevel(
+                                if (uiState.filterLogLevel == LogLevel.DEBUG) LogLevel.Default else LogLevel.DEBUG
+                            )
+                        },
+                        label = { Text(stringResource(R.string.log_level_debug)) },
+                        leadingIcon = if (uiState.filterLogLevel == LogLevel.DEBUG) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp),
+                    )
                 }
             }
 
@@ -448,10 +480,11 @@ fun LogScreen(
                             .fillMaxWidth()
                             .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
                             .focusRequester(focusRequester),
+                        shape = RoundedCornerShape(16.dp),
                         placeholder = { Text(stringResource(R.string.search_logs_placeholder)) },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Search,
+                                imageVector = Icons.Rounded.Search,
                                 contentDescription = stringResource(R.string.search),
                             )
                         },
@@ -459,7 +492,7 @@ fun LogScreen(
                             if (uiState.searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { resolvedViewModel.updateSearchQuery("") }) {
                                     Icon(
-                                        imageVector = Icons.Default.Delete,
+                                        imageVector = Icons.Rounded.Close,
                                         contentDescription = stringResource(R.string.content_description_clear_search),
                                     )
                                 }
@@ -553,6 +586,7 @@ fun LogScreen(
                         ) { index, log ->
                             LogItem(
                                 annotatedString = log.annotatedString,
+                                level = log.entry.level,
                                 index = index,
                                 isSelected = uiState.selectedLogIndices.contains(index),
                                 isSelectionMode = uiState.isSelectionMode,
@@ -632,7 +666,7 @@ fun LogScreen(
                     onClick = { expandedLogLevel = !expandedLogLevel },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.FilterList,
+                            imageVector = Icons.Rounded.FilterList,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
@@ -641,9 +675,9 @@ fun LogScreen(
                         Icon(
                             imageVector =
                             if (expandedLogLevel) {
-                                Icons.Default.ExpandLess
+                                Icons.Rounded.ExpandLess
                             } else {
-                                Icons.Default.ExpandMore
+                                Icons.Rounded.ExpandMore
                             },
                             contentDescription = null,
                         )
@@ -666,9 +700,9 @@ fun LogScreen(
                                 Icon(
                                     imageVector =
                                     if (uiState.filterLogLevel == level) {
-                                        Icons.Default.RadioButtonChecked
+                                        Icons.Rounded.RadioButtonChecked
                                     } else {
-                                        Icons.Default.RadioButtonUnchecked
+                                        Icons.Rounded.RadioButtonUnchecked
                                     },
                                     contentDescription =
                                     if (uiState.filterLogLevel == level) {
@@ -702,7 +736,7 @@ fun LogScreen(
                     onClick = { expandedSave = !expandedSave },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Save,
+                            imageVector = Icons.Rounded.Save,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                         )
@@ -711,9 +745,9 @@ fun LogScreen(
                         Icon(
                             imageVector =
                             if (expandedSave) {
-                                Icons.Default.ExpandLess
+                                Icons.Rounded.ExpandLess
                             } else {
-                                Icons.Default.ExpandMore
+                                Icons.Rounded.ExpandMore
                             },
                             contentDescription = null,
                         )
@@ -750,7 +784,7 @@ fun LogScreen(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.ContentCopy,
+                                imageVector = Icons.Rounded.ContentCopy,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(start = 24.dp),
@@ -775,7 +809,7 @@ fun LogScreen(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Save,
+                                imageVector = Icons.Rounded.Save,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(start = 24.dp),
@@ -839,7 +873,7 @@ fun LogScreen(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Share,
+                                imageVector = Icons.Rounded.Share,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(start = 24.dp),
@@ -865,7 +899,7 @@ fun LogScreen(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Delete,
+                                imageVector = Icons.Rounded.Delete,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.error,
                             )
@@ -891,22 +925,41 @@ fun LogScreen(
                 .padding(bottom = fabBottomPadding, end = fabEndPadding, top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Scroll to bottom FAB
-            // Use fade animation on API 23 to avoid OpenGLRenderer crash with scale transforms
+            // Scroll to bottom FAB with unread new logs badge
             AnimatedVisibility(
                 visible = !isAtBottom && !uiState.isSelectionMode && uiState.logs.isNotEmpty(),
                 enter = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) scaleIn() else fadeIn(),
                 exit = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) scaleOut() else fadeOut(),
             ) {
-                FloatingActionButton(
-                    onClick = { resolvedViewModel.scrollToBottom() },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                BadgedBox(
+                    badge = {
+                        if (unreadNewLogsCount > 0) {
+                            Badge(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                            ) {
+                                Text(
+                                    text = if (unreadNewLogsCount > 99) "99+" else unreadNewLogsCount.toString(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                        }
+                    },
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = stringResource(R.string.content_description_scroll_to_bottom),
-                    )
+                    FloatingActionButton(
+                        onClick = {
+                            resolvedViewModel.scrollToBottom()
+                            lastSeenLogCount = uiState.logs.size
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.KeyboardArrowDown,
+                            contentDescription = stringResource(R.string.content_description_scroll_to_bottom),
+                        )
+                    }
                 }
             }
         }
@@ -923,12 +976,46 @@ fun LogScreen(
 @Composable
 fun LogItem(
     annotatedString: androidx.compose.ui.text.AnnotatedString,
+    level: LogLevel = LogLevel.Default,
     index: Int,
     isSelected: Boolean,
     isSelectionMode: Boolean,
     onLongClick: () -> Unit,
     onClick: () -> Unit,
 ) {
+    val containerColor = when {
+        isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+        level == LogLevel.ERROR || level == LogLevel.FATAL || level == LogLevel.PANIC ->
+            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)
+        level == LogLevel.WARNING ->
+            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.35f)
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
+    }
+
+    val cardBorder = when {
+        isSelected -> CardDefaults.outlinedCardBorder().copy(
+            width = 2.dp,
+            brush = androidx.compose.ui.graphics.SolidColor(
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+            ),
+        )
+        level == LogLevel.ERROR || level == LogLevel.FATAL || level == LogLevel.PANIC ->
+            CardDefaults.outlinedCardBorder().copy(
+                width = 1.dp,
+                brush = androidx.compose.ui.graphics.SolidColor(
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.35f),
+                ),
+            )
+        level == LogLevel.WARNING ->
+            CardDefaults.outlinedCardBorder().copy(
+                width = 1.dp,
+                brush = androidx.compose.ui.graphics.SolidColor(
+                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.35f),
+                ),
+            )
+        else -> null
+    }
+
     Card(
         modifier =
         Modifier
@@ -938,27 +1025,8 @@ fun LogItem(
                 onLongClick = onLongClick,
             ),
         shape = RoundedCornerShape(12.dp),
-        colors =
-        CardDefaults.cardColors(
-            containerColor =
-            if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            },
-        ),
-        border =
-        if (isSelected) {
-            CardDefaults.outlinedCardBorder().copy(
-                width = 2.dp,
-                brush =
-                androidx.compose.ui.graphics.SolidColor(
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                ),
-            )
-        } else {
-            null
-        },
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = cardBorder,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -966,14 +1034,12 @@ fun LogItem(
         ) {
             if (isSelectionMode) {
                 Icon(
-                    imageVector = if (isSelected) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+                    imageVector = if (isSelected) Icons.Rounded.CheckBox else Icons.Rounded.CheckBoxOutlineBlank,
                     contentDescription =
                     if (isSelected) {
                         stringResource(R.string.group_selected_title)
                     } else {
-                        stringResource(
-                            R.string.not_selected,
-                        )
+                        stringResource(R.string.not_selected)
                     },
                     modifier = Modifier.padding(start = 12.dp, end = 4.dp),
                     tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -993,7 +1059,6 @@ fun LogItem(
                 fontFamily = FontFamily.Monospace,
                 lineHeight = 18.sp,
             )
-
         }
     }
 }

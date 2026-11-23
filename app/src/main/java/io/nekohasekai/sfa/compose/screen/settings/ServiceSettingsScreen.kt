@@ -18,10 +18,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.BatteryChargingFull
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -69,7 +68,6 @@ import io.nekohasekai.sfa.bg.ServiceConnection
 import io.nekohasekai.sfa.compose.base.GlobalEventBus
 import io.nekohasekai.sfa.compose.base.UiEvent
 import io.nekohasekai.sfa.compose.base.rememberApplyServiceChangeNotifier
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.ktx.launchCustomTab
@@ -89,6 +87,7 @@ fun ServiceSettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var serviceMode by remember { mutableStateOf(Settings.serviceMode) }
+    var autoRedirect by remember { mutableStateOf(Settings.autoRedirect) }
     var showRootDeniedDialog by remember { mutableStateOf(false) }
     var isBatteryOptimizationIgnored by remember { mutableStateOf(false) }
     var allowBypass by remember { mutableStateOf(Settings.allowBypass) }
@@ -121,7 +120,7 @@ fun ServiceSettingsScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(R.string.content_description_back),
                         )
                     }
@@ -143,17 +142,17 @@ fun ServiceSettingsScreen(
         ) {
         if (!isBatteryOptimizationIgnored && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Card(
-                modifier =
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                colors =
-                CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                 ),
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(20.dp),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -161,13 +160,13 @@ fun ServiceSettingsScreen(
                         Icon(
                             imageVector = Icons.Outlined.BatteryChargingFull,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.padding(end = 12.dp),
                         )
                         Text(
                             stringResource(R.string.background_permission),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Medium,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                         )
                     }
@@ -175,7 +174,7 @@ fun ServiceSettingsScreen(
                     Text(
                         stringResource(R.string.background_permission_description),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f),
                         modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
                     )
 
@@ -218,7 +217,8 @@ fun ServiceSettingsScreen(
             text = stringResource(R.string.service_mode_title),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
 
         Card(
@@ -226,9 +226,9 @@ fun ServiceSettingsScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(24.dp),
         ) {
             Column(modifier = Modifier.padding(vertical = 4.dp)) {
                 ListItem(
@@ -252,7 +252,7 @@ fun ServiceSettingsScreen(
                         )
                     },
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .clickable {
                             if (serviceMode != io.nekohasekai.sfa.constant.ServiceMode.VPN) {
                                 serviceMode = io.nekohasekai.sfa.constant.ServiceMode.VPN
@@ -269,7 +269,7 @@ fun ServiceSettingsScreen(
                 )
 
                 HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
 
@@ -294,7 +294,7 @@ fun ServiceSettingsScreen(
                         )
                     },
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(16.dp))
                         .clickable {
                             if (serviceMode != io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN) {
                                 scope.launch {
@@ -314,6 +314,68 @@ fun ServiceSettingsScreen(
                         },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
+
+                if (serviceMode == io.nekohasekai.sfa.constant.ServiceMode.ROOT_TUN) {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.auto_redirect),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                stringResource(R.string.auto_redirect_description),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = autoRedirect,
+                                onCheckedChange = null,
+                            )
+                        },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable {
+                                val willEnable = !autoRedirect
+                                if (willEnable) {
+                                    scope.launch {
+                                        val hasRoot = io.nekohasekai.sfa.bg.RootClient.checkRootAvailable()
+                                        if (hasRoot) {
+                                            autoRedirect = true
+                                            withContext(Dispatchers.IO) {
+                                                Settings.autoRedirect = true
+                                            }
+                                            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                        } else {
+                                            android.widget.Toast.makeText(
+                                                context,
+                                                context.getString(R.string.root_access_required),
+                                                android.widget.Toast.LENGTH_LONG,
+                                            ).show()
+                                        }
+                                    }
+                                } else {
+                                    autoRedirect = false
+                                    scope.launch(Dispatchers.IO) {
+                                        Settings.autoRedirect = false
+                                        withContext(Dispatchers.Main) {
+                                            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                                        }
+                                    }
+                                }
+                            },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+                }
             }
         }
 
@@ -324,83 +386,71 @@ fun ServiceSettingsScreen(
             text = "VPN",
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
 
         Card(
-            modifier =
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
             val descriptionText = stringResource(R.string.allow_bypass_description)
             val linkText = stringResource(R.string.android_documentation)
             val linkColor = MaterialTheme.colorScheme.primary
             val textColor = MaterialTheme.colorScheme.onSurfaceVariant
-            val textStyle = MaterialTheme.typography.bodyMedium
+            val textStyle = MaterialTheme.typography.bodySmall
 
             ListItem(
                 headlineContent = {
                     Text(
                         stringResource(R.string.allow_bypass),
                         style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
                     )
                 },
                 supportingContent = {
-                    val annotatedString = buildAnnotatedString {
-                        withStyle(SpanStyle(color = textColor)) {
-                            append(descriptionText)
-                        }
-                        append("\n\n")
-                        pushStringAnnotation(tag = "URL", annotation = ALLOW_BYPASS_DOC_URL)
-                        withStyle(
-                            SpanStyle(
-                                color = linkColor,
-                                textDecoration = TextDecoration.Underline,
-                            ),
-                        ) {
-                            append(linkText)
-                        }
-                        pop()
+                    Column(modifier = Modifier.padding(top = 4.dp)) {
+                        Text(
+                            text = descriptionText,
+                            style = textStyle,
+                            color = textColor
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = linkText,
+                            style = textStyle,
+                            color = linkColor,
+                            textDecoration = TextDecoration.Underline,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { context.launchCustomTab(ALLOW_BYPASS_DOC_URL) }
+                        )
                     }
-                    ClickableText(
-                        text = annotatedString,
-                        style = textStyle,
-                        modifier = Modifier.padding(top = 4.dp),
-                        onClick = { offset ->
-                            annotatedString.getStringAnnotations(
-                                tag = "URL",
-                                start = offset,
-                                end = offset,
-                            ).firstOrNull()?.let {
-                                context.launchCustomTab(it.item)
-                            }
-                        },
-                    )
                 },
                 trailingContent = {
                     Switch(
                         checked = allowBypass,
-                        onCheckedChange = { checked ->
-                            allowBypass = checked
-                            scope.launch(Dispatchers.IO) {
-                                Settings.allowBypass = checked
-                                withContext(Dispatchers.Main) {
-                                    notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
-                                }
-                            }
-                        },
+                        onCheckedChange = null,
                     )
                 },
-                modifier = Modifier.clip(RoundedCornerShape(12.dp)),
-                colors =
-                ListItemDefaults.colors(
-                    containerColor = Color.Transparent,
-                ),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable {
+                        val newChecked = !allowBypass
+                        allowBypass = newChecked
+                        scope.launch(Dispatchers.IO) {
+                            Settings.allowBypass = newChecked
+                            withContext(Dispatchers.Main) {
+                                notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Reload)
+                            }
+                        }
+                    },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             )
         }
 

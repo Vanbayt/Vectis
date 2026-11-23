@@ -1,5 +1,6 @@
 package io.nekohasekai.sfa.compose.screen.tools
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -22,9 +25,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -36,7 +41,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -45,7 +53,6 @@ import androidx.navigation.NavController
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.model.GroupItem
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.utils.CommandClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -92,6 +99,7 @@ fun OutboundPickerScreen(
     val viewModel: OutboundPickerViewModel = viewModel()
     val outbounds by viewModel.outbounds.collectAsState()
     var searchText by rememberSaveable { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
 
     DisposableEffect(Unit) {
         viewModel.connect()
@@ -111,61 +119,74 @@ fun OutboundPickerScreen(
         navController.navigateUp()
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.tool_outbound)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.tool_outbound), fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface),
+        ) {
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text(stringResource(android.R.string.search_go)) },
+                leadingIcon = {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        imageVector = Icons.Default.Search,
                         contentDescription = null,
                     )
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+            )
+
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item {
+                    OutboundPickerItem(
+                        tag = stringResource(R.string.tool_default_outbound),
+                        isSelected = selectedOutbound.isEmpty(),
+                        onClick = { selectOutbound("") },
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
                 }
-            },
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-    ) {
-        OutlinedTextField(
-            value = searchText,
-            onValueChange = { searchText = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            placeholder = { Text(stringResource(android.R.string.search_go)) },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                )
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-        )
-
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            item {
-                OutboundPickerItem(
-                    tag = stringResource(R.string.tool_default_outbound),
-                    isSelected = selectedOutbound.isEmpty(),
-                    onClick = { selectOutbound("") },
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                )
-            }
-            items(filteredOutbounds, key = { it.tag }) { item ->
-                OutboundPickerItem(
-                    tag = item.tag,
-                    type = Libbox.proxyDisplayType(item.type),
-                    urlTestDelay = item.urlTestDelay,
-                    isSelected = selectedOutbound == item.tag,
-                    onClick = { selectOutbound(item.tag) },
-                )
+                items(filteredOutbounds, key = { it.tag }) { item ->
+                    OutboundPickerItem(
+                        tag = item.tag,
+                        type = Libbox.proxyDisplayType(item.type),
+                        urlTestDelay = item.urlTestDelay,
+                        isSelected = selectedOutbound == item.tag,
+                        onClick = { selectOutbound(item.tag) },
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    )
+                }
             }
         }
     }
@@ -205,7 +226,7 @@ private fun OutboundPickerItem(
                     if (urlTestDelay > 0) {
                         Text(
                             text = "${urlTestDelay}ms",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = "tnum"),
                             color = outboundDelayColor(urlTestDelay),
                         )
                     }
@@ -236,10 +257,10 @@ fun OutboundPickerRow(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RoundedCornerShape(16.dp),
     ) {
         Row(
             modifier = Modifier

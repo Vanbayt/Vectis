@@ -12,5 +12,8 @@ data class UserProfileResponse(
     val subscription_tier: String = "free",
     val subscription_end: String? = null,
     val traffic_used: Long? = 0L,
-    val traffic_limit: Long? = 0L
+    val traffic_limit: Long? = 0L,
+    val quota_reset_date: String? = null,
+    val vpn_uuid: String? = null,
+    val device_id: String? = null
 )

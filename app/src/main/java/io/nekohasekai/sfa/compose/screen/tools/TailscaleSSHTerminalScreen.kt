@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -51,7 +52,6 @@ import com.termux.terminal.TerminalSessionClient
 import com.termux.view.TerminalView
 import com.termux.view.TerminalViewClient
 import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.terminal.ImportedFontStore
 import io.nekohasekai.sfa.terminal.TailscaleSSHPresentedSession
@@ -116,9 +116,10 @@ fun TailscaleSSHTerminalScreen(
         }
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(displayTitle, style = MaterialTheme.typography.titleMedium) },
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(displayTitle, style = MaterialTheme.typography.titleMedium) },
             navigationIcon = {
                 IconButton(onClick = {
                     keyboardController?.hide()
@@ -233,9 +234,14 @@ fun TailscaleSSHTerminalScreen(
                 }
             },
         )
-    }
-
-    Column(modifier = Modifier.fillMaxSize().imePadding()) {
+    },
+) { paddingValues ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .imePadding(),
+    ) {
         if (activeSession != null) {
             Box(modifier = Modifier.weight(1f)) {
                 val themeName = if (isDark) Settings.tailscaleSSHDarkTheme else Settings.tailscaleSSHLightTheme
@@ -319,6 +325,7 @@ fun TailscaleSSHTerminalScreen(
             }
         }
     }
+}
 
     DisposableEffect(Unit) {
         onDispose {

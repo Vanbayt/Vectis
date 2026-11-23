@@ -223,6 +223,37 @@ class DashboardViewModel(
         }
     }
 
+    fun regenerateVpnUuid(onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val newUuid = userRepository.regenerateVpnUuid(Settings.token)
+                refreshUserProfile()
+                withContext(Dispatchers.Main) {
+                    onSuccess(newUuid ?: "")
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onError(e.message ?: "Failed to regenerate VPN key")
+                }
+            }
+        }
+    }
+
+    fun revokeOtherSessions(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                userRepository.revokeOtherSessions(Settings.token)
+                withContext(Dispatchers.Main) {
+                    onSuccess()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onError(e.message ?: "Failed to revoke sessions")
+                }
+            }
+        }
+    }
+
     private fun checkDeprecatedNotes() {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
@@ -577,7 +608,7 @@ class DashboardViewModel(
         }
 
         val formattedLocation = if (activeTag == "auto") {
-            "⚡ Автовыбор"
+            "Автовыбор"
         } else {
             io.nekohasekai.sfa.utils.LocationLocalizer.formatLocation(activeTag)
         }
@@ -585,8 +616,14 @@ class DashboardViewModel(
         val isHysteria = activeTag.contains("hysteria", ignoreCase = true) || activeTag.contains("hy2", ignoreCase = true) || activeTag.endsWith("-8") || activeTag.endsWith("-2") || activeTag.endsWith("-9")
         val isGrpc = activeTag.contains("grpc", ignoreCase = true) || activeTag.endsWith("-5") || activeTag.endsWith("-3")
         val isHttpUpgrade = activeTag.contains("httpupgrade", ignoreCase = true) || activeTag.endsWith("-4")
+        val isNaive = activeTag.contains("naive", ignoreCase = true)
+        val isTuic = activeTag.contains("tuic", ignoreCase = true)
+        val isShadowTls = activeTag.contains("shadowtls", ignoreCase = true) || activeTag.contains("ss2022", ignoreCase = true)
         val formattedProtocol = when {
             isHysteria -> "Hysteria 2 (UDP)"
+            isNaive -> "NaiveProxy (Chromium)"
+            isTuic -> "TUIC v5 (BBR)"
+            isShadowTls -> "ShadowTLS v3"
             isGrpc -> "VLESS gRPC"
             isHttpUpgrade -> "VLESS HTTPUpgrade"
             activeTag == "auto" -> "Умный роутинг"

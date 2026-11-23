@@ -43,8 +43,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,11 +60,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.component.qr.QRCodeDialog
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.compose.util.QRCodeGenerator
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,17 +75,6 @@ fun TailscaleEndpointScreen(
     sshSharedViewModel: TailscaleSSHSharedViewModel,
     endpointTag: String,
 ) {
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(endpointTag) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
-                }
-            },
-        )
-    }
-
     val state by viewModel.uiState.collectAsState()
     val endpoint = state.endpoints.firstOrNull { it.endpointTag == endpointTag }
 
@@ -97,27 +88,47 @@ fun TailscaleEndpointScreen(
     val context = LocalContext.current
     var showAuthQRCode by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
-    ) {
-        val hasThisDevice = endpoint.backendState == "Running" && endpoint.selfPeer != null
-        val hasExitNode = endpoint.backendState == "Running" && endpoint.hasExitNodeCandidates
-        val hasAuth = endpoint.authURL.isNotEmpty()
-
-        // Status section
-        SectionHeader(stringResource(R.string.tailscale_status))
-        Card(
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(endpointTag, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
         ) {
+            val hasThisDevice = endpoint.backendState == "Running" && endpoint.selfPeer != null
+            val hasExitNode = endpoint.backendState == "Running" && endpoint.hasExitNodeCandidates
+            val hasAuth = endpoint.authURL.isNotEmpty()
+
+            // Status section
+            SectionHeader(stringResource(R.string.tailscale_status))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
+            ) {
             Column {
                 val stateIsLast = !hasThisDevice && !hasExitNode && !hasAuth
                 ListItem(
@@ -308,8 +319,9 @@ fun TailscaleEndpointScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
             ) {
                 Column {
@@ -335,12 +347,6 @@ fun TailscaleEndpointScreen(
                                     { showSSHMenu = true }
                                 } else {
                                     null
-                                },
-                                modifier = when {
-                                    group.peers.size == 1 -> Modifier.clip(RoundedCornerShape(12.dp))
-                                    index == 0 -> Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                                    index == group.peers.lastIndex -> Modifier.clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                                    else -> Modifier
                                 },
                             )
                             DropdownMenu(
@@ -371,6 +377,7 @@ fun TailscaleEndpointScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
     }
+}
 
     if (showAuthQRCode && endpoint.authURL.isNotEmpty()) {
         val qrBitmap = QRCodeGenerator.rememberBitmap(endpoint.authURL)
@@ -387,7 +394,7 @@ private fun SectionHeader(title: String) {
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+        modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp),
     )
 }
 

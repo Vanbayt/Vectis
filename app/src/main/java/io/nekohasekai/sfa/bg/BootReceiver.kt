@@ -20,7 +20,7 @@ class BootReceiver : BroadcastReceiver() {
             else -> return
         }
         GlobalScope.launch(Dispatchers.IO) {
-            if (Settings.startedByUser) {
+            if (Settings.autoConnectOnBoot || Settings.startedByUser) {
                 CrashReportManager.refresh()
                 if (CrashReportManager.unreadCount.value > 0) {
                     Settings.startedByUser = false

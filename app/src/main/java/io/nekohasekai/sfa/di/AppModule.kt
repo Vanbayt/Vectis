@@ -101,4 +101,12 @@ val appModule = module {
     viewModel {
         LoginViewModel(get())
     }
+
+    viewModel {
+        io.nekohasekai.sfa.compose.screen.dashboard.NotificationsViewModel(get())
+    }
+
+    viewModel {
+        io.nekohasekai.sfa.compose.screen.dashboard.TrafficLimitViewModel(get())
+    }
 }

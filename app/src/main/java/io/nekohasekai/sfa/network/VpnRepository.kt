@@ -14,8 +14,15 @@ class VpnRepository(private val vpnApi: VpnApi) {
     suspend fun fetchAndDecryptConfig(token: String): ByteArray {
         return withContext(Dispatchers.IO) {
             try {
-                // Выполняем GET-запрос к API
-                val response = vpnApi.getVpnConfig("Bearer $token")
+                // Выполняем GET-запрос к API с учетом пользовательских настроек
+                val mode = io.nekohasekai.sfa.database.Settings.routingMode
+                val adblock = if (io.nekohasekai.sfa.database.Settings.adblockEnabled) "1" else "0"
+                val response = vpnApi.getVpnConfig(
+                    authHeader = "Bearer $token",
+                    fakeIp = "1",
+                    mode = mode,
+                    adblock = adblock,
+                )
                 
                 // Расшифровываем конфигурацию
                 val configBytes = CryptoUtils.decryptConfig(response.encryptedConfig, response.iv)
@@ -92,12 +99,15 @@ class VpnRepository(private val vpnApi: VpnApi) {
                 val userSelectedTag = io.nekohasekai.sfa.database.Settings.selectedOutboundTag
                 if (userSelectedTag.isBlank() || userSelectedTag == "auto") {
                     io.nekohasekai.sfa.database.Settings.lastProtocol = "Auto"
-                    io.nekohasekai.sfa.database.Settings.lastLocation = "Auto"
+                    io.nekohasekai.sfa.database.Settings.lastLocation = "Нидерланды"
                 } else {
                     val tag = userSelectedTag
-                    val country = if (tag.contains("germany", ignoreCase = true) || tag.contains("ger", ignoreCase = true)) "Германия" else "Голландия"
+                    val country = if (tag.contains("germany", ignoreCase = true) || tag.contains("ger", ignoreCase = true)) "Германия" else "Нидерланды"
                     val proto = when {
                         tag.contains("hysteria", ignoreCase = true) || tag.contains("hy2", ignoreCase = true) || tag.endsWith("-8") || tag.endsWith("-2") || tag.endsWith("-9") -> "Hysteria 2"
+                        tag.contains("naive", ignoreCase = true) -> "NaiveProxy"
+                        tag.contains("tuic", ignoreCase = true) -> "TUIC v5"
+                        tag.contains("shadowtls", ignoreCase = true) -> "ShadowTLS"
                         tag.contains("grpc", ignoreCase = true) || tag.endsWith("-5") || tag.endsWith("-3") -> "VLESS gRPC"
                         else -> "VLESS Reality"
                     }

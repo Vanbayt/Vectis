@@ -34,7 +34,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.outlined.DeleteForever
@@ -49,17 +49,19 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
-
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -85,7 +87,6 @@ import io.nekohasekai.sfa.BuildConfig
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.base.UiEvent
 import io.nekohasekai.sfa.compose.base.rememberApplyServiceChangeNotifier
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.ktx.clipboardText
@@ -201,7 +202,7 @@ fun AppSettingsScreen(
     }
 
     if (showLanguageDialog) {
-        LanguageDialog(
+        LanguageBottomSheet(
             currentTag = currentLocaleTag,
             availableLocales = availableLocales,
             onLocaleSelected = { tag ->
@@ -231,7 +232,7 @@ fun AppSettingsScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(R.string.content_description_back),
                         )
                     }
@@ -254,20 +255,17 @@ fun AppSettingsScreen(
         // App Info
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            shape = RoundedCornerShape(32.dp)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            shape = RoundedCornerShape(24.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Box {
                     SettingsTileM3(
                         icon = Icons.Outlined.Info,
                         title = stringResource(R.string.app_version_title),
                         subtitle = BuildConfig.VERSION_NAME,
                         onClick = { },
-                        modifier = Modifier.combinedClickable(
-                            onClick = {},
-                            onLongClick = { showVersionMenu = true }
-                        )
+                        onLongClick = { showVersionMenu = true }
                     )
                     Box(modifier = Modifier.align(Alignment.BottomEnd)) {
                         DropdownMenu(
@@ -295,6 +293,10 @@ fun AppSettingsScreen(
                         }
                     }
                 }
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 68.dp, end = 12.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                )
                 SettingsTileM3(
                     icon = Icons.Outlined.Language,
                     title = stringResource(R.string.language),
@@ -306,6 +308,10 @@ fun AppSettingsScreen(
                     },
                     onClick = { showLanguageDialog = true }
                 )
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 68.dp, end = 12.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                )
                 SettingsTileM3(
                     icon = Icons.Outlined.DeleteSweep,
                     title = stringResource(R.string.cache_size),
@@ -313,6 +319,10 @@ fun AppSettingsScreen(
                     onClick = { }
                 )
                 if (cacheSize > 0L) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 68.dp, end = 12.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    )
                     SettingsTileM3(
                         icon = Icons.Outlined.DeleteForever,
                         title = stringResource(R.string.clear_cache),
@@ -337,14 +347,14 @@ fun AppSettingsScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                shape = RoundedCornerShape(32.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                shape = RoundedCornerShape(24.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(12.dp)) {
                     SettingsTileM3(
                         icon = Icons.Default.Terminal,
                         title = stringResource(R.string.tailscale_terminal_config),
@@ -361,14 +371,14 @@ fun AppSettingsScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                shape = RoundedCornerShape(32.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                shape = RoundedCornerShape(24.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(12.dp)) {
                     SettingsTileM3(
                         icon = Icons.Outlined.Notifications,
                         title = stringResource(R.string.enable_notification),
@@ -380,13 +390,18 @@ fun AppSettingsScreen(
                             )
                         }
                     )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 68.dp, end = 12.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    )
                     SettingsTileM3(
                         icon = Icons.Outlined.Speed,
                         title = stringResource(R.string.dynamic_notification),
                         onClick = {
-                            dynamicNotification = !dynamicNotification
+                            val newChecked = !dynamicNotification
+                            dynamicNotification = newChecked
                             scope.launch(Dispatchers.IO) {
-                                Settings.dynamicNotification = dynamicNotification
+                                Settings.dynamicNotification = newChecked
                                 withContext(Dispatchers.Main) {
                                     notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
                                 }
@@ -395,15 +410,7 @@ fun AppSettingsScreen(
                         trailing = {
                             Switch(
                                 checked = dynamicNotification,
-                                onCheckedChange = { checked ->
-                                    dynamicNotification = checked
-                                    scope.launch(Dispatchers.IO) {
-                                        Settings.dynamicNotification = checked
-                                        withContext(Dispatchers.Main) {
-                                            notifyApplyChange(UiEvent.ApplyServiceChange.Mode.Restart)
-                                        }
-                                    }
-                                }
+                                onCheckedChange = null,
                             )
                         }
                     )
@@ -417,20 +424,22 @@ fun AppSettingsScreen(
 }
 
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SettingsTileM3(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     subtitle: String? = null,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     trailing: @Composable (() -> Unit)? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "bounce"
     )
 
@@ -438,30 +447,32 @@ fun SettingsTileM3(
         modifier = modifier
             .fillMaxWidth()
             .scale(scale)
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(
+            .clip(RoundedCornerShape(16.dp))
+            .combinedClickable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,
-                onClick = onClick
+                onClick = onClick,
+                onLongClick = onLongClick
             )
-            .padding(vertical = 16.dp, horizontal = 16.dp),
+            .padding(vertical = 12.dp, horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)),
+                    .size(42.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(22.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
             Column {
                 Text(
                     text = title,
@@ -470,9 +481,10 @@ fun SettingsTileM3(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 if (subtitle != null) {
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -484,65 +496,78 @@ fun SettingsTileM3(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LanguageDialog(
+private fun LanguageBottomSheet(
     currentTag: String,
     availableLocales: List<Locale>,
     onLocaleSelected: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    val sheetState = rememberModalBottomSheetState()
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.language)) },
-        text = {
-            Column {
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.language),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onLocaleSelected("") }
+                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(
+                    selected = currentTag.isEmpty(),
+                    onClick = null,
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = stringResource(R.string.system_default),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (currentTag.isEmpty()) FontWeight.Bold else FontWeight.Normal,
+                )
+            }
+            availableLocales.forEach { locale ->
+                val tag = locale.toLanguageTag()
+                val isSelected = currentTag == tag
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onLocaleSelected("") }
-                        .padding(vertical = 8.dp),
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onLocaleSelected(tag) }
+                        .padding(vertical = 12.dp, horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RadioButton(
-                        selected = currentTag.isEmpty(),
-                        onClick = { onLocaleSelected("") },
+                        selected = isSelected,
+                        onClick = null,
                     )
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = stringResource(R.string.system_default),
+                        text = locale.getDisplayName(locale).replaceFirstChar { it.uppercase(locale) },
                         style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 8.dp),
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                     )
                 }
-                availableLocales.forEach { locale ->
-                    val tag = locale.toLanguageTag()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { onLocaleSelected(tag) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(
-                            selected = currentTag == tag,
-                            onClick = { onLocaleSelected(tag) },
-                        )
-                        Text(
-                            text = locale.getDisplayName(locale).replaceFirstChar { it.uppercase(locale) },
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(start = 8.dp),
-                        )
-                    }
-                }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel))
-            }
-        },
-    )
+        }
+    }
 }
 
 private fun calculateDirSize(dir: File?): Long {

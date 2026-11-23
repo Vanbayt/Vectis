@@ -33,6 +33,7 @@ import io.nekohasekai.sfa.compose.screen.log.LogViewModel
 import io.nekohasekai.sfa.compose.screen.privilegesettings.PrivilegeSettingsManageScreen
 
 import io.nekohasekai.sfa.compose.screen.profileoverride.PerAppProxyScreen
+import io.nekohasekai.sfa.compose.screen.settings.AdvancedSettingsScreen
 import io.nekohasekai.sfa.compose.screen.settings.AppSettingsScreen
 import io.nekohasekai.sfa.compose.screen.settings.CoreSettingsScreen
 import io.nekohasekai.sfa.compose.screen.settings.FDroidMirrorScreen
@@ -493,7 +494,17 @@ fun SFANavHost(
         }
 
         composable(Screen.Settings.route) {
-            SettingsScreen(navController = navController)
+            SettingsScreen(navController = navController, serviceStatus = serviceStatus)
+        }
+
+        composable(
+            route = "settings/advanced",
+            enterTransition = slideInFromRight,
+            exitTransition = slideOutToLeft,
+            popEnterTransition = slideInFromLeft,
+            popExitTransition = slideOutToRight,
+        ) {
+            AdvancedSettingsScreen(navController = navController)
         }
 
         // Settings subscreens with slide animations

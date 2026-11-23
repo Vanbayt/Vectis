@@ -61,4 +61,8 @@ object SettingsKey {
     const val LAST_LOCATION = "last_location"
     const val TRAFFIC_LIMIT = "traffic_limit"
     const val TRAFFIC_USED = "traffic_used"
+
+    const val ROUTING_MODE = "routing_mode"
+    const val ADBLOCK_ENABLED = "adblock_enabled"
+    const val AUTO_CONNECT_ON_BOOT = "auto_connect_on_boot"
 }

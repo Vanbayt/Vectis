@@ -38,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -71,7 +72,6 @@ import io.nekohasekai.sfa.compat.rememberOverscrollEffectCompat
 import io.nekohasekai.sfa.compose.model.Group
 import io.nekohasekai.sfa.compose.model.GroupItem
 import io.nekohasekai.sfa.compose.screen.dashboard.groups.GroupsViewModel
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.utils.CommandClient
@@ -98,35 +98,6 @@ fun GroupsCard(
     )
     val snackbarHostState = remember { SnackbarHostState() }
     val uiState by actualViewModel.uiState.collectAsState()
-
-    if (showTopBar) {
-        val allCollapsed = uiState.expandedGroups.isEmpty()
-        OverrideTopBar {
-            TopAppBar(
-                title = { Text(stringResource(R.string.title_groups)) },
-                actions = {
-                    if (uiState.groups.isNotEmpty()) {
-                        IconButton(onClick = { actualViewModel.toggleAllGroups() }) {
-                            Icon(
-                                imageVector =
-                                if (allCollapsed) {
-                                    Icons.Default.UnfoldMore
-                                } else {
-                                    Icons.Default.UnfoldLess
-                                },
-                                contentDescription =
-                                if (allCollapsed) {
-                                    stringResource(R.string.expand_all)
-                                } else {
-                                    stringResource(R.string.collapse_all)
-                                },
-                            )
-                        }
-                    }
-                },
-            )
-        }
-    }
 
     // Stable callbacks to prevent recomposition - use remember with viewModel as key
     val onToggleExpanded =
@@ -169,15 +140,56 @@ fun GroupsCard(
         }
     }
 
-    GroupsCardContent(
-        uiState = uiState,
-        onToggleExpanded = onToggleExpanded,
-        onItemSelected = onItemSelected,
-        onUrlTest = onUrlTest,
-        listHeaderContent = listHeaderContent,
-        asSheet = asSheet,
-        modifier = modifier,
-    )
+    if (showTopBar) {
+        val allCollapsed = uiState.expandedGroups.isEmpty()
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.title_groups)) },
+                    actions = {
+                        if (uiState.groups.isNotEmpty()) {
+                            IconButton(onClick = { actualViewModel.toggleAllGroups() }) {
+                                Icon(
+                                    imageVector =
+                                    if (allCollapsed) {
+                                        Icons.Default.UnfoldMore
+                                    } else {
+                                        Icons.Default.UnfoldLess
+                                    },
+                                    contentDescription =
+                                    if (allCollapsed) {
+                                        stringResource(R.string.expand_all)
+                                    } else {
+                                        stringResource(R.string.collapse_all)
+                                    },
+                                )
+                            }
+                        }
+                    },
+                )
+            },
+        ) { paddingValues ->
+            GroupsCardContent(
+                uiState = uiState,
+                onToggleExpanded = onToggleExpanded,
+                onItemSelected = onItemSelected,
+                onUrlTest = onUrlTest,
+                listHeaderContent = listHeaderContent,
+                asSheet = asSheet,
+                modifier = modifier.padding(paddingValues),
+            )
+        }
+    } else {
+        GroupsCardContent(
+            uiState = uiState,
+            onToggleExpanded = onToggleExpanded,
+            onItemSelected = onItemSelected,
+            onUrlTest = onUrlTest,
+            listHeaderContent = listHeaderContent,
+            asSheet = asSheet,
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable

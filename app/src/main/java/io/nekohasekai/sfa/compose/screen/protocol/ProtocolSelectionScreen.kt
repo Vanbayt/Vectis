@@ -110,13 +110,13 @@ fun ProtocolSelectionScreen(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surface
     ) { paddingValues ->
-        Surface(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
+                .padding(paddingValues)
         ) {
             if (uiState.isLoading && uiState.items.isEmpty()) {
                 Box(
@@ -170,26 +170,24 @@ fun ProtocolCardItem(
     val containerColor = if (isSelected) {
         MaterialTheme.colorScheme.primaryContainer
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        MaterialTheme.colorScheme.surfaceContainer
     }
 
     val contentColor = if (isSelected) {
         MaterialTheme.colorScheme.onPrimaryContainer
     } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
+        MaterialTheme.colorScheme.onSurface
     }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onSelect() },
-        shape = RoundedCornerShape(16.dp),
+        onClick = onSelect,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = containerColor,
-            contentColor = contentColor
+            contentColor = contentColor,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier
@@ -205,11 +203,13 @@ fun ProtocolCardItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = item.countryFlag,
-                        fontSize = 26.sp,
-                        modifier = Modifier.padding(end = 10.dp)
-                    )
+                    if (item.countryFlag.isNotBlank()) {
+                        Text(
+                            text = item.countryFlag,
+                            fontSize = 26.sp,
+                            modifier = Modifier.padding(end = 10.dp)
+                        )
+                    }
 
                     Column {
                         Text(
@@ -222,7 +222,7 @@ fun ProtocolCardItem(
 
                 RadioButton(
                     selected = isSelected,
-                    onClick = onSelect,
+                    onClick = null,
                     colors = RadioButtonDefaults.colors(
                         selectedColor = MaterialTheme.colorScheme.primary
                     )
@@ -288,9 +288,11 @@ fun ProtocolCardItem(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "${item.delayMs} ms",
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontFeatureSettings = "tnum",
+                            ),
                             fontWeight = FontWeight.Bold,
-                            color = pingColor
+                            color = pingColor,
                         )
                     }
                 } else if (!item.isAuto) {

@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -51,6 +54,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compose.base.UiEvent
@@ -59,7 +64,6 @@ import io.nekohasekai.sfa.compose.shared.AppSelectionCard
 import io.nekohasekai.sfa.compose.shared.PackageCache
 import io.nekohasekai.sfa.compose.shared.SortMode
 import io.nekohasekai.sfa.compose.shared.buildDisplayPackages
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.ktx.clipboardText
@@ -341,208 +345,212 @@ fun PrivilegeSettingsManageScreen(
         )
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.privilege_settings_hide_title)) },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-            actions = {
-                IconButton(
-                    onClick = {
-                        isSearchActive = !isSearchActive
-                        if (!isSearchActive) {
-                            searchQuery = ""
-                            updateCurrentPackages("")
-                            focusManager.clearFocus()
-                        }
-                    },
-                ) {
-                    Icon(
-                        imageVector = if (isSearchActive) Icons.Default.Close else Icons.Default.Search,
-                        contentDescription = stringResource(R.string.search),
-                    )
-                }
-                PrivilegeSettingsMenus(
-                    sortMode = sortMode,
-                    sortReverse = sortReverse,
-                    hideSystemApps = hideSystemApps,
-                    hideOfflineApps = hideOfflineApps,
-                    hideDisabledApps = hideDisabledApps,
-                    onSortModeChange = { mode ->
-                        sortMode = mode
-                        applyFilter()
-                    },
-                    onSortReverseToggle = {
-                        sortReverse = !sortReverse
-                        applyFilter()
-                    },
-                    onHideSystemAppsToggle = {
-                        hideSystemApps = !hideSystemApps
-                        applyFilter()
-                    },
-                    onHideOfflineAppsToggle = {
-                        hideOfflineApps = !hideOfflineApps
-                        applyFilter()
-                    },
-                    onHideDisabledAppsToggle = {
-                        hideDisabledApps = !hideDisabledApps
-                        applyFilter()
-                    },
-                    onSelectAll = {
-                        val newSelected = currentPackages.map { it.uid }.toSet()
-                        postSaveSelectedApplications(newSelected)
-                    },
-                    onDeselectAll = {
-                        postSaveSelectedApplications(emptySet())
-                    },
-                    onImport = {
-                        val packageNames =
-                            clipboardText?.split("\n")?.distinct()
-                                ?.takeIf { it.isNotEmpty() && it[0].isNotEmpty() }
-                        if (packageNames.isNullOrEmpty()) {
-                            Toast.makeText(
-                                context,
-                                R.string.toast_clipboard_empty,
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                        } else {
-                            val newSelected =
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.privilege_settings_hide_title), fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            isSearchActive = !isSearchActive
+                            if (!isSearchActive) {
+                                searchQuery = ""
+                                updateCurrentPackages("")
+                                focusManager.clearFocus()
+                            }
+                        },
+                    ) {
+                        Icon(
+                            imageVector = if (isSearchActive) Icons.Default.Close else Icons.Default.Search,
+                            contentDescription = stringResource(R.string.search),
+                        )
+                    }
+                    PrivilegeSettingsMenus(
+                        sortMode = sortMode,
+                        sortReverse = sortReverse,
+                        hideSystemApps = hideSystemApps,
+                        hideOfflineApps = hideOfflineApps,
+                        hideDisabledApps = hideDisabledApps,
+                        onSortModeChange = { mode ->
+                            sortMode = mode
+                            applyFilter()
+                        },
+                        onSortReverseToggle = {
+                            sortReverse = !sortReverse
+                            applyFilter()
+                        },
+                        onHideSystemAppsToggle = {
+                            hideSystemApps = !hideSystemApps
+                            applyFilter()
+                        },
+                        onHideOfflineAppsToggle = {
+                            hideOfflineApps = !hideOfflineApps
+                            applyFilter()
+                        },
+                        onHideDisabledAppsToggle = {
+                            hideDisabledApps = !hideDisabledApps
+                            applyFilter()
+                        },
+                        onSelectAll = {
+                            val newSelected = currentPackages.map { it.uid }.toSet()
+                            postSaveSelectedApplications(newSelected)
+                        },
+                        onDeselectAll = {
+                            postSaveSelectedApplications(emptySet())
+                        },
+                        onImport = {
+                            val packageNames =
+                                clipboardText?.split("\n")?.distinct()
+                                    ?.takeIf { it.isNotEmpty() && it[0].isNotEmpty() }
+                            if (packageNames.isNullOrEmpty()) {
+                                Toast.makeText(
+                                    context,
+                                    R.string.toast_clipboard_empty,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            } else {
+                                val newSelected =
+                                    packages.mapNotNull { packageCache ->
+                                        if (packageNames.contains(packageCache.packageName)) {
+                                            packageCache.uid
+                                        } else {
+                                            null
+                                        }
+                                    }.toSet()
+                                postSaveSelectedApplications(newSelected)
+                                Toast.makeText(
+                                    context,
+                                    R.string.toast_imported_from_clipboard,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        },
+                        onExport = {
+                            val packageList =
                                 packages.mapNotNull { packageCache ->
-                                    if (packageNames.contains(packageCache.packageName)) {
-                                        packageCache.uid
+                                    if (selectedUids.contains(packageCache.uid)) {
+                                        packageCache.packageName
                                     } else {
                                         null
                                     }
-                                }.toSet()
-                            postSaveSelectedApplications(newSelected)
+                                }
+                            clipboardText = packageList.joinToString("\n")
                             Toast.makeText(
                                 context,
-                                R.string.toast_imported_from_clipboard,
+                                R.string.toast_copied_to_clipboard,
                                 Toast.LENGTH_SHORT,
                             ).show()
-                        }
-                    },
-                    onExport = {
-                        val packageList =
-                            packages.mapNotNull { packageCache ->
-                                if (selectedUids.contains(packageCache.uid)) {
-                                    packageCache.packageName
-                                } else {
-                                    null
-                                }
-                            }
-                        clipboardText = packageList.joinToString("\n")
-                        Toast.makeText(
-                            context,
-                            R.string.toast_copied_to_clipboard,
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    },
-                )
-            },
-            colors =
-            TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                titleContentColor = MaterialTheme.colorScheme.onSurface,
-            ),
-        )
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        AnimatedVisibility(
-            visible = isLoading,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        }
-
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Text(
-                text = stringResource(R.string.privilege_settings_hide_description),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-
-        AnimatedVisibility(
-            visible = isSearchActive,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut(),
-        ) {
-            val focusRequester = remember { FocusRequester() }
-
-            LaunchedEffect(isSearchActive) {
-                if (isSearchActive) {
-                    focusRequester.requestFocus()
-                }
-            }
-
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = {
-                    searchQuery = it
-                    updateCurrentPackages(it)
-                },
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .focusRequester(focusRequester),
-                placeholder = { Text(stringResource(R.string.search)) },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = stringResource(R.string.search),
+                        },
                     )
                 },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = {
-                            searchQuery = ""
-                            updateCurrentPackages("")
-                            focusManager.clearFocus()
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.content_description_clear_search),
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
-        }
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding =
-            androidx.compose.foundation.layout.PaddingValues(
-                horizontal = 16.dp,
-                vertical = 12.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
         ) {
-            items(currentPackages, key = { it.packageName }) { packageCache ->
-                AppSelectionCard(
-                    packageCache = packageCache,
-                    selected = selectedUids.contains(packageCache.uid),
-                    onToggle = { selected -> toggleSelection(packageCache, selected) },
-                    onCopyLabel = { clipboardText = packageCache.applicationLabel },
-                    onCopyPackage = { clipboardText = packageCache.packageName },
-                    onCopyUid = { clipboardText = packageCache.uid.toString() },
+            AnimatedVisibility(
+                visible = isLoading,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+            ) {
+                Text(
+                    text = stringResource(R.string.privilege_settings_hide_description),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    style = MaterialTheme.typography.bodyMedium,
                 )
+            }
+
+            AnimatedVisibility(
+                visible = isSearchActive,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut(),
+            ) {
+                val focusRequester = remember { FocusRequester() }
+
+                LaunchedEffect(isSearchActive) {
+                    if (isSearchActive) {
+                        focusRequester.requestFocus()
+                    }
+                }
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = {
+                        searchQuery = it
+                        updateCurrentPackages(it)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .focusRequester(focusRequester),
+                    placeholder = { Text(stringResource(R.string.search)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = stringResource(R.string.search),
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = {
+                                searchQuery = ""
+                                updateCurrentPackages("")
+                                focusManager.clearFocus()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = stringResource(R.string.content_description_clear_search),
+                                )
+                            }
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                    singleLine = true,
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 16.dp,
+                    vertical = 12.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(currentPackages, key = { it.packageName }) { packageCache ->
+                    AppSelectionCard(
+                        packageCache = packageCache,
+                        selected = selectedUids.contains(packageCache.uid),
+                        onToggle = { selected -> toggleSelection(packageCache, selected) },
+                        onCopyLabel = { clipboardText = packageCache.applicationLabel },
+                        onCopyPackage = { clipboardText = packageCache.packageName },
+                        onCopyUid = { clipboardText = packageCache.uid.toString() },
+                    )
+                }
             }
         }
     }

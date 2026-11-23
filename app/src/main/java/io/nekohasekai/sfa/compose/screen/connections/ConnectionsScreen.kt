@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,18 +14,25 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,8 +42,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -54,16 +64,17 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.sfa.R
 import io.nekohasekai.sfa.compat.LazyColumnCompat
 import io.nekohasekai.sfa.compat.rememberOverscrollEffectCompat
 import io.nekohasekai.sfa.compose.model.Connection
 import io.nekohasekai.sfa.compose.model.ConnectionSort
 import io.nekohasekai.sfa.compose.model.ConnectionStateFilter
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.compose.util.rememberSheetDismissFromContentOnlyIfGestureStartedAtTopModifier
 import io.nekohasekai.sfa.constant.Status
 
@@ -83,14 +94,6 @@ fun ConnectionsPage(
     var showSortMenu by remember { mutableStateOf(false) }
     var showConnectionsMenu by remember { mutableStateOf(false) }
 
-    if (showTopBar) {
-        OverrideTopBar {
-            TopAppBar(
-                title = { Text(stringResource(R.string.title_connections)) },
-            )
-        }
-    }
-
     val headerRowModifier =
         if (asSheet) {
             Modifier
@@ -109,10 +112,11 @@ fun ConnectionsPage(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (showTitle) {
+            if (showTitle || showTopBar) {
                 Text(
                     text = stringResource(R.string.title_connections),
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
             }
@@ -146,7 +150,7 @@ fun ConnectionsPage(
                         },
                         leadingIcon = {
                             if (uiState.stateFilter == ConnectionStateFilter.All) {
-                                Icon(Icons.Default.Check, contentDescription = null)
+                                Icon(Icons.Rounded.Check, contentDescription = null)
                             }
                         },
                     )
@@ -158,7 +162,7 @@ fun ConnectionsPage(
                         },
                         leadingIcon = {
                             if (uiState.stateFilter == ConnectionStateFilter.Active) {
-                                Icon(Icons.Default.Check, contentDescription = null)
+                                Icon(Icons.Rounded.Check, contentDescription = null)
                             }
                         },
                     )
@@ -170,7 +174,7 @@ fun ConnectionsPage(
                         },
                         leadingIcon = {
                             if (uiState.stateFilter == ConnectionStateFilter.Closed) {
-                                Icon(Icons.Default.Check, contentDescription = null)
+                                Icon(Icons.Rounded.Check, contentDescription = null)
                             }
                         },
                     )
@@ -179,7 +183,7 @@ fun ConnectionsPage(
 
             Box {
                 IconButton(onClick = { showSortMenu = true }) {
-                    Icon(Icons.Default.SwapVert, contentDescription = null)
+                    Icon(Icons.Rounded.SwapVert, contentDescription = null)
                 }
 
                 DropdownMenu(
@@ -194,7 +198,7 @@ fun ConnectionsPage(
                         },
                         leadingIcon = {
                             if (uiState.sort == ConnectionSort.ByDate) {
-                                Icon(Icons.Default.Check, contentDescription = null)
+                                Icon(Icons.Rounded.Check, contentDescription = null)
                             }
                         },
                     )
@@ -206,7 +210,7 @@ fun ConnectionsPage(
                         },
                         leadingIcon = {
                             if (uiState.sort == ConnectionSort.ByTraffic) {
-                                Icon(Icons.Default.Check, contentDescription = null)
+                                Icon(Icons.Rounded.Check, contentDescription = null)
                             }
                         },
                     )
@@ -218,7 +222,7 @@ fun ConnectionsPage(
                         },
                         leadingIcon = {
                             if (uiState.sort == ConnectionSort.ByTrafficTotal) {
-                                Icon(Icons.Default.Check, contentDescription = null)
+                                Icon(Icons.Rounded.Check, contentDescription = null)
                             }
                         },
                     )
@@ -227,7 +231,7 @@ fun ConnectionsPage(
 
             Box {
                 IconButton(onClick = { showConnectionsMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = null)
+                    Icon(Icons.Rounded.MoreVert, contentDescription = null)
                 }
 
                 DropdownMenu(
@@ -250,7 +254,7 @@ fun ConnectionsPage(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = if (uiState.isSearchActive) Icons.Default.Close else Icons.Default.Search,
+                                imageVector = if (uiState.isSearchActive) Icons.Rounded.Close else Icons.Rounded.Search,
                                 contentDescription = null,
                             )
                         },
@@ -262,7 +266,7 @@ fun ConnectionsPage(
                             showConnectionsMenu = false
                         },
                         leadingIcon = {
-                            Icon(Icons.Default.Close, contentDescription = null)
+                            Icon(Icons.Rounded.Close, contentDescription = null)
                         },
                         enabled = uiState.connections.any { it.isActive },
                     )
@@ -315,30 +319,6 @@ fun ConnectionDetailsRoute(
         cachedConnection = cachedConnection?.copy(closedAt = System.currentTimeMillis())
     }
 
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.connection_details)) },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                    )
-                }
-            },
-            actions = {
-                if (cachedConnection?.isActive == true) {
-                    IconButton(onClick = { viewModel.closeConnection(connectionId) }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.connection_close),
-                        )
-                    }
-                }
-            },
-        )
-    }
-
     LaunchedEffect(Unit) {
         viewModel.setVisible(true)
     }
@@ -359,13 +339,42 @@ fun ConnectionDetailsRoute(
         }
         Box(modifier = modifier.fillMaxSize())
     } else {
-        ConnectionDetailsScreen(
-            connection = cachedConnection!!,
-            onBack = onBack,
-            onClose = { viewModel.closeConnection(connectionId) },
-            modifier = modifier,
-            showHeader = false,
-        )
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.connection_details), fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(R.string.content_description_back),
+                            )
+                        }
+                    },
+                    actions = {
+                        if (cachedConnection?.isActive == true) {
+                            IconButton(onClick = { viewModel.closeConnection(connectionId) }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = stringResource(R.string.connection_close),
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                )
+            },
+        ) { paddingValues ->
+            ConnectionDetailsScreen(
+                connection = cachedConnection!!,
+                onBack = onBack,
+                onClose = { viewModel.closeConnection(connectionId) },
+                modifier = modifier.padding(paddingValues),
+                showHeader = false,
+            )
+        }
     }
 }
 
@@ -418,6 +427,21 @@ fun ConnectionsScreen(
                 }
             }
 
+            item(key = "connections_hero_card") {
+                val allList = if (uiState.allConnections.isNotEmpty()) uiState.allConnections else uiState.connections
+                val activeCount = allList.count { it.isActive }
+                val totalCount = allList.size
+                val uploadTotal = allList.sumOf { it.uploadTotal }
+                val downloadTotal = allList.sumOf { it.downloadTotal }
+                ConnectionsHeroSummaryCard(
+                    activeCount = activeCount,
+                    totalCount = totalCount,
+                    uploadTotal = uploadTotal,
+                    downloadTotal = downloadTotal,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+
             item(key = "connections_search") {
                 AnimatedVisibility(
                     visible = uiState.isSearchActive,
@@ -438,12 +462,13 @@ fun ConnectionsScreen(
                             .fillMaxWidth()
                             .padding(bottom = 8.dp)
                             .focusRequester(focusRequester),
+                        shape = RoundedCornerShape(16.dp),
                         placeholder = { Text(stringResource(R.string.search_connections)) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                         trailingIcon = {
                             if (uiState.searchText.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.setSearchText("") }) {
-                                    Icon(Icons.Default.Clear, contentDescription = null)
+                                    Icon(Icons.Rounded.Clear, contentDescription = null)
                                 }
                             }
                         },
@@ -499,6 +524,21 @@ fun ConnectionsScreen(
         }
     } else {
         Column(modifier = modifier.fillMaxSize()) {
+            val allList = if (uiState.allConnections.isNotEmpty()) uiState.allConnections else uiState.connections
+            val activeCount = allList.count { it.isActive }
+            val totalCount = allList.size
+            val uploadTotal = allList.sumOf { it.uploadTotal }
+            val downloadTotal = allList.sumOf { it.downloadTotal }
+            ConnectionsHeroSummaryCard(
+                activeCount = activeCount,
+                totalCount = totalCount,
+                uploadTotal = uploadTotal,
+                downloadTotal = downloadTotal,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 8.dp),
+            )
+
             AnimatedVisibility(
                 visible = uiState.isSearchActive,
                 enter = expandVertically() + fadeIn(),
@@ -519,12 +559,13 @@ fun ConnectionsScreen(
                         .padding(horizontal = 16.dp)
                         .padding(bottom = 8.dp)
                         .focusRequester(focusRequester),
+                    shape = RoundedCornerShape(16.dp),
                     placeholder = { Text(stringResource(R.string.search_connections)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                     trailingIcon = {
                         if (uiState.searchText.isNotEmpty()) {
                             IconButton(onClick = { viewModel.setSearchText("") }) {
-                                Icon(Icons.Default.Clear, contentDescription = null)
+                                Icon(Icons.Rounded.Clear, contentDescription = null)
                             }
                         }
                     },
@@ -590,5 +631,123 @@ private fun rememberBounceBlockingNestedScrollConnection(lazyListState: LazyList
         override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset = if (available.y < 0) available else Offset.Zero
 
         override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = if (available.y < 0) available else Velocity.Zero
+    }
+}
+
+@Composable
+fun ConnectionsHeroSummaryCard(
+    activeCount: Int,
+    totalCount: Int,
+    uploadTotal: Long,
+    downloadTotal: Long,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Active / Total Connections
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(
+                                color = if (activeCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                shape = RoundedCornerShape(4.dp),
+                            ),
+                    )
+                    Text(
+                        text = "$activeCount / $totalCount",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.connection_state_active),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            // Downlink
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowDownward,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = Libbox.formatBytes(downloadTotal),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.connection_downlink),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            // Uplink
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.End,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowUpward,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.tertiary,
+                    )
+                    Text(
+                        text = Libbox.formatBytes(uploadTotal),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.connection_uplink),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }

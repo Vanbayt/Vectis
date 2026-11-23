@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -24,14 +25,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -46,12 +50,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.sfa.R
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.constant.Status
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,17 +71,6 @@ fun NetworkQualityScreen(
 
     var showConfigURLDialog by remember { mutableStateOf(false) }
     var showMaxRuntimeDialog by remember { mutableStateOf(false) }
-
-    OverrideTopBar {
-        TopAppBar(
-            title = { Text(stringResource(R.string.network_quality)) },
-            navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                }
-            },
-        )
-    }
 
     LaunchedEffect(vpnRunning) {
         if (!vpnRunning) {
@@ -138,250 +131,268 @@ fun NetworkQualityScreen(
         )
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-            ),
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.network_quality), fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            )
+        },
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.surface)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.tool_configuration),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+            Text(
+                text = stringResource(R.string.tool_configuration),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp),
+            )
 
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { showConfigURLDialog = true },
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                stringResource(R.string.network_quality_url),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
+            ) {
+                Column {
+                    ListItem(
+                        headlineContent = {
+                            Text(stringResource(R.string.network_quality_url), style = MaterialTheme.typography.bodyLarge)
+                        },
+                        supportingContent = {
                             Text(
                                 state.configURL,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                        }
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        stringResource(R.string.network_quality_serial),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Switch(
-                        checked = state.serial,
-                        onCheckedChange = { viewModel.setSerial(it) },
-                        enabled = !state.isRunning,
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        stringResource(R.string.network_quality_http3),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Switch(
-                        checked = state.http3,
-                        onCheckedChange = { viewModel.setHttp3(it) },
-                        enabled = !state.isRunning,
-                    )
-                }
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                )
-
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable(enabled = !state.isRunning) { showMaxRuntimeDialog = true },
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Text(
-                            stringResource(R.string.network_quality_max_runtime),
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            stringResource(state.maxRuntime.labelRes),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-
-                if (vpnRunning) {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    )
-                    OutboundPickerRow(
-                        selectedOutbound = state.selectedOutbound,
-                        onClick = {
-                            navController.navigate(
-                                "tools/outbound_picker/${android.net.Uri.encode(state.selectedOutbound)}",
+                        },
+                        trailingContent = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         },
+                        modifier = Modifier.clickable { showConfigURLDialog = true },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
+
+                    ListItem(
+                        headlineContent = {
+                            Text(stringResource(R.string.network_quality_serial), style = MaterialTheme.typography.bodyLarge)
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = state.serial,
+                                onCheckedChange = null,
+                                enabled = !state.isRunning,
+                            )
+                        },
+                        modifier = Modifier.clickable(enabled = !state.isRunning) {
+                            viewModel.setSerial(!state.serial)
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
+
+                    ListItem(
+                        headlineContent = {
+                            Text(stringResource(R.string.network_quality_http3), style = MaterialTheme.typography.bodyLarge)
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = state.http3,
+                                onCheckedChange = null,
+                                enabled = !state.isRunning,
+                            )
+                        },
+                        modifier = Modifier.clickable(enabled = !state.isRunning) {
+                            viewModel.setHttp3(!state.http3)
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
+
+                    ListItem(
+                        headlineContent = {
+                            Text(stringResource(R.string.network_quality_max_runtime), style = MaterialTheme.typography.bodyLarge)
+                        },
+                        trailingContent = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    stringResource(state.maxRuntime.labelRes),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        },
+                        modifier = Modifier.clickable(enabled = !state.isRunning) {
+                            showMaxRuntimeDialog = true
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+
+                    if (vpnRunning) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        )
+                        OutboundPickerRow(
+                            selectedOutbound = state.selectedOutbound,
+                            onClick = {
+                                navController.navigate(
+                                    "tools/outbound_picker/${android.net.Uri.encode(state.selectedOutbound)}",
+                                )
+                            },
+                        )
+                    }
                 }
             }
-        }
 
-        if (state.isRunning) {
-            Button(
-                onClick = { viewModel.cancelTest() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                ),
-            ) {
-                Text(stringResource(R.string.network_quality_cancel))
-            }
-        } else {
-            Button(
-                onClick = { viewModel.requestStartTest(context, vpnRunning) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.network_quality_start))
-            }
-        }
-
-        if (state.phase >= 0) {
-            val phaseDownload = Libbox.NetworkQualityPhaseDownload.toInt()
-            val phaseUpload = Libbox.NetworkQualityPhaseUpload.toInt()
-            val downloadActive =
-                (state.isRunning && !state.serial && state.phase in phaseDownload..phaseUpload) || state.phase == phaseDownload
-            val uploadActive =
-                (state.isRunning && !state.serial && state.phase in phaseDownload..phaseUpload) || state.phase == phaseUpload
-            val done = state.phase == Libbox.NetworkQualityPhaseDone.toInt()
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
-                ),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+            if (state.isRunning) {
+                Button(
+                    onClick = { viewModel.cancelTest() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
                 ) {
-                    Text(
-                        text = stringResource(R.string.tool_results),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    )
+                    Text(stringResource(R.string.network_quality_cancel), fontWeight = FontWeight.SemiBold)
+                }
+            } else {
+                Button(
+                    onClick = { viewModel.requestStartTest(context, vpnRunning) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Text(stringResource(R.string.network_quality_start), fontWeight = FontWeight.SemiBold)
+                }
+            }
 
-                    ResultItem(
-                        label = stringResource(R.string.network_quality_idle_latency),
-                        value = if (state.idleLatencyMs > 0) "${state.idleLatencyMs} ms" else null,
-                        isActive = state.phase == Libbox.NetworkQualityPhaseIdle.toInt(),
-                        isRunning = state.isRunning,
-                    )
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    )
-                    ResultItem(
-                        label = stringResource(R.string.network_quality_download),
-                        value = if (state.downloadCapacity > 0) Libbox.formatBitrate(state.downloadCapacity) else null,
-                        isActive = downloadActive,
-                        isRunning = state.isRunning,
-                        accuracy = if (done) accuracyLabel(state.downloadCapacityAccuracy).first else null,
-                        accuracyColor = if (done) accuracyLabel(state.downloadCapacityAccuracy).second else null,
-                    )
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    )
-                    ResultItem(
-                        label = stringResource(R.string.network_quality_download_rpm),
-                        value = if (state.downloadRPM > 0) "${state.downloadRPM}" else null,
-                        isActive = downloadActive,
-                        isRunning = state.isRunning,
-                        accuracy = if (done) accuracyLabel(state.downloadRPMAccuracy).first else null,
-                        accuracyColor = if (done) accuracyLabel(state.downloadRPMAccuracy).second else null,
-                    )
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    )
-                    ResultItem(
-                        label = stringResource(R.string.network_quality_upload),
-                        value = if (state.uploadCapacity > 0) Libbox.formatBitrate(state.uploadCapacity) else null,
-                        isActive = uploadActive,
-                        isRunning = state.isRunning,
-                        accuracy = if (done) accuracyLabel(state.uploadCapacityAccuracy).first else null,
-                        accuracyColor = if (done) accuracyLabel(state.uploadCapacityAccuracy).second else null,
-                    )
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    )
-                    ResultItem(
-                        label = stringResource(R.string.network_quality_upload_rpm),
-                        value = if (state.uploadRPM > 0) "${state.uploadRPM}" else null,
-                        isActive = uploadActive,
-                        isRunning = state.isRunning,
-                        accuracy = if (done) accuracyLabel(state.uploadRPMAccuracy).first else null,
-                        accuracyColor = if (done) accuracyLabel(state.uploadRPMAccuracy).second else null,
-                    )
+            if (state.phase >= 0) {
+                val phaseDownload = Libbox.NetworkQualityPhaseDownload.toInt()
+                val phaseUpload = Libbox.NetworkQualityPhaseUpload.toInt()
+                val downloadActive =
+                    (state.isRunning && !state.serial && state.phase in phaseDownload..phaseUpload) || state.phase == phaseDownload
+                val uploadActive =
+                    (state.isRunning && !state.serial && state.phase in phaseDownload..phaseUpload) || state.phase == phaseUpload
+                val done = state.phase == Libbox.NetworkQualityPhaseDone.toInt()
+
+                Text(
+                    text = stringResource(R.string.tool_results),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 8.dp, top = 8.dp),
+                )
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    ) {
+                        ResultItem(
+                            label = stringResource(R.string.network_quality_idle_latency),
+                            value = if (state.idleLatencyMs > 0) "${state.idleLatencyMs} ms" else null,
+                            isActive = state.phase == Libbox.NetworkQualityPhaseIdle.toInt(),
+                            isRunning = state.isRunning,
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        )
+                        ResultItem(
+                            label = stringResource(R.string.network_quality_download),
+                            value = if (state.downloadCapacity > 0) Libbox.formatBitrate(state.downloadCapacity) else null,
+                            isActive = downloadActive,
+                            isRunning = state.isRunning,
+                            accuracy = if (done) accuracyLabel(state.downloadCapacityAccuracy).first else null,
+                            accuracyColor = if (done) accuracyLabel(state.downloadCapacityAccuracy).second else null,
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        )
+                        ResultItem(
+                            label = stringResource(R.string.network_quality_download_rpm),
+                            value = if (state.downloadRPM > 0) "${state.downloadRPM}" else null,
+                            isActive = downloadActive,
+                            isRunning = state.isRunning,
+                            accuracy = if (done) accuracyLabel(state.downloadRPMAccuracy).first else null,
+                            accuracyColor = if (done) accuracyLabel(state.downloadRPMAccuracy).second else null,
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        )
+                        ResultItem(
+                            label = stringResource(R.string.network_quality_upload),
+                            value = if (state.uploadCapacity > 0) Libbox.formatBitrate(state.uploadCapacity) else null,
+                            isActive = uploadActive,
+                            isRunning = state.isRunning,
+                            accuracy = if (done) accuracyLabel(state.uploadCapacityAccuracy).first else null,
+                            accuracyColor = if (done) accuracyLabel(state.uploadCapacityAccuracy).second else null,
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        )
+                        ResultItem(
+                            label = stringResource(R.string.network_quality_upload_rpm),
+                            value = if (state.uploadRPM > 0) "${state.uploadRPM}" else null,
+                            isActive = uploadActive,
+                            isRunning = state.isRunning,
+                            accuracy = if (done) accuracyLabel(state.uploadRPMAccuracy).first else null,
+                            accuracyColor = if (done) accuracyLabel(state.uploadRPMAccuracy).second else null,
+                        )
+                    }
                 }
             }
         }
@@ -390,9 +401,9 @@ fun NetworkQualityScreen(
 
 @Composable
 private fun accuracyLabel(value: Int): Pair<String, Color> = when (value) {
-    Libbox.NetworkQualityAccuracyHigh -> stringResource(R.string.network_quality_confidence_high) to Color.Green
-    Libbox.NetworkQualityAccuracyMedium -> stringResource(R.string.network_quality_confidence_medium) to Color.Yellow
-    else -> stringResource(R.string.network_quality_confidence_low) to Color.Red
+    Libbox.NetworkQualityAccuracyHigh -> stringResource(R.string.network_quality_confidence_high) to Color(0xFF2E7D32)
+    Libbox.NetworkQualityAccuracyMedium -> stringResource(R.string.network_quality_confidence_medium) to Color(0xFFF57C00)
+    else -> stringResource(R.string.network_quality_confidence_low) to MaterialTheme.colorScheme.error
 }
 
 @Composable
@@ -410,6 +421,7 @@ private fun ConfigURLDialog(
                 value = text,
                 onValueChange = { text = it },
                 modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
             )
         },
         confirmButton = {
@@ -443,14 +455,14 @@ private fun MaxRuntimeDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .clickable { onOptionSelected(option) }
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(
                             selected = currentOption == option,
-                            onClick = { onOptionSelected(option) },
+                            onClick = null,
                         )
                         Text(
                             text = stringResource(option.labelRes),

@@ -63,33 +63,32 @@ object NetworkPriorityAdapter {
             val pingRtt = PreConnectPingManager.getPingForTag(tag)
 
             // Base transport rank (0 = highest priority, higher = lower priority)
-            val baseRank = if (udpState == UdpProber.UdpState.UDP_SHAPED && isHysteria) {
-                // TSPU blocking UDP on cellular -> demote Hysteria 2 to last place
-                100
-            } else {
-                when (category) {
-                    NetworkCategory.WIFI -> {
-                        // Wi-Fi network: Hysteria 2 (UDP QUIC + BBR) #0 (highest speed & loss resilience), Reality TCP #1, gRPC #2
+            val baseRank = when (category) {
+                NetworkCategory.WIFI -> {
+                    // Wi-Fi network: Hysteria 2 (UDP QUIC + BBR) #0 (highest speed & loss resilience), Reality TCP #1, gRPC #2
+                    when {
+                        isHysteria -> 0
+                        isTcp -> 1
+                        else -> 2
+                    }
+                }
+                NetworkCategory.CELLULAR_4G_5G, NetworkCategory.CELLULAR_WEAK_3G_2G -> {
+                    // Cellular network: if UDP is confirmed shaped by TSPU, prefer TCP (Reality / Naive)
+                    if (udpState == UdpProber.UdpState.UDP_SHAPED && isHysteria) {
+                        5
+                    } else {
                         when {
                             isHysteria -> 0
                             isTcp -> 1
                             else -> 2
                         }
                     }
-                    NetworkCategory.CELLULAR_4G_5G, NetworkCategory.CELLULAR_WEAK_3G_2G -> {
-                        // Cellular network: VLESS gRPC #0 (DPI evasion), VLESS Reality TCP #1, Hysteria 2 #2
-                        when {
-                            isGrpc -> 0
-                            isTcp -> 1
-                            else -> 2
-                        }
-                    }
-                    NetworkCategory.UNKNOWN -> {
-                        when {
-                            isHysteria -> 0
-                            isTcp -> 1
-                            else -> 2
-                        }
+                }
+                else -> {
+                    when {
+                        isHysteria -> 0
+                        isTcp -> 1
+                        else -> 2
                     }
                 }
             }

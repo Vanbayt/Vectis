@@ -61,7 +61,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import io.nekohasekai.libbox.Libbox
-import io.nekohasekai.sfa.compose.topbar.OverrideTopBar
 import io.nekohasekai.sfa.database.Settings
 import io.nekohasekai.sfa.ktx.clipboardText
 import kotlinx.coroutines.Dispatchers
@@ -129,10 +128,11 @@ fun CoreSettingsScreen(navController: NavController) {
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
+            shape = RoundedCornerShape(24.dp),
         ) {
-            Column {
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
                 // Version Info
                 Box {
                     ListItem(
@@ -140,6 +140,7 @@ fun CoreSettingsScreen(navController: NavController) {
                             Text(
                                 stringResource(R.string.core_version_title),
                                 style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                             )
                         },
                         supportingContent = {
@@ -158,7 +159,7 @@ fun CoreSettingsScreen(navController: NavController) {
                             )
                         },
                         modifier = Modifier
-                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .combinedClickable(
                                 onClick = {},
                                 onLongClick = { showVersionMenu = true },
@@ -195,12 +196,18 @@ fun CoreSettingsScreen(navController: NavController) {
                     }
                 }
 
+                androidx.compose.material3.HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+
                 // Data Size
                 ListItem(
                     headlineContent = {
                         Text(
                             stringResource(R.string.core_data_size),
                             style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                         )
                     },
                     supportingContent = {
@@ -219,12 +226,7 @@ fun CoreSettingsScreen(navController: NavController) {
                         )
                     },
                     modifier =
-                    Modifier.clip(
-                        RoundedCornerShape(
-                            bottomStart = 12.dp,
-                            bottomEnd = 12.dp,
-                        ),
-                    ),
+                    Modifier.clip(RoundedCornerShape(16.dp)),
                     colors =
                     ListItemDefaults.colors(
                         containerColor = Color.Transparent,
@@ -240,7 +242,8 @@ fun CoreSettingsScreen(navController: NavController) {
                 text = stringResource(R.string.beta_settings),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             )
 
             Card(
@@ -250,14 +253,16 @@ fun CoreSettingsScreen(navController: NavController) {
                     .padding(horizontal = 16.dp),
                 colors =
                 CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
+                shape = RoundedCornerShape(24.dp),
             ) {
                 ListItem(
                     headlineContent = {
                         Text(
                             stringResource(R.string.disable_deprecated_warnings),
                             style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                         )
                     },
                     leadingContent = {
@@ -270,15 +275,18 @@ fun CoreSettingsScreen(navController: NavController) {
                     trailingContent = {
                         Switch(
                             checked = disableDeprecatedWarnings,
-                            onCheckedChange = { checked ->
-                                disableDeprecatedWarnings = checked
-                                scope.launch(Dispatchers.IO) {
-                                    Settings.disableDeprecatedWarnings = checked
-                                }
-                            },
+                            onCheckedChange = null,
                         )
                     },
-                    modifier = Modifier.clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .clickable {
+                            val newChecked = !disableDeprecatedWarnings
+                            disableDeprecatedWarnings = newChecked
+                            scope.launch(Dispatchers.IO) {
+                                Settings.disableDeprecatedWarnings = newChecked
+                            }
+                        },
                     colors =
                     ListItemDefaults.colors(
                         containerColor = Color.Transparent,
@@ -293,7 +301,8 @@ fun CoreSettingsScreen(navController: NavController) {
             text = stringResource(R.string.working_directory),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
 
         // Working Directory Card
@@ -304,76 +313,86 @@ fun CoreSettingsScreen(navController: NavController) {
                 .padding(horizontal = 16.dp),
             colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
+            shape = RoundedCornerShape(24.dp),
         ) {
-            // Browse
-            ListItem(
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.browse),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Outlined.FolderOpen,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                },
-                modifier =
-                Modifier
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                    .clickable {
-                        openInFileManager(context)
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                // Browse
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.browse),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        )
                     },
-                colors =
-                ListItemDefaults.colors(
-                    containerColor = Color.Transparent,
-                ),
-            )
-
-            // Destroy
-            ListItem(
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.destroy),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Outlined.DeleteForever,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                    )
-                },
-                modifier =
-                Modifier
-                    .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
-                    .clickable {
-                        scope.launch(Dispatchers.IO) {
-                            val filesDir = context.getExternalFilesDir(null) ?: context.filesDir
-                            filesDir.deleteRecursively()
-                            filesDir.mkdirs()
-
-                            // Recalculate data size
-                            val newSize =
-                                filesDir.walkTopDown()
-                                    .filter { it.isFile }
-                                    .map { it.length() }
-                                    .sum()
-                            val formattedSize = Libbox.formatBytes(newSize)
-                            dataSize = formattedSize
-                        }
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Outlined.FolderOpen,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
                     },
-                colors =
-                ListItemDefaults.colors(
-                    containerColor = Color.Transparent,
-                ),
-            )
+                    modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable {
+                            openInFileManager(context)
+                        },
+                    colors =
+                    ListItemDefaults.colors(
+                        containerColor = Color.Transparent,
+                    ),
+                )
+
+                androidx.compose.material3.HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+
+                // Destroy
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.destroy),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Outlined.DeleteForever,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                    },
+                    modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable {
+                            scope.launch(Dispatchers.IO) {
+                                val filesDir = context.getExternalFilesDir(null) ?: context.filesDir
+                                filesDir.deleteRecursively()
+                                filesDir.mkdirs()
+
+                                // Recalculate data size
+                                val newSize =
+                                    filesDir.walkTopDown()
+                                        .filter { it.isFile }
+                                        .map { it.length() }
+                                        .sum()
+                                val formattedSize = Libbox.formatBytes(newSize)
+                                dataSize = formattedSize
+                            }
+                        },
+                    colors =
+                    ListItemDefaults.colors(
+                        containerColor = Color.Transparent,
+                    ),
+                )
+            }
         }
 
         // Session Section
@@ -382,7 +401,8 @@ fun CoreSettingsScreen(navController: NavController) {
             text = stringResource(R.string.settings_account),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp),
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
         )
 
         Card(
@@ -392,14 +412,16 @@ fun CoreSettingsScreen(navController: NavController) {
                 .padding(horizontal = 16.dp),
             colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
+            shape = RoundedCornerShape(24.dp),
         ) {
             ListItem(
                 headlineContent = {
                     Text(
                         stringResource(R.string.settings_logout),
                         style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.error,
                     )
                 },
@@ -412,7 +434,7 @@ fun CoreSettingsScreen(navController: NavController) {
                 },
                 modifier =
                 Modifier
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(24.dp))
                     .clickable {
                         scope.launch {
                             Settings.clearSession()

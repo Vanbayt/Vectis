@@ -179,6 +179,11 @@
     
     <!-- Log -->
     <string name="log_level">Уровень логов</string>
+    <string name="log_level_all">Все</string>
+    <string name="log_level_info">Инфо</string>
+    <string name="log_level_warn">Предупреждения</string>
+    <string name="log_level_error">Ошибки</string>
+    <string name="log_level_debug">Debug</string>
     <string name="filter_label">Фильтр: %s</string>
     <string name="clear_filter">Очистить</string>
     <string name="clear_logs">Очистить логи</string>
@@ -689,6 +694,7 @@
     <string name="profile_passwords_mismatch">Новые пароли не совпадают</string>
     <string name="profile_password_too_short">Пароль должен быть не менее 6 символов</string>
     <string name="profile_change_button">Изменить</string>
+    <string name="profile_password_changed_success">Пароль успешно изменен</string>
 
     <!-- Traffic Limit -->
     <string name="traffic_limit_title">Лимит трафика</string>
@@ -713,14 +719,14 @@
     <string name="protocol_selection_subtitle">Подберите протокол под свои задачи. Владельцы Maximum подписки могут зафиксировать конкретную ноду или доверить роутинг автоматике (Auto).</string>
     <string name="protocol_check_ping">Проверить пинг</string>
     <string name="protocol_testing">тестируется...</string>
-    <string name="protocol_auto_title">⚡ Автоматический выбор (Auto)</string>
+    <string name="protocol_auto_title">Автоматический выбор (Auto)</string>
     <string name="protocol_auto_subtitle">Текущий выбор: %1$s</string>
     <string name="protocol_auto_subtitle_fallback">Автонастройка и переключение при сбоях</string>
     <string name="protocol_auto_desc">Автоматически тестирует все узлы и подключает к самому быстрому и стабильному серверу.</string>
     <string name="protocol_badge_smart_routing">Умный роутинг</string>
-    <string name="protocol_badge_mobile">⚡ Мобильные сети</string>
-    <string name="protocol_badge_dpi">🛡️ Обход DPI</string>
-    <string name="protocol_badge_speed">🚀 Макс. скорость</string>
+    <string name="protocol_badge_mobile">Мобильные сети</string>
+    <string name="protocol_badge_dpi">Обход DPI</string>
+    <string name="protocol_badge_speed">Макс. скорость</string>
     <string name="protocol_desc_hysteria">Протокол на базе UDP (QUIC). Сохраняет полную скорость при высокой потере пакетов на 3G/4G и слабом Wi-Fi.</string>
     <string name="protocol_desc_grpc">Мультиплексирование через gRPC. Создан для пробития тяжелых фильтров ТСПУ и глубокого анализа пакетов.</string>
     <string name="protocol_desc_vless">Классический зашифрованный TCP-туннель с маскировкой под HTTPS. Максимальная скорость для веб-серфинга и видео.</string>
@@ -729,16 +735,16 @@
 
     <!-- Per App Proxy -->
     <string name="per_app_preset_applied">Применен пресет: выбрано %1$d прил.</string>
-    <string name="per_app_mode_include">⚡ РЕЖИМ: ВКЛЮЧЕНИЕ</string>
-    <string name="per_app_mode_exclude">🛡️ РЕЖИМ: ИСКЛЮЧЕНИЕ</string>
+    <string name="per_app_mode_include">РЕЖИМ: ВКЛЮЧЕНИЕ</string>
+    <string name="per_app_mode_exclude">РЕЖИМ: ИСКЛЮЧЕНИЕ</string>
     <string name="per_app_switch_mode">Сменить режим</string>
     <string name="per_app_presets_rf">Пресеты РФ приложений:</string>
-    <string name="per_app_preset_all_rf">🇷🇺 Все РФ прил.</string>
-    <string name="per_app_preset_yandex_vk">🟢 Яндекс и VK</string>
-    <string name="per_app_preset_banks">🏦 Банки</string>
-    <string name="per_app_preset_marketplaces">🛒 Маркетплейсы</string>
-    <string name="per_app_preset_gosuslugi">🏛️ Госуслуги</string>
-    <string name="per_app_preset_media_rf">🎬 Медиа РФ</string>
+    <string name="per_app_preset_all_rf">Все РФ прил.</string>
+    <string name="per_app_preset_yandex_vk">Яндекс и VK</string>
+    <string name="per_app_preset_banks">Банки</string>
+    <string name="per_app_preset_marketplaces">Маркетплейсы</string>
+    <string name="per_app_preset_gosuslugi">Госуслуги</string>
+    <string name="per_app_preset_media_rf">Медиа РФ</string>
 
     <!-- Settings & Updates -->
     <string name="settings_account">Аккаунт</string>
@@ -765,6 +771,89 @@
     <string name="service_mode_root_desc">Прямой туннель в обход VpnService: скрыт от банков, без значка ключа</string>
     <string name="service_mode_root_missing_title">Root-права не найдены</string>
     <string name="service_mode_root_missing_msg">Для работы в режиме Native TUN требуются права Superuser (Magisk, KernelSU или APatch). Запрос root был отклонён или устройство не рутировано.</string>
+
+    <!-- Profile & Notifications M3 -->
+    <string name="profile_logout_confirm_title">Выход из аккаунта</string>
+    <string name="profile_logout_confirm_msg">Вы уверены, что хотите выйти? Текущее VPN-подключение будет остановлено, а данные авторизации удалены с этого устройства.</string>
+    <string name="profile_status_active">Активен</string>
+    <string name="profile_status_inactive">Приостановлен</string>
+    <string name="profile_user_id">ID: #%1$d</string>
+    <string name="profile_traffic_unlimited">Трафик без ограничений</string>
+    <string name="profile_traffic_title">Трафик</string>
+    <string name="profile_days_left">Осталось %1$d дн.</string>
+    <string name="profile_password_repeat_hint">Пароли совпадают</string>
+
+    <string name="profile_device_title">Текущее устройство</string>
+    <string name="profile_device_this">Это устройство</string>
+    <string name="profile_session_active">Сеанс активен</string>
+    <string name="profile_revoke_others">Завершить другие сеансы</string>
+    <string name="profile_revoke_others_title">Завершить другие сеансы</string>
+    <string name="profile_revoke_others_msg">Завершить все активные сеансы на других устройствах? На этом устройстве вход сохранится.</string>
+    <string name="profile_revoke_others_success">Другие сеансы успешно завершены</string>
+    <string name="profile_quota_reset">Квота обновится %1$s</string>
+    <string name="profile_vpn_key_title">VPN-ключ и конфигурация</string>
+    <string name="profile_vpn_key_desc">Уникальный идентификатор для настройки на ПК, роутере или в сторонних клиентах</string>
+    <string name="profile_vpn_key_copied">VPN-ключ скопирован в буфер обмена</string>
+    <string name="profile_regenerate_key">Перевыпустить ключ</string>
+    <string name="profile_regenerate_key_title">Перевыпуск VPN-ключа</string>
+    <string name="profile_regenerate_key_msg">Создание нового ключа аннулирует текущую конфигурацию на сервере. Потребуется обновить конфигурацию для подключения.</string>
+    <string name="profile_regenerate_key_success">Новый VPN-ключ успешно создан</string>
+    <string name="profile_plan_perks_title">Возможности тарифа</string>
+    <string name="profile_upgrade_plan">Улучшить тариф</string>
+    <string name="profile_extend_plan">Продлить подписку</string>
+    <string name="profile_perk_protocols">Протоколы: Hysteria 2, VLESS, gRPC</string>
+    <string name="profile_perk_speed">Скорость до 1 Гбит/с</string>
+    <string name="profile_perk_dpi">Обход блокировок и ТСПУ</string>
+
+    <string name="notifications_filter_all">Все</string>
+    <string name="notifications_filter_unread">Непрочитанные</string>
+    <string name="notifications_filter_subscription">Подписка</string>
+    <string name="notifications_filter_system">Системные</string>
+    <string name="notifications_clear_all_title">Очистить список</string>
+    <string name="notifications_clear_all_msg">Удалить все уведомления из списка?</string>
+    <string name="notifications_mark_all_read">Прочитать все</string>
+    <string name="notifications_action_delete">Удалить</string>
+    <string name="notifications_time_just_now">Только что</string>
+    <string name="notifications_filter_empty">В этой категории нет уведомлений</string>
+    <string name="profile_sub_info_title">Подписка и трафик</string>
+    <string name="profile_support_title">Поддержка</string>
+    <string name="profile_support_subtitle">Telegram-бот техподдержки</string>
+    <string name="profile_in_development">В РАЗРАБОТКЕ</string>
+    <string name="profile_in_development_msg">Раздел поддержки находится в разработке</string>
+    <string name="profile_device_model">Модель</string>
+    <string name="profile_os_version">Версия ОС</string>
+    <string name="profile_app_version">Версия клиента</string>
+    <string name="quick_settings_tile_title">Плитка быстрых настроек</string>
+    <string name="quick_settings_tile_desc">Добавить переключатель Vectis в шторку Android</string>
+    <string name="quick_settings_tile_added">Плитка успешно добавлена</string>
+    <string name="quick_settings_tile_manual">Опустите шторку дважды, нажмите значок карандаша и перетащите плитку Vectis в активные.</string>
+
+    <!-- New Simple Settings -->
+    <string name="settings_section_account">ПРОФИЛЬ И ПОДПИСКА</string>
+    <string name="settings_section_routing">РЕЖИМ МАРШРУТИЗАЦИИ</string>
+    <string name="settings_section_security_automation">БЕЗОПАСНОСТЬ И АВТОМАТИЗАЦИЯ</string>
+    <string name="settings_section_advanced">ДЛЯ СПЕЦИАЛИСТОВ</string>
+    <string name="routing_mode_title">Режим работы VPN</string>
+    <string name="routing_mode_smart">Умный режим (Рекомендуется)</string>
+    <string name="routing_mode_smart_desc">Банки, Госуслуги и сайты РФ работают напрямую. Заблокированные ресурсы — через VPN</string>
+    <string name="routing_mode_all">Весь трафик через VPN</string>
+    <string name="routing_mode_all_desc">Максимальная защита. Весь интернет идет через туннель (для зарубежных поездок и открытых Wi-Fi)</string>
+    <string name="routing_mode_blocked">Только заблокированное</string>
+    <string name="routing_mode_blocked_desc">VPN используется строго для заблокированных ресурсов. Экономит мобильный трафик</string>
+    <string name="adblock_title">Блокировка рекламы и трекеров</string>
+    <string name="adblock_desc">Блокирует баннеры, всплывающие окна и рекламные трекеры</string>
+    <string name="auto_connect_on_boot">Автоподключение при включении</string>
+    <string name="auto_connect_on_boot_desc">Автоматически запускать VPN после перезагрузки устройства</string>
+    <string name="kill_switch_title">Защита от утечек (Kill Switch)</string>
+    <string name="kill_switch_desc">Блокировать доступ в интернет при случайном обрыве VPN</string>
+    <string name="kill_switch_dialog_title">Настройка Kill Switch</string>
+    <string name="kill_switch_dialog_msg">В Android защита от утечек включается на уровне системы.\n\nНажмите «Открыть настройки», выберите Vectis (значок шестерёнки) и включите «Блокировать соединения без VPN».</string>
+    <string name="kill_switch_dialog_btn">Открыть настройки VPN</string>
+    <string name="advanced_settings_title">Расширенные настройки</string>
+    <string name="advanced_settings_subtitle">Режим службы (Root), маскировка Xposed, ядро и диагностика</string>
+    <string name="my_account_title">Мой аккаунт</string>
+    <string name="account_tier_prefix">Тариф: </string>
+    <string name="account_traffic_prefix">Трафик: </string>
 </resources>
 
 
